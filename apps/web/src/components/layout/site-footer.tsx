@@ -8,14 +8,14 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <Link href="/" aria-label="Portal Inmobiliario, inicio" className="inline-flex">
+            <Link href="/" aria-label="Portal Imobiliário, início" className="inline-flex">
               <SiteBrand />
             </Link>
             <p className="max-w-sm text-sm leading-6 text-slate-600">
-              Propiedades en venta y arriendo en Chile.
+              Imóveis à venda e para aluguel no Brasil.
             </p>
           </div>
-          <nav aria-label="Navegación del pie de página">
+          <nav aria-label="Navegação do rodapé">
             <ul className="grid grid-cols-2 gap-x-6 sm:flex sm:flex-wrap sm:gap-x-4">
               {publicNavigation.map(({ label, href }) => (
                 <li key={href}>
@@ -31,7 +31,7 @@ export function SiteFooter() {
           </nav>
         </div>
         <p className="mt-6 border-t border-slate-100 pt-6 text-xs leading-5 text-slate-500">
-          © Portal Inmobiliario.
+          © Portal Imobiliário.
         </p>
       </div>
     </footer>

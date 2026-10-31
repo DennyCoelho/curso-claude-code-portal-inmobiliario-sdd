@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* Opções de configuração do Next.js. */
   turbopack: {
     rules: {
       "*.css": {

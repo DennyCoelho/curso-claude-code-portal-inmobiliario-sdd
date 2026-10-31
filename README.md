@@ -1,6 +1,19 @@
 # Portal Imobiliário — SDD
 
-Portal imobiliário para o Chile desenvolvido por meio de **Spec-Driven Development (SDD)** — desenvolvimento orientado por especificações.
+Portal imobiliário para o Brasil desenvolvido por meio de **Spec-Driven Development (SDD)** — desenvolvimento orientado por especificações.
+
+A interface, os textos de acessibilidade, os metadados e a documentação utilizam português do Brasil (`pt-BR`).
+
+## Contexto brasileiro
+
+- Mercado: Brasil, com país `BR` definido automaticamente.
+- Moeda: real brasileiro (`BRL`), com preços como `R$ 450.000,00` para venda e `R$ 2.500,00/mês` para aluguel.
+- Endereço: logradouro, número, complemento opcional, bairro, cidade, estado (UF) e CEP no formato `00000-000`.
+- Busca e filtros de localização: bairro, cidade e UF, com parâmetros `neighborhood`, `city` e `state`.
+- Contato: telefone com DDD e prefixo internacional `+55`.
+- Mapas e dados de demonstração: endereços e localidades do Brasil.
+
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 e 2 estão implementadas; persistência, valores monetários, filtros, mapas e contato serão implementados nas respectivas etapas.
 
 ## Desenvolvimento local
 

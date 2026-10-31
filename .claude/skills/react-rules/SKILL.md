@@ -1,3 +1,8 @@
+---
+name: react-rules
+description: Criar ou modificar componentes, hooks, formulários e lógica de interface React com TypeScript neste portal imobiliário brasileiro, seguindo a especificação e a arquitetura REST do projeto.
+---
+
 # Skill: react-rules
 
 **Descrição:** Gera um projeto ou componente React com TypeScript seguindo as melhores práticas atuais.
@@ -22,6 +27,16 @@ Use esta skill quando o usuário:
 - Utilize API REST por meio dos Route Handlers do Next.js.
 - Não utilize Server Actions.
 - Utilize uma estrutura monorepo.
+
+### Contexto deste projeto
+
+Consulte [spec.md](../../../specs/portal-inmobiliario/spec.md), [plan.md](../../../specs/portal-inmobiliario/plan.md) e [tasks.md](../../../specs/portal-inmobiliario/tasks.md) para os requisitos e a etapa atual.
+
+- O portal atende ao mercado brasileiro. Use `pt-BR` nos textos, nos metadados e na acessibilidade.
+- Formate preços em BRL (`R$`) e identifique o valor mensal dos aluguéis; siga a representação monetária da API definida em `plan.md`.
+- Use bairro, cidade, UF e CEP para a localização, com os campos e parâmetros de `spec.md` e `plan.md`. O país é Brasil (`BR`).
+- Nos formulários de contato, siga o padrão de telefone brasileiro com DDD e `+55` definido na especificação.
+- Use exemplos brasileiros e implemente essas regras somente na etapa correspondente de `tasks.md`.
 
 ### Estado global
 

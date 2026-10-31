@@ -2,6 +2,8 @@
 
 > Execute as tarefas em ordem. Não comece a próxima até implementar e validar a atual.
 
+> Contexto do produto: Brasil (`BR`), idioma `pt-BR`, moeda BRL (R$), endereço com logradouro, número, complemento opcional, bairro, cidade, UF e CEP. As etapas pendentes devem seguir esse contexto.
+
 ## Fase 1 — Fundamentos
 
 - [x] **Etapa 1 — Criar projeto Next.js**
@@ -9,12 +11,15 @@
   - Configurar a estrutura básica.
   - Criar `.env.example`.
   - Validar o servidor de desenvolvimento e o build.
+  - Revisão pt-BR concluída: instruções do projeto, `.env.example` e comentários de configuração traduzidos.
 
 - [x] **Etapa 2 — Layout e navegação**
   - Criar cabeçalho, navegação, rodapé e layout.
   - Adicionar um design responsivo básico.
   - Navegação: Início, Imóveis, Comprar, Alugar, Entrar.
   - Validado com `npm test`, `npm run build` e navegador em 360, 768 e 1280 px: links, menu móvel, teclado, Escape, foco e salto para o conteúdo; sem transbordamento horizontal nem erros no console.
+  - Revisão pt-BR validada: interface, acessibilidade, metadados, idioma do HTML e página 404 em português do Brasil.
+  - Direcionamento ao Brasil validado nos textos da página inicial, no rodapé e nos metadados.
 
 - [ ] **Etapa 3 — Configurar PostgreSQL**
   - Configurar o PostgreSQL.
@@ -29,13 +34,14 @@
   - Feature.
   - Favorite.
   - Inquiry.
+  - Preços em BRL com precisão decimal e endereço brasileiro conforme os campos de `plan.md`.
   - Criar relacionamentos e restrições.
   - Executar as migrações.
 
 - [ ] **Etapa 5 — Criar seed**
-  - Imóveis realistas para venda e aluguel.
+  - Imóveis realistas para venda e aluguel no Brasil, com preços em BRL e aluguel mensal.
   - Casas, apartamentos, terrenos e escritórios.
-  - Diferentes comunas, preços e características.
+  - Diferentes bairros, cidades, UFs, CEPs, preços e características.
 
 ## Fase 2 — Portal público
 
@@ -54,7 +60,8 @@
 
 - [ ] **Etapa 8 — PropertyCard e grade responsiva**
   - Criar componente reutilizável.
-  - Imagem, título, preço, operação, localização, quartos, banheiros e área.
+  - Imagem, título, preço em BRL, operação, bairro/cidade/UF, quartos, banheiros e área.
+  - Formatação monetária `pt-BR` e indicação `/mês` para aluguel.
   - Criar grade responsiva.
 
 - [ ] **Etapa 9 — Catálogo**
@@ -64,17 +71,17 @@
 
 - [ ] **Etapa 10 — Busca**
   - Busca textual.
-  - Título, comuna, cidade, região e descrição.
+  - Título, bairro, cidade, UF e descrição.
   - Representar a busca nos parâmetros de consulta da URL.
 
 - [ ] **Etapa 11 — Filtros**
   - Venda/aluguel.
   - Tipo.
-  - Faixa de preço.
+  - Faixa de preço em BRL.
   - Quartos.
   - Banheiros.
   - Área mínima.
-  - Comuna/cidade/região.
+  - Bairro/cidade/UF, usando `neighborhood`, `city` e `state` na URL e na API.
   - Permitir filtros combinados.
 
 - [ ] **Etapa 12 — Ordenação e estados**
@@ -96,7 +103,7 @@
   - Responsividade.
 
 - [ ] **Etapa 15 — Google Maps**
-  - Construir a localização a partir de endereço, comuna, cidade e região.
+  - Construir a localização a partir de logradouro, número, bairro, cidade, UF, CEP e Brasil.
   - Integrar o Google Maps.
   - Não solicitar latitude/longitude manualmente.
 
@@ -105,6 +112,7 @@
   - Incluir ID/título do imóvel.
   - Estados de envio em andamento/sucesso/erro.
   - Validar os dados.
+  - Aceitar telefone brasileiro com DDD e prefixo `+55`; normalizar para formato internacional.
 
 ## Fase 3 — Autenticação e usuário
 
@@ -163,11 +171,12 @@
 - [ ] **Etapa 25 — Formulário de imóvel**
   - Título e descrição.
   - Operação e tipo.
-  - Preço.
+  - Preço em BRL, com valor mensal para aluguel.
   - Área útil/total.
   - Quartos, banheiros e vagas de garagem.
   - Idade do imóvel.
-  - Endereço, comuna, cidade e região.
+  - Logradouro, número, complemento opcional, bairro, cidade, UF e CEP; país Brasil (`BR`) automático.
+  - Validar UF e CEP no backend e preservar zeros à esquerda do CEP.
   - Características.
   - Publicado/em destaque.
   - Não adicionar campos para inserção manual de latitude/longitude.
@@ -236,6 +245,7 @@
   - Fluxos de USER.
   - Fluxos de ADMIN.
   - Erros e códigos HTTP.
+  - BRL, aluguel mensal, endereços brasileiros, UF, CEP, telefone com DDD e `+55` e localização no Brasil.
   - Corrigir defeitos que impeçam o funcionamento.
 
 - [ ] **Etapa 36 — Conformidade arquitetural**

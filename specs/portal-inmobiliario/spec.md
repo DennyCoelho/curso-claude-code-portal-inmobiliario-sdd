@@ -2,7 +2,9 @@
 
 ## 1. Visão do produto
 
-Construir um portal imobiliário full stack voltado inicialmente ao mercado chileno.
+Construir um portal imobiliário full stack voltado ao mercado brasileiro.
+
+A interface, os textos de acessibilidade e os metadados devem utilizar português do Brasil (`pt-BR`).
 
 Os visitantes poderão descobrir imóveis à venda ou para aluguel, buscá-los e filtrá-los, consultar suas informações completas, visualizar fotografias e uma localização aproximada no mapa, além de solicitar informações sobre um imóvel.
 
@@ -67,17 +69,21 @@ Cada imóvel deve oferecer suporte, no mínimo, a:
 - descrição;
 - tipo de operação;
 - tipo de imóvel;
-- preço;
+- preço em reais (BRL);
 - área útil em metros quadrados;
 - área total em metros quadrados;
 - número de quartos;
 - número de banheiros;
 - número de vagas de garagem;
 - idade do imóvel;
-- endereço;
-- comuna;
+- logradouro;
+- número (texto, incluindo `s/n` quando necessário);
+- complemento (opcional);
+- bairro;
 - cidade;
-- região;
+- estado (UF);
+- CEP;
+- país definido automaticamente como Brasil (`BR`);
 - status de publicação;
 - indicador de imóvel em destaque;
 - data de criação;
@@ -103,7 +109,11 @@ Valores iniciais:
 
 ### Moeda
 
-Deve oferecer suporte a `USD`.
+Utilizar o real brasileiro (`BRL`, símbolo `R$`) como moeda do portal.
+
+Exibir preços com a formatação `pt-BR`, por exemplo, `R$ 450.000,00`. Os valores devem ser armazenados com precisão decimal e duas casas decimais. A formatação monetária pertence à interface.
+
+Os preços de venda representam o valor total do imóvel. Os preços de aluguel representam o valor mensal, identificado na interface, por exemplo, `R$ 2.500,00/mês`.
 
 Alguns campos poderão ser opcionais quando não se aplicarem ao tipo de imóvel.
 
@@ -163,24 +173,32 @@ O administrador não deve inserir latitude nem longitude manualmente.
 
 O formulário utiliza:
 
-- endereço;
-- comuna;
+- logradouro;
+- número;
+- complemento (opcional);
+- bairro;
 - cidade;
-- região.
+- estado (UF);
+- CEP.
 
-Exemplo:
+O país é definido automaticamente como Brasil (`BR`). O estado deve ser uma UF brasileira válida em maiúsculas. O CEP deve ser armazenado como texto com oito dígitos, preservando zeros à esquerda, e exibido no formato `00000-000`.
+
+Exemplo ilustrativo de preenchimento:
 
 ```text
-Av. Apoquindo 3000
-Las Condes
-Santiago
-Región Metropolitana
+Avenida Exemplo
+100
+Apartamento 201
+Centro
+São Paulo
+SP
+01000-000
 ```
 
-A aplicação construirá um endereço completo que possa ser utilizado pelo Google Maps.
+A aplicação construirá um endereço completo que possa ser utilizado pelo Google Maps, acrescentando Brasil. O complemento pode ser omitido da consulta ao mapa.
 
 ```text
-Av. Apoquindo 3000, Las Condes, Santiago, Región Metropolitana, Chile
+Avenida Exemplo, 100, Centro, São Paulo - SP, 01000-000, Brasil
 ```
 
 A localização exibida publicamente pode ser aproximada quando apropriado.
@@ -229,7 +247,7 @@ Cada card exibirá, quando aplicável:
 - preço;
 - operação;
 - tipo;
-- comuna ou localização;
+- bairro, cidade e UF;
 - quartos;
 - banheiros;
 - área útil.
@@ -241,15 +259,15 @@ Cada card exibirá, quando aplicável:
 Permitir busca textual nas informações relevantes:
 
 - título;
-- comuna;
+- bairro;
 - cidade;
-- região;
+- estado (UF);
 - descrição.
 
 A busca deve ser representada por parâmetros de consulta.
 
 ```text
-/properties?search=providencia
+/properties?search=pinheiros
 ```
 
 ---
@@ -265,14 +283,14 @@ Permitir combinar:
 - quartos;
 - banheiros;
 - área útil mínima;
-- comuna;
+- bairro;
 - cidade;
-- região.
+- estado (UF).
 
 Os filtros devem ser representados na URL.
 
 ```text
-/properties?operation=SALE&commune=las-condes&bedrooms=3
+/properties?operation=SALE&neighborhood=pinheiros&city=sao-paulo&state=SP&bedrooms=3
 ```
 
 ---
@@ -313,7 +331,7 @@ Exibir:
 
 ## 13. Google Maps
 
-A página de detalhes deve exibir o Google Maps utilizando o endereço textual do imóvel.
+A página de detalhes deve exibir o Google Maps utilizando logradouro, número, bairro, cidade, UF, CEP e Brasil no endereço textual do imóvel.
 
 A configuração deve ser gerenciada por variáveis de ambiente.
 
@@ -329,8 +347,10 @@ Campos visíveis:
 
 - nome;
 - e-mail;
-- telefone;
+- telefone com DDD;
 - mensagem.
+
+O telefone deve aceitar a formatação brasileira com DDD e o prefixo internacional `+55`. Normalizar o número para armazenamento no formato internacional e validar no backend.
 
 Adicionar automaticamente:
 
@@ -421,17 +441,21 @@ Formulário:
 - descrição;
 - operação;
 - tipo;
-- preço;
+- preço em BRL;
 - área útil;
 - área total;
 - quartos;
 - banheiros;
 - vagas de garagem;
 - idade do imóvel;
-- endereço;
-- comuna;
+- logradouro;
+- número;
+- complemento (opcional);
+- bairro;
 - cidade;
-- região;
+- estado (UF);
+- CEP;
+- país Brasil (`BR`), definido automaticamente;
 - características;
 - publicado;
 - em destaque.
@@ -557,4 +581,5 @@ O produto estará funcionalmente concluído quando:
 - não forem utilizadas Server Actions;
 - a autorização for aplicada no backend;
 - a aplicação for responsiva;
+- a interface utilizar `pt-BR`, os preços estiverem em BRL e os endereços, filtros e exemplos seguirem o contexto brasileiro;
 - não houver erros conhecidos que impeçam o funcionamento.

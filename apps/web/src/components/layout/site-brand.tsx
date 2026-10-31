@@ -20,7 +20,7 @@ export function SiteBrand() {
       <span className="text-base leading-5 font-semibold tracking-tight text-slate-900">
         Portal
         <span className="block text-sm font-normal tracking-normal text-slate-600">
-          Inmobiliario
+          Imobiliário
         </span>
       </span>
     </span>

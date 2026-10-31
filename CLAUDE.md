@@ -1,97 +1,104 @@
 # CLAUDE.md
 
-## Instrucciones del proyecto
+## Instruções do projeto
 
-Este proyecto utiliza **Spec-Driven Development (SDD)**.
+Este projeto utiliza **Spec-Driven Development (SDD)**.
 
-Antes de implementar cualquier funcionalidad, lee:
+Use português do Brasil (`pt-BR`) na interface, nos metadados, nos textos de acessibilidade, nos comentários, na documentação e na comunicação sobre o projeto. Preserve os identificadores técnicos, os contratos de API e os nomes de arquivos definidos na especificação.
+
+O produto é destinado ao Brasil: utilize real brasileiro (`BRL`/`R$`), endereços com bairro, cidade, UF e CEP, telefone com DDD e `+55` e exemplos brasileiros. Consulte os campos e contratos definidos em `spec.md` e `plan.md` ao implementar cada etapa.
+
+Antes de implementar qualquer funcionalidade, leia:
 
 - `specs/portal-inmobiliario/spec.md`
 - `specs/portal-inmobiliario/plan.md`
 - `specs/portal-inmobiliario/tasks.md`
 
-La especificación es la fuente de verdad del proyecto.
+A especificação é a fonte de verdade do projeto.
 
-## Flujo de desarrollo
+## Fluxo de desenvolvimento
 
-1. Lee la especificación y el plan técnico.
-2. Revisa `tasks.md`.
-3. Identifica la primera tarea pendiente.
-4. Implementa únicamente esa tarea.
-5. Ejecuta las validaciones y pruebas necesarias.
-6. Corrige los errores antes de continuar.
-7. Marca la tarea como completada en `tasks.md`.
-8. No implementes tareas futuras salvo que el usuario lo solicite explícitamente.
+1. Leia a especificação e o plano técnico.
+2. Revise `tasks.md`.
+3. Identifique a primeira tarefa pendente.
+4. Implemente apenas essa tarefa.
+5. Execute as validações e os testes necessários.
+6. Corrija os erros antes de continuar.
+7. Marque a tarefa como concluída em `tasks.md`.
+8. Não implemente tarefas futuras, a menos que o usuário solicite explicitamente.
 
-## Reglas de arquitectura
+## Regras de arquitetura
 
-- Utiliza Next.js (version más reciente disponible) + React + TypeScript.
-- Utiliza PostgreSQL como única base de datos de la aplicación.
-- Utiliza API REST mediante Route Handlers de Next.js.
-- No utilices Server Actions.
-- Los componentes del frontend no deben acceder directamente a la base de datos.
-- Mantén separadas las responsabilidades de API, lógica de negocio y persistencia.
-- Utiliza Cloudinary para las imágenes de las propiedades.
-- Utiliza Google Maps para mostrar la ubicación de las propiedades.
-- Utiliza Web3Forms para el formulario de contacto.
-- No expongas secretos al navegador.
-- Utiliza variables de entorno para credenciales y claves.
+- Utilize Next.js (versão mais recente disponível) + React + TypeScript.
+- Utilize PostgreSQL como único banco de dados da aplicação.
+- Utilize API REST por meio dos Route Handlers do Next.js.
+- Não utilize Server Actions.
+- Os componentes do frontend não devem acessar diretamente o banco de dados.
+- Mantenha separadas as responsabilidades de API, lógica de negócio e persistência.
+- Utilize Cloudinary para as imagens dos imóveis.
+- Utilize Google Maps para exibir a localização dos imóveis.
+- Utilize Web3Forms para o formulário de contato.
+- Não exponha segredos ao navegador.
+- Utilize variáveis de ambiente para credenciais e chaves.
 
-## Reglas de implementación
+## Regras de implementação
 
-- Analiza el código existente antes de modificarlo.
-- Prefiere cambios pequeños e incrementales.
-- No agregues funcionalidades fuera de la tarea actual.
-- Mantén TypeScript estricto y evita `any` salvo que sea realmente necesario.
-- Valida los datos recibidos por el backend.
-- Protege los recursos USER y ADMIN también en el backend.
-- Utiliza respuestas REST y códigos HTTP consistentes.
-- Mantén la aplicación responsive.
-- Respeta la arquitectura existente.
+- Analise o código existente antes de modificá-lo.
+- Prefira alterações pequenas e incrementais.
+- Não adicione funcionalidades fora da tarefa atual.
+- Mantenha o TypeScript em modo estrito e evite `any`, salvo quando necessário.
+- Valide os dados recebidos pelo backend.
+- Proteja os recursos USER e ADMIN também no backend.
+- Utilize respostas REST e códigos HTTP consistentes.
+- Mantenha a aplicação responsiva.
+- Respeite a arquitetura existente.
 
-## Regla de finalización
+## Regra de conclusão
 
-Una tarea solo está terminada cuando:
+Uma tarefa só está concluída quando:
 
-- su implementación está completa;
-- el proyecto compila correctamente;
-- las pruebas o validaciones correspondientes pasan;
-- no quedan errores bloqueantes conocidos;
-- la casilla correspondiente de `tasks.md` está marcada como completada.
+- sua implementação está completa;
+- o projeto compila corretamente;
+- os testes ou as validações correspondentes são aprovados;
+- não há erros conhecidos que impeçam o funcionamento;
+- a caixa de seleção correspondente em `tasks.md` está marcada como concluída.
 
-## Protocolo SDD (ESTRICTO)
-1. ANTES de modificar o crear cualquier código fuente, DEBES leer `specs/portal-inmobiliario/spec.md`.
-2. No escribas código sin un plan aprobado en `specs/portal-inmobiliario/plan.md`.
-3. Sigue tu progreso línea por línea en `specs/portal-inmobiliario/tasks.md`. Marca las tareas como [x] solo después de que las pruebas (tests) hayan pasado con éxito.
+## Protocolo SDD (ESTRITO)
 
-## Comandos de Construcción y Pruebas
-- Instalar dependencias: `npm install`
-- Ejecutar pruebas: `npm test`
-- Ejecutar linter: `npm run lint`
-- Servidor de desarrollo: `npm run dev`
+1. ANTES de modificar ou criar qualquer código-fonte, você DEVE ler `specs/portal-inmobiliario/spec.md`.
+2. Não escreva código sem um plano aprovado em `specs/portal-inmobiliario/plan.md`.
+3. Acompanhe o progresso linha por linha em `specs/portal-inmobiliario/tasks.md`. Marque as tarefas como [x] somente depois que os testes forem aprovados.
 
-## Estilo de Código y Arquitectura
-- Seguir los principios de Arquitectura Limpia (Clean Architecture).
-- Usar nombres de variables explícitos. No usar abreviaturas.
-- Cada nueva funcionalidad debe tener su prueba unitaria correspondiente.
+## Comandos de compilação e testes
 
-## Available Skills
+- Instalar dependências: `npm install`
+- Executar testes: `npm test`
+- Executar o linter: `npm run lint`
+- Servidor de desenvolvimento: `npm run dev`
 
-| Skill | Path | Description |
+## Estilo de código e arquitetura
+
+- Siga os princípios da Arquitetura Limpa (Clean Architecture).
+- Use nomes de variáveis explícitos. Não use abreviações.
+- Cada nova funcionalidade deve ter seu teste unitário correspondente.
+
+## Skills disponíveis
+
+| Skill | Caminho | Descrição |
 |---|---|---|
-| `react-rules` | `.claude/skills/react-rules/SKILL.md` | Estándares de desarrollo y reglas de arquitectura para proyectos y componentes de React con TypeScript, Tailwind CSS, Zustand, Zod, React Hook Form y React Query / SWR. |
+| `react-rules` | `.claude/skills/react-rules/SKILL.md` | Padrões de desenvolvimento e regras de arquitetura para projetos e componentes React com TypeScript, Tailwind CSS, Zustand, Zod, React Hook Form e React Query / SWR. |
 
 ---
 
-## Skill Trigger Rules
+## Regras de ativação das skills
 
 ### `react-rules`
-- **Activación**: Activar esta habilidad cuando el usuario pida:
-  - Crear una nueva aplicación React o generar su estructura con TypeScript.
-  - Crear, agregar o modificar componentes de React y maquetación con Tailwind CSS.
-  - Diseñar e implementar Custom Hooks (`useAuth`, `useFetch`, etc.).
-  - Gestionar estado global utilizando Zustand (`create()`).
-  - Crear esquemas de validación de datos utilizando Zod (`z.object`, `z.string`, `parse`, `safeParse`).
-  - Implementar formularios utilizando React Hook Form con resolver de Zod.
-  - Implementar lógica de UI o fetching de APIs utilizando TanStack Query (React Query) o SWR.
-  - Refactorizar código React para cumplir con principios de inmutabilidad, pureza y correcto uso de `useEffect`.
+- **Ativação**: ative esta skill quando o usuário pedir:
+  - Criar uma nova aplicação React ou gerar sua estrutura com TypeScript.
+  - Criar, adicionar ou modificar componentes React e layouts com Tailwind CSS.
+  - Projetar e implementar hooks personalizados (`useAuth`, `useFetch`, etc.).
+  - Gerenciar estado global utilizando Zustand (`create()`).
+  - Criar esquemas de validação de dados utilizando Zod (`z.object`, `z.string`, `parse`, `safeParse`).
+  - Implementar formulários utilizando React Hook Form com o resolver do Zod.
+  - Implementar lógica de interface ou busca de dados em APIs utilizando TanStack Query (React Query) ou SWR.
+  - Refatorar código React para seguir os princípios de imutabilidade, pureza e uso correto de `useEffect`.

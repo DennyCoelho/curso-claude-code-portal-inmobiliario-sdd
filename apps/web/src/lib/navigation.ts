@@ -1,7 +1,7 @@
 export const publicNavigation = [
-  { label: "Inicio", href: "/" },
-  { label: "Propiedades", href: "/properties" },
+  { label: "Início", href: "/" },
+  { label: "Imóveis", href: "/properties" },
   { label: "Comprar", href: "/properties?operation=SALE" },
-  { label: "Arrendar", href: "/properties?operation=RENT" },
-  { label: "Ingresar", href: "/login" },
+  { label: "Alugar", href: "/properties?operation=RENT" },
+  { label: "Entrar", href: "/login" },
 ] as const;

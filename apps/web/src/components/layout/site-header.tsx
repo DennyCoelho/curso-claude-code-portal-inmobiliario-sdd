@@ -24,7 +24,7 @@ export function SiteHeader() {
       }}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 px-5 py-4 sm:px-8">
-        <Link href="/" aria-label="Portal Inmobiliario, inicio" onNavigate={closeMenu}>
+        <Link href="/" aria-label="Portal Imobiliário, início" onNavigate={closeMenu}>
           <SiteBrand />
         </Link>
         <button
@@ -32,7 +32,7 @@ export function SiteHeader() {
           type="button"
           aria-expanded={isMenuOpen}
           aria-controls="primary-navigation"
-          aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 md:hidden"
         >
@@ -44,11 +44,11 @@ export function SiteHeader() {
               strokeLinecap="round"
             />
           </svg>
-          {isMenuOpen ? "Cerrar" : "Menú"}
+          {isMenuOpen ? "Fechar" : "Menu"}
         </button>
         <nav
           id="primary-navigation"
-          aria-label="Navegación principal"
+          aria-label="Navegação principal"
           data-open={isMenuOpen}
           className="mt-4 hidden w-full border-t border-slate-200 pt-4 data-[open=true]:block md:mt-0 md:block md:w-auto md:border-0 md:pt-0"
         >

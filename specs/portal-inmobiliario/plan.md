@@ -41,6 +41,17 @@ Web3Forms   → contato
 - Google Maps
 - Web3Forms
 
+### Contexto brasileiro
+
+- Mercado e país: Brasil (`BR`).
+- Idioma da interface, acessibilidade e metadados: português do Brasil (`pt-BR`).
+- Moeda: real brasileiro (`BRL`), exibido com `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`.
+- Preço de venda: valor total. Preço de aluguel: valor mensal, identificado com `/mês` na interface.
+- Datas: persistir e transmitir em UTC; exibir em `pt-BR` com fuso explícito, usando `America/Sao_Paulo` como padrão do portal.
+- Telefone de contato: aceitar DDD e prefixo `+55`, normalizar para formato internacional e validar no servidor.
+
+Esses requisitos orientam as etapas futuras; a implementação deve continuar seguindo a ordem de `tasks.md`.
+
 ## 3. Restrições
 
 - Não utilizar Server Actions.
@@ -92,6 +103,21 @@ Property * --- * Feature
 
 `Inquiry.userId` pode ser nulo para permitir consultas de visitantes.
 
+Na implementação de `Property`, utilizar os seguintes campos de localização:
+
+| Campo técnico | Significado | Regra |
+| --- | --- | --- |
+| `address` | Logradouro | Rua, avenida ou equivalente. |
+| `addressNumber` | Número | Texto, permitindo `s/n`. |
+| `addressComplement` | Complemento | Opcional. |
+| `neighborhood` | Bairro | Texto. |
+| `city` | Cidade | Texto. |
+| `state` | Estado (UF) | UF brasileira válida em maiúsculas. |
+| `postalCode` | CEP | Texto com oito dígitos, preservando zeros à esquerda; máscara apenas na interface. |
+| `country` | País | `BR`, atribuído pelo servidor. |
+
+Os preços devem utilizar um tipo decimal exato com duas casas decimais no PostgreSQL, em BRL. Não armazenar o texto formatado com `R$`, pontos de milhar ou vírgula decimal. Na API, representar valores monetários como strings decimais, por exemplo, `"450000.00"`; a interface aplica a formatação brasileira.
+
 ## 6. Persistência
 
 O PostgreSQL é o único banco de dados.
@@ -104,7 +130,7 @@ Requisitos:
 - chaves estrangeiras;
 - restrições de unicidade;
 - índices quando justificados;
-- seed para desenvolvimento.
+- seed para desenvolvimento com cidades e bairros brasileiros, UFs válidas, CEPs coerentes e preços de venda e aluguel em BRL.
 
 Restrições importantes:
 
@@ -202,11 +228,19 @@ maxPrice
 bedrooms
 bathrooms
 minUsableArea
-commune
+neighborhood
 city
-region
+state
 sort
 ```
+
+Os filtros de localização devem usar `neighborhood` (bairro), `city` (cidade) e `state` (UF). Validar a UF no servidor. Exemplo:
+
+```text
+/api/properties?operation=SALE&neighborhood=pinheiros&city=sao-paulo&state=SP
+```
+
+Os parâmetros `minPrice` e `maxPrice` representam valores em BRL, sem formatação monetária, usando ponto como separador decimal, por exemplo, `minPrice=250000.00`.
 
 A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, sem carregar todo o catálogo no navegador.
 
@@ -257,11 +291,15 @@ A exclusão deve manter o Cloudinary e o PostgreSQL sincronizados.
 
 Construir a localização utilizando:
 
-- endereço;
-- comuna;
+- logradouro;
+- número;
+- bairro;
 - cidade;
-- região;
-- país.
+- estado (UF);
+- CEP;
+- Brasil como país.
+
+Usar os campos `address`, `addressNumber`, `neighborhood`, `city`, `state` e `postalCode`, acrescentando `Brasil` ao montar a consulta. O complemento é opcional e pode ser omitido do mapa. Configurar a apresentação em português do Brasil quando a integração permitir idioma e país.
 
 Não solicitar coordenadas manualmente.
 
@@ -328,7 +366,8 @@ Validar, no mínimo:
 - consultas;
 - upload/exclusão no Cloudinary;
 - CRUD ADMIN;
-- comportamento responsivo.
+- comportamento responsivo;
+- contexto brasileiro: BRL, aluguel mensal, UF, CEP com zeros à esquerda, filtros por bairro/cidade/UF, telefone com DDD e `+55` e endereço do mapa no Brasil.
 
 ## 17. Definição de conclusão
 
