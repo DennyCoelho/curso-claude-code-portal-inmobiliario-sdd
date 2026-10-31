@@ -1,255 +1,255 @@
-# Tareas — Portal Inmobiliario
+# Tarefas — Portal Imobiliário
 
-> Ejecutar las tareas en orden. No comenzar la siguiente hasta implementar y validar la actual.
+> Execute as tarefas em ordem. Não comece a próxima até implementar e validar a atual.
 
 ## Fase 1 — Fundamentos
 
-- [x] **Paso 1 — Crear proyecto Next.js**
-  - Crear proyecto con React y TypeScript.
-  - Configurar estructura básica.
-  - Crear `.env.example`.
-  - Validar servidor de desarrollo y build.
+- [x] **Etapa 1 — Criar projeto Next.js**
+  - Criar projeto com React e TypeScript.
+  - Configurar a estrutura básica.
+  - Criar `.env.example`.
+  - Validar o servidor de desenvolvimento e o build.
 
-- [x] **Paso 2 — Layout y navegación**
-  - Crear header, navegación, footer y layout.
-  - Agregar diseño responsive base.
-  - Navegación: Inicio, Propiedades, Comprar, Arrendar, Ingresar.
-  - Validado con `npm test`, `npm run build` y navegador en 360, 768 y 1280 px: enlaces, menú móvil, teclado, Escape, foco y salto al contenido; sin desbordamiento horizontal ni errores de consola.
+- [x] **Etapa 2 — Layout e navegação**
+  - Criar cabeçalho, navegação, rodapé e layout.
+  - Adicionar um design responsivo básico.
+  - Navegação: Início, Imóveis, Comprar, Alugar, Entrar.
+  - Validado com `npm test`, `npm run build` e navegador em 360, 768 e 1280 px: links, menu móvel, teclado, Escape, foco e salto para o conteúdo; sem transbordamento horizontal nem erros no console.
 
-- [ ] **Paso 3 — Configurar PostgreSQL**
-  - Configurar PostgreSQL.
-  - Seleccionar y configurar ORM.
-  - Configurar migraciones.
-  - Validar conexión.
+- [ ] **Etapa 3 — Configurar PostgreSQL**
+  - Configurar o PostgreSQL.
+  - Selecionar e configurar o ORM.
+  - Configurar as migrações.
+  - Validar a conexão.
 
-- [ ] **Paso 4 — Crear modelo de dominio**
+- [ ] **Etapa 4 — Criar modelo de domínio**
   - User.
   - Property.
   - PropertyImage.
   - Feature.
   - Favorite.
   - Inquiry.
-  - Crear relaciones y constraints.
-  - Ejecutar migraciones.
+  - Criar relacionamentos e restrições.
+  - Executar as migrações.
 
-- [ ] **Paso 5 — Crear seed**
-  - Propiedades realistas de venta y arriendo.
-  - Casas, departamentos, terrenos y oficinas.
-  - Diferentes comunas, precios y características.
+- [ ] **Etapa 5 — Criar seed**
+  - Imóveis realistas para venda e aluguel.
+  - Casas, apartamentos, terrenos e escritórios.
+  - Diferentes comunas, preços e características.
 
 ## Fase 2 — Portal público
 
-- [ ] **Paso 6 — API REST pública de propiedades**
+- [ ] **Etapa 6 — API REST pública de imóveis**
   - `GET /api/properties`.
   - `GET /api/properties/{id}`.
-  - Mostrar públicamente solo propiedades publicadas.
-  - Separar API, servicios y persistencia.
+  - Exibir publicamente apenas imóveis publicados.
+  - Separar API, serviços e persistência.
 
-- [ ] **Paso 7 — Landing page**
-  - Hero.
-  - Buscador.
-  - Propiedades destacadas.
-  - Secciones comprar y arrendar.
-  - Llamadas a la acción.
+- [ ] **Etapa 7 — Landing page**
+  - Seção principal de destaque (hero).
+  - Campo de busca.
+  - Imóveis em destaque.
+  - Seções de compra e aluguel.
+  - Chamadas para ação.
 
-- [ ] **Paso 8 — PropertyCard y grid responsive**
-  - Crear componente reutilizable.
-  - Imagen, título, precio, operación, ubicación, dormitorios, baños y superficie.
-  - Crear grid responsive.
+- [ ] **Etapa 8 — PropertyCard e grade responsiva**
+  - Criar componente reutilizável.
+  - Imagem, título, preço, operação, localização, quartos, banheiros e área.
+  - Criar grade responsiva.
 
-- [ ] **Paso 9 — Catálogo**
-  - Crear `/properties`.
-  - Consumir API REST.
-  - Mostrar propiedades publicadas.
+- [ ] **Etapa 9 — Catálogo**
+  - Criar `/properties`.
+  - Consumir a API REST.
+  - Exibir imóveis publicados.
 
-- [ ] **Paso 10 — Búsqueda**
-  - Búsqueda textual.
-  - Título, comuna, ciudad, región y descripción.
-  - Reflejar búsqueda en query parameters.
+- [ ] **Etapa 10 — Busca**
+  - Busca textual.
+  - Título, comuna, cidade, região e descrição.
+  - Representar a busca nos parâmetros de consulta da URL.
 
-- [ ] **Paso 11 — Filtros**
-  - Venta/arriendo.
+- [ ] **Etapa 11 — Filtros**
+  - Venda/aluguel.
   - Tipo.
-  - Rango de precio.
-  - Dormitorios.
-  - Baños.
-  - Superficie mínima.
-  - Comuna/ciudad/región.
+  - Faixa de preço.
+  - Quartos.
+  - Banheiros.
+  - Área mínima.
+  - Comuna/cidade/região.
   - Permitir filtros combinados.
 
-- [ ] **Paso 12 — Ordenamiento y estados**
-  - Más recientes.
-  - Precio ascendente/descendente.
-  - Superficie ascendente/descendente.
-  - Loading, vacío y error.
-  - Skeletons cuando aporten valor.
+- [ ] **Etapa 12 — Ordenação e estados**
+  - Mais recentes.
+  - Preço em ordem crescente/decrescente.
+  - Área em ordem crescente/decrescente.
+  - Estados de carregamento, ausência de resultados e erro.
+  - Skeletons quando agregarem valor.
 
-- [ ] **Paso 13 — Detalle de propiedad**
-  - Crear `/properties/{id}`.
-  - Mostrar información completa.
-  - Consumir exclusivamente API REST.
+- [ ] **Etapa 13 — Detalhes do imóvel**
+  - Criar `/properties/{id}`.
+  - Exibir informações completas.
+  - Consumir exclusivamente a API REST.
 
-- [ ] **Paso 14 — Galería**
-  - Imagen principal.
+- [ ] **Etapa 14 — Galeria**
+  - Imagem principal.
   - Miniaturas.
-  - Navegación.
-  - Responsive.
+  - Navegação.
+  - Responsividade.
 
-- [ ] **Paso 15 — Google Maps**
-  - Construir ubicación desde dirección, comuna, ciudad y región.
-  - Integrar Google Maps.
-  - No solicitar latitud/longitud manual.
+- [ ] **Etapa 15 — Google Maps**
+  - Construir a localização a partir de endereço, comuna, cidade e região.
+  - Integrar o Google Maps.
+  - Não solicitar latitude/longitude manualmente.
 
-- [ ] **Paso 16 — Contacto con Web3Forms**
-  - Formulario de contacto.
-  - Incluir ID/título de propiedad.
-  - Estados enviando/éxito/error.
-  - Validar datos.
+- [ ] **Etapa 16 — Contato com Web3Forms**
+  - Formulário de contato.
+  - Incluir ID/título do imóvel.
+  - Estados de envio em andamento/sucesso/erro.
+  - Validar os dados.
 
-## Fase 3 — Autenticación y usuario
+## Fase 3 — Autenticação e usuário
 
-- [ ] **Paso 17 — Registro y login REST**
-  - Registro.
+- [ ] **Etapa 17 — Cadastro e login via REST**
+  - Cadastro.
   - Login.
   - Logout.
-  - Endpoint de usuario actual.
+  - Endpoint do usuário atual.
   - Hashing seguro.
 
-- [ ] **Paso 18 — Autorización USER y ADMIN**
-  - Crear roles.
+- [ ] **Etapa 18 — Autorização USER e ADMIN**
+  - Criar perfis de acesso.
   - Proteger APIs.
   - Proteger páginas.
-  - Aplicar permisos en backend.
+  - Aplicar permissões no backend.
 
-- [ ] **Paso 19 — Cuenta de usuario**
-  - Crear `/account`.
-  - Mostrar información básica.
-  - Preparar secciones de propiedades interesadas y consultadas.
+- [ ] **Etapa 19 — Conta do usuário**
+  - Criar `/account`.
+  - Exibir informações básicas.
+  - Preparar seções de imóveis de interesse e imóveis sobre os quais foram enviadas consultas.
 
-- [ ] **Paso 20 — Favoritos**
+- [ ] **Etapa 20 — Favoritos**
   - Listar.
-  - Agregar.
-  - Eliminar.
-  - Evitar duplicados.
-  - Integrar en interfaz.
+  - Adicionar.
+  - Remover.
+  - Evitar duplicações.
+  - Integrar à interface.
 
-- [ ] **Paso 21 — Persistir consultas**
-  - Crear consulta mediante REST.
-  - Persistir en PostgreSQL.
-  - Asociar propiedad.
-  - Asociar usuario cuando exista.
-  - Integrar envío Web3Forms.
+- [ ] **Etapa 21 — Persistir consultas**
+  - Criar consulta por REST.
+  - Persistir no PostgreSQL.
+  - Associar o imóvel.
+  - Associar o usuário, quando houver.
+  - Integrar o envio pelo Web3Forms.
 
-## Fase 4 — Administración
+## Fase 4 — Administração
 
-- [ ] **Paso 22 — Dashboard ADMIN**
-  - Crear `/admin`.
-  - Mostrar indicadores.
-  - Restringir a ADMIN.
+- [ ] **Etapa 22 — Painel ADMIN**
+  - Criar `/admin`.
+  - Exibir indicadores.
+  - Restringir o acesso a ADMIN.
 
-- [ ] **Paso 23 — CRUD REST de propiedades**
+- [ ] **Etapa 23 — CRUD REST de imóveis**
   - Listar.
-  - Crear.
-  - Obtener.
-  - Actualizar.
-  - Eliminar.
+  - Criar.
+  - Obter.
+  - Atualizar.
+  - Excluir.
   - Proteger endpoints.
 
-- [ ] **Paso 24 — Interfaz de administración**
+- [ ] **Etapa 24 — Interface de administração**
   - `/admin/properties`.
   - `/admin/properties/new`.
   - `/admin/properties/{id}/edit`.
 
-- [ ] **Paso 25 — Formulario de propiedad**
-  - Título y descripción.
-  - Operación y tipo.
-  - Precio.
-  - Superficie útil/total.
-  - Dormitorios, baños y estacionamientos.
-  - Antigüedad.
-  - Dirección, comuna, ciudad y región.
+- [ ] **Etapa 25 — Formulário de imóvel**
+  - Título e descrição.
+  - Operação e tipo.
+  - Preço.
+  - Área útil/total.
+  - Quartos, banheiros e vagas de garagem.
+  - Idade do imóvel.
+  - Endereço, comuna, cidade e região.
   - Características.
-  - Publicada/destacada.
-  - No agregar latitud/longitud manual.
+  - Publicado/em destaque.
+  - Não adicionar campos para inserção manual de latitude/longitude.
 
-- [ ] **Paso 26 — Subida a Cloudinary**
-  - Configurar Cloudinary.
-  - Crear subida segura mediante REST.
-  - Validar tipo y tamaño.
-  - Guardar URL y `publicId`.
+- [ ] **Etapa 26 — Upload para o Cloudinary**
+  - Configurar o Cloudinary.
+  - Criar upload seguro por REST.
+  - Validar tipo e tamanho.
+  - Salvar URL e `publicId`.
 
-- [ ] **Paso 27 — Administración de imágenes**
-  - Múltiples imágenes.
-  - Eliminar.
-  - Seleccionar principal.
+- [ ] **Etapa 27 — Administração de imagens**
+  - Múltiplas imagens.
+  - Excluir.
+  - Selecionar a principal.
   - Ordenar.
-  - Mantener sincronizados Cloudinary y PostgreSQL.
+  - Manter o Cloudinary e o PostgreSQL sincronizados.
 
-- [ ] **Paso 28 — Características**
-  - Múltiples características por propiedad.
-  - Modelo flexible.
-  - Permitir nuevas características sin modificar columnas de Property.
+- [ ] **Etapa 28 — Características**
+  - Múltiplas características por imóvel.
+  - Modelo flexível.
+  - Permitir novas características sem modificar as colunas de Property.
 
-- [ ] **Paso 29 — Usuarios**
-  - Crear `/admin/users`.
-  - Listar y buscar.
-  - Activar/desactivar.
-  - Modificar rol cuando corresponda.
+- [ ] **Etapa 29 — Usuários**
+  - Criar `/admin/users`.
+  - Listar e buscar.
+  - Ativar/desativar.
+  - Modificar o perfil de acesso quando apropriado.
 
-- [ ] **Paso 30 — Consultas**
-  - Crear `/admin/inquiries`.
-  - Mostrar propiedad, usuario, contacto, mensaje y fecha.
-  - Enlazar propiedad asociada.
+- [ ] **Etapa 30 — Consultas**
+  - Criar `/admin/inquiries`.
+  - Exibir imóvel, usuário, contato, mensagem e data.
+  - Incluir link para o imóvel associado.
 
-## Fase 5 — Calidad y finalización
+## Fase 5 — Qualidade e finalização
 
-- [ ] **Paso 31 — SEO y metadata**
-  - Metadata dinámica.
+- [ ] **Etapa 31 — SEO e metadados**
+  - Metadados dinâmicos.
   - Título.
-  - Descripción.
+  - Descrição.
   - Open Graph.
 
-- [ ] **Paso 32 — Optimización**
-  - Optimizar imágenes Next.js/Cloudinary.
-  - Evitar imágenes sobredimensionadas.
-  - Revisar solicitudes duplicadas.
-  - Revisar consultas PostgreSQL.
+- [ ] **Etapa 32 — Otimização**
+  - Otimizar imagens com Next.js/Cloudinary.
+  - Evitar imagens com dimensões excessivas.
+  - Revisar requisições duplicadas.
+  - Revisar consultas ao PostgreSQL.
 
-- [ ] **Paso 33 — Responsive y accesibilidad**
-  - Desktop.
-  - Tablet.
-  - Móvil.
-  - Labels, teclado, foco, alt y semántica.
+- [ ] **Etapa 33 — Responsividade e acessibilidade**
+  - Computadores.
+  - Tablets.
+  - Celulares.
+  - Rótulos, teclado, foco, textos alternativos e semântica.
 
-- [ ] **Paso 34 — Seguridad**
-  - Autenticación.
-  - Autorización.
-  - Validación REST.
+- [ ] **Etapa 34 — Segurança**
+  - Autenticação.
+  - Autorização.
+  - Validação REST.
   - Uploads.
-  - Secretos.
+  - Segredos.
   - Cloudinary.
   - Web3Forms.
   - Endpoints ADMIN.
 
-- [ ] **Paso 35 — QA integral**
-  - Flujos visitante.
-  - Flujos USER.
-  - Flujos ADMIN.
-  - Errores y códigos HTTP.
-  - Corregir defectos bloqueantes.
+- [ ] **Etapa 35 — QA integral**
+  - Fluxos de visitante.
+  - Fluxos de USER.
+  - Fluxos de ADMIN.
+  - Erros e códigos HTTP.
+  - Corrigir defeitos que impeçam o funcionamento.
 
-- [ ] **Paso 36 — Cumplimiento arquitectónico**
-  - Confirmar que no existen Server Actions.
-  - Confirmar comunicación REST.
-  - Confirmar PostgreSQL.
-  - Confirmar que React no accede a DB.
-  - Confirmar permisos backend.
-  - Confirmar integraciones externas.
+- [ ] **Etapa 36 — Conformidade arquitetural**
+  - Confirmar que não existem Server Actions.
+  - Confirmar a comunicação REST.
+  - Confirmar o uso do PostgreSQL.
+  - Confirmar que o React não acessa o banco de dados.
+  - Confirmar as permissões no backend.
+  - Confirmar as integrações externas.
 
-- [ ] **Paso 37 — Convergencia final del SDD**
-  - Releer `spec.md`.
-  - Releer `plan.md`.
-  - Comparar implementación con requisitos.
-  - Corregir faltantes o inconsistencias.
-  - Ejecutar build y validaciones finales.
-  - Confirmar ausencia de errores bloqueantes.
+- [ ] **Etapa 37 — Convergência final do SDD**
+  - Reler `spec.md`.
+  - Reler `plan.md`.
+  - Comparar a implementação com os requisitos.
+  - Corrigir itens ausentes ou inconsistências.
+  - Executar o build e as validações finais.
+  - Confirmar a ausência de erros que impeçam o funcionamento.

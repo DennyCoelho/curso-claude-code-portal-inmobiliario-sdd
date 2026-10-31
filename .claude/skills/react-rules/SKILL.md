@@ -1,114 +1,117 @@
 # Skill: react-rules
 
-**Description:** Genera un proyecto o componente React con TypeScript siguiendo las mejores prácticas actuales.
+**Descrição:** Gera um projeto ou componente React com TypeScript seguindo as melhores práticas atuais.
 
-## Activation Triggers
+## Gatilhos de ativação
 
-Usar este skill cuando el usuario:
-- Pida crear una aplicación React nueva
-- Pida crear o modificar componentes React
-- Agregue o modifique hooks, estado, formularios o lógica de UI en React
+Use esta skill quando o usuário:
+
+- Pedir para criar uma nova aplicação React
+- Pedir para criar ou modificar componentes React
+- Adicionar ou modificar hooks, estado, formulários ou lógica de interface no React
 
 ---
 
-## Instructions
+## Instruções
 
-### Versión y lenguaje
+### Versão e linguagem
 
-- Utiliza Next.js (version más reciente disponible) + **React 19.2.8 o superior** revisar versión disponible en https://www.npmjs.com/package/react antes de scaffoldear
-- Utiliza **TypeScript** en lugar de JavaScript para tipado estático, seguridad y mantenibilidad.
-- Utiliza PostgreSQL como única base de datos de la aplicación.
-- Utiliza API REST mediante Route Handlers de Next.js.
-- No utilices Server Actions.
-- Utiliza estructura monorepo
+- Utilize Next.js (versão mais recente disponível) + **React 19.2.8 ou superior**. Verifique a versão disponível em https://www.npmjs.com/package/react antes de gerar a estrutura inicial do projeto.
+- Utilize **TypeScript** em vez de JavaScript para tipagem estática, segurança e facilidade de manutenção.
+- Utilize PostgreSQL como único banco de dados da aplicação.
+- Utilize API REST por meio dos Route Handlers do Next.js.
+- Não utilize Server Actions.
+- Utilize uma estrutura monorepo.
 
 ### Estado global
 
-- Usar **Zustand** para estado global: crear un store con `create()` definiendo estado y acciones en el mismo objeto.
+- Use **Zustand** para o estado global: crie um store com `create()`, definindo o estado e as ações no mesmo objeto.
 
 ```ts
-import { create } from "zustand";
+import { create } from 'zustand'
 
-type Store = { count: number; increment: () => void };
+type Store = { count: number; increment: () => void }
 const useStore = create<Store>((set) => ({
   count: 0,
   increment: () => set((s) => ({ count: s.count + 1 })),
-}));
+}))
 ```
 
-### Validación de datos
+### Validação de dados
 
-- Usar **Zod** para validar datos con esquemas (`z.object`, `z.string`, etc.).
-- Validar con `.parse()` (lanza error) o `.safeParse()` (retorna `{ success, data, error }`).
+- Use **Zod** para validar dados com esquemas (`z.object`, `z.string`, etc.).
+- Valide com `.parse()` (lança um erro) ou `.safeParse()` (retorna `{ success, data, error }`).
 
-### Formularios
+### Formulários
 
-- Integrar **Zod + React Hook Form** para formularios: usar `zodResolver` del paquete `@hookform/resolvers/zod`.
+- Integre **Zod + React Hook Form** nos formulários: use `zodResolver` do pacote `@hookform/resolvers/zod`.
 
 ```ts
-const schema = z.object({ email: z.string().email() });
-const { register, handleSubmit } = useForm({ resolver: zodResolver(schema) });
+const schema = z.object({ email: z.string().email() })
+const { register, handleSubmit } = useForm({ resolver: zodResolver(schema) })
 ```
 
 ### Componentes
 
-- Mantener componentes **pequeños, simples y con una sola responsabilidad**.
-- Nunca mutar el estado directamente — siempre crear nuevas copias de objetos o arrays.
+- Mantenha os componentes **pequenos, simples e com uma única responsabilidade**.
+- Nunca altere o estado diretamente — sempre crie novas cópias dos objetos ou arrays.
 
 ### useEffect
 
-- Usar `useEffect` **solo** para sincronizar con sistemas externos (API, DOM, librerías de terceros).
-- No usar `useEffect` para lógica derivada de props o estado — calcularla en el render o en handlers.
-- Mantener los effects simples con dependencias explícitas y claras.
+- Use `useEffect` **apenas** para sincronizar com sistemas externos (API, DOM, bibliotecas de terceiros).
+- Não use `useEffect` para lógica derivada de props ou estado — faça o cálculo durante a renderização ou nos handlers.
+- Mantenha os efeitos simples, com dependências explícitas e claras.
 
-### Handlers vs Effects
+### Handlers vs. efeitos
 
-- La lógica causada por interacción del usuario debe ir en **event handlers**, no en `useEffect`.
-- Para comunicar cambios al padre, usar callbacks por props y ejecutarlos desde el hijo cuando corresponda.
+- A lógica causada pela interação do usuário deve ficar nos **event handlers**, e não no `useEffect`.
+- Para comunicar alterações ao componente pai, use callbacks passados por props e execute-os no componente filho quando apropriado.
 
-### Custom hooks
+### Hooks personalizados
 
-- Extraer lógica reutilizable en **custom hooks** (`useAuth`, `useFetch`, etc.) para mantener componentes simples.
-- Compartir lógica entre eventos usando funciones reutilizables o hooks, no duplicando código.
+- Extraia a lógica reutilizável para **hooks personalizados** (`useAuth`, `useFetch`, etc.) para manter os componentes simples.
+- Compartilhe lógica entre eventos usando funções reutilizáveis ou hooks, sem duplicar código.
 
-### Performance
+### Desempenho
 
-- Usar `useMemo` para cachear cálculos costosos.
-- Para reiniciar o ajustar estado: usar `key`, derivar estado desde props, o actualizar en eventos.
+- Use `useMemo` para armazenar em cache os resultados de cálculos custosos.
+- Para reiniciar ou ajustar o estado: use `key`, derive o estado das props ou atualize-o em eventos.
 
-### Reglas de hooks
+### Regras dos hooks
 
-- No llamar hooks dentro de bucles, condicionales o funciones anidadas.
-- Los componentes y hooks deben ser **puros** — sin side effects durante el render.
+- Não chame hooks dentro de loops, condicionais ou funções aninhadas.
+- Os componentes e hooks devem ser **puros** — sem efeitos colaterais durante a renderização.
 
-### Fetching de datos
+### Busca de dados
 
-- Usar **React Query** o **SWR** cuando el componente necesite obtener datos de una API y compartirlos entre varios componentes, aprovechando cache y refetch automático.
+- Use **React Query** ou **SWR** quando o componente precisar buscar dados de uma API e compartilhá-los entre vários componentes, aproveitando o cache e a revalidação automática.
 
-### Estilos y Diseño UI con Tailwind CSS
+### Estilos e design de interface com Tailwind CSS
 
-- **Clases Utilitarias**: Emplea clases utilitarias de Tailwind CSS para la maquetación y el estilizado de componentes UI.
-- **Clases Condicionales Dinámicas**: Para combinar clases dinámicas o condicionales sin conflictos de especificidad o duplicados, utiliza la función de utilidad `cn` (con `clsx` y `tailwind-merge`):
+- **Classes utilitárias:** utilize classes utilitárias do Tailwind CSS para definir o layout e os estilos dos componentes de interface.
+- **Classes condicionais e dinâmicas:** para combinar classes dinâmicas ou condicionais sem conflitos de especificidade ou duplicações, utilize a função utilitária `cn` (com `clsx` e `tailwind-merge`):
+
   ```typescript
-  import { clsx, type ClassValue } from 'clsx';
-  import { twMerge } from 'tailwind-merge';
+  import { clsx, type ClassValue } from 'clsx'
+  import { twMerge } from 'tailwind-merge'
 
   export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+    return twMerge(clsx(inputs))
   }
   ```
-- **Diseño Responsivo y Temas**: Utiliza los prefijos integrados de Tailwind (`sm:`, `md:`, `lg:`, `dark:`) para garantizar interfaces adaptables a distintos dispositivos y soporte para modo oscuro.
+
+- **Design responsivo e temas:** utilize os prefixos integrados do Tailwind (`sm:`, `md:`, `lg:`, `dark:`) para garantir interfaces adaptáveis a diferentes dispositivos e suporte ao modo escuro.
 
 ---
 
-## Project Structure (referencia)
+## Estrutura do projeto (referência)
 
-```
+```text
 src/
-├── components/        # Componentes UI por feature
-├── hooks/             # Custom hooks reutilizables
-├── stores/            # Stores Zustand
-├── schemas/           # Esquemas Zod
-├── types/             # Tipos TypeScript compartidos
-└── lib/               # Utilidades y clientes API
+├── components/        # Componentes de interface por funcionalidade
+├── hooks/             # Hooks personalizados reutilizáveis
+├── stores/            # Stores do Zustand
+├── schemas/           # Esquemas do Zod
+├── types/             # Tipos TypeScript compartilhados
+└── lib/               # Utilitários e clientes de API
 ```

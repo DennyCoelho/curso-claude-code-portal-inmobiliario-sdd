@@ -1,8 +1,8 @@
-# Plan técnico — Portal Inmobiliario
+# Plano técnico — Portal Imobiliário
 
-## 1. Arquitectura
+## 1. Arquitetura
 
-Next.js se utilizará como framework full stack manteniendo una arquitectura REST clara.
+O Next.js será utilizado como framework full stack, mantendo uma arquitetura REST clara.
 
 ```text
 Next.js + React
@@ -13,43 +13,43 @@ Next.js + React
 API REST /api/**
       │
       ▼
-Capa de servicios
+Camada de serviços
       │
       ▼
-Repositorio / ORM
+Repositório / ORM
       │
       ▼
 PostgreSQL
 ```
 
-Integraciones externas:
+Integrações externas:
 
 ```text
-Cloudinary  → imágenes
-Google Maps → ubicación
-Web3Forms   → contacto
+Cloudinary  → imagens
+Google Maps → localização
+Web3Forms   → contato
 ```
 
-## 2. Tecnologías obligatorias
+## 2. Tecnologias obrigatórias
 
 - Next.js
 - React
 - TypeScript
 - PostgreSQL
-- API REST con Route Handlers de Next.js
+- API REST com Route Handlers do Next.js
 - Cloudinary
 - Google Maps
 - Web3Forms
 
-## 3. Restricciones
+## 3. Restrições
 
-- No utilizar Server Actions.
-- No acceder a PostgreSQL directamente desde componentes React.
-- No almacenar imágenes binarias en PostgreSQL.
-- No exigir latitud/longitud en el formulario ADMIN.
-- No implementar funcionalidades especulativas fuera de `spec.md`.
+- Não utilizar Server Actions.
+- Não acessar o PostgreSQL diretamente a partir de componentes React.
+- Não armazenar imagens binárias no PostgreSQL.
+- Não exigir latitude/longitude no formulário ADMIN.
+- Não implementar funcionalidades especulativas fora de `spec.md`.
 
-## 4. Estructura sugerida
+## 4. Estrutura sugerida
 
 ```text
 src/
@@ -67,9 +67,9 @@ src/
 └── ...
 ```
 
-Adaptar cuando las convenciones actuales de Next.js lo justifiquen sin romper la separación de responsabilidades.
+Adaptar quando as convenções atuais do Next.js justificarem, sem comprometer a separação de responsabilidades.
 
-## 5. Modelo de datos
+## 5. Modelo de dados
 
 Entidades:
 
@@ -80,7 +80,7 @@ Entidades:
 - Favorite
 - Inquiry
 
-Relaciones:
+Relacionamentos:
 
 ```text
 User 1 --- * Favorite * --- 1 Property
@@ -90,37 +90,37 @@ Property 1 --- * PropertyImage
 Property * --- * Feature
 ```
 
-`Inquiry.userId` puede ser nulo para permitir consultas de visitantes.
+`Inquiry.userId` pode ser nulo para permitir consultas de visitantes.
 
-## 6. Persistencia
+## 6. Persistência
 
-PostgreSQL es la única base de datos.
+O PostgreSQL é o único banco de dados.
 
-Seleccionar un ORM compatible con las versiones actuales de Next.js y PostgreSQL.
+Selecionar um ORM compatível com as versões atuais do Next.js e do PostgreSQL.
 
 Requisitos:
 
-- migraciones;
-- claves foráneas;
-- restricciones de unicidad;
-- índices cuando estén justificados;
-- seed para desarrollo.
+- migrações;
+- chaves estrangeiras;
+- restrições de unicidade;
+- índices quando justificados;
+- seed para desenvolvimento.
 
-Restricciones importantes:
+Restrições importantes:
 
 - `User.email` único;
-- combinación `(userId, propertyId)` única en favoritos.
+- combinação `(userId, propertyId)` única nos favoritos.
 
 ## 7. API REST
 
-Propiedades públicas:
+Imóveis públicos:
 
 ```text
 GET /api/properties
 GET /api/properties/{id}
 ```
 
-Autenticación:
+Autenticação:
 
 ```text
 POST /api/auth/register
@@ -143,7 +143,7 @@ Consultas:
 POST /api/inquiries
 ```
 
-Administración:
+Administração:
 
 ```text
 GET    /api/admin/properties
@@ -153,45 +153,45 @@ PUT    /api/admin/properties/{id}
 DELETE /api/admin/properties/{id}
 ```
 
-Crear recursos REST adicionales cuando sean necesarios para:
+Criar recursos REST adicionais quando necessários para:
 
-- imágenes;
+- imagens;
 - características;
-- usuarios;
+- usuários;
 - consultas.
 
 ## 8. Responsabilidades
 
 ### Route Handlers
 
-- recibir y analizar HTTP;
-- validar entrada básica;
-- invocar servicios;
-- devolver respuestas HTTP.
+- receber e analisar requisições HTTP;
+- validar os dados básicos de entrada;
+- invocar serviços;
+- retornar respostas HTTP.
 
-### Servicios
+### Serviços
 
-- lógica de aplicación;
-- reglas de negocio;
-- coordinación de persistencia e integraciones.
+- lógica da aplicação;
+- regras de negócio;
+- coordenação da persistência e das integrações.
 
-### Repositorios / ORM
+### Repositórios / ORM
 
-- persistencia;
-- consultas a PostgreSQL;
-- sin lógica de presentación.
+- persistência;
+- consultas ao PostgreSQL;
+- sem lógica de apresentação.
 
 ### React
 
-- interfaz;
-- interacción;
+- interface;
+- interação;
 - estado visual;
 - consumo de REST;
-- sin acceso directo a base de datos.
+- sem acesso direto ao banco de dados.
 
-## 9. Búsqueda y filtros
+## 9. Busca e filtros
 
-`GET /api/properties` debe soportar parámetros como:
+`GET /api/properties` deve aceitar parâmetros como:
 
 ```text
 search
@@ -208,30 +208,30 @@ region
 sort
 ```
 
-El filtrado y ordenamiento debe ejecutarse principalmente en PostgreSQL y no cargando todo el catálogo en el navegador.
+A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, sem carregar todo o catálogo no navegador.
 
-## 10. Autenticación y autorización
+## 10. Autenticação e autorização
 
-Utilizar un mecanismo seguro compatible con la API REST.
+Utilizar um mecanismo seguro compatível com a API REST.
 
 Requisitos:
 
-- hashing de contraseñas;
-- almacenamiento seguro de sesión/token;
-- autorización en servidor;
-- no almacenar tokens sensibles en `localStorage`;
-- usuarios inactivos no pueden autenticarse;
-- endpoints ADMIN requieren ADMIN;
-- endpoints privados USER requieren autenticación.
+- hashing de senhas;
+- armazenamento seguro de sessão/token;
+- autorização no servidor;
+- não armazenar tokens sensíveis em `localStorage`;
+- usuários inativos não podem se autenticar;
+- endpoints ADMIN exigem o perfil ADMIN;
+- endpoints privados USER exigem autenticação.
 
 ## 11. Cloudinary
 
-Flujo:
+Fluxo:
 
 ```text
 ADMIN
   │
-selecciona archivo
+seleciona arquivo
   │
   ▼
 API REST
@@ -248,41 +248,41 @@ PostgreSQL
 Validar:
 
 - tipo;
-- tamaño;
-- autorización.
+- tamanho;
+- autorização.
 
-La eliminación debe mantener sincronizados Cloudinary y PostgreSQL.
+A exclusão deve manter o Cloudinary e o PostgreSQL sincronizados.
 
 ## 12. Google Maps
 
-Construir la ubicación utilizando:
+Construir a localização utilizando:
 
-- dirección;
+- endereço;
 - comuna;
-- ciudad;
-- región;
+- cidade;
+- região;
 - país.
 
-No solicitar coordenadas manuales.
+Não solicitar coordenadas manualmente.
 
-Si posteriormente se requiere geocodificación interna, debe ser transparente para ADMIN y no modificar los campos obligatorios del formulario.
+Se posteriormente for necessária uma geocodificação interna, ela deve ser transparente para o ADMIN e não alterar os campos obrigatórios do formulário.
 
 ## 13. Web3Forms
 
-Flujo:
+Fluxo:
 
-1. validar datos;
-2. identificar propiedad;
-3. identificar usuario autenticado cuando exista;
-4. persistir consulta;
-5. enviar mediante Web3Forms;
-6. devolver una respuesta REST consistente.
+1. validar os dados;
+2. identificar o imóvel;
+3. identificar o usuário autenticado, quando houver;
+4. persistir a consulta;
+5. enviar por meio do Web3Forms;
+6. retornar uma resposta REST consistente.
 
-Definir un comportamiento claro ante fallos para evitar perder silenciosamente una consulta.
+Definir um comportamento claro em caso de falhas para evitar a perda silenciosa de uma consulta.
 
-## 14. Errores
+## 14. Erros
 
-Utilizar códigos HTTP apropiados:
+Utilizar códigos HTTP apropriados:
 
 - 400
 - 401
@@ -295,48 +295,48 @@ Formato recomendado:
 
 ```json
 {
-  "message": "Propiedad no encontrada",
+  "message": "Imóvel não encontrado",
   "status": 404
 }
 ```
 
-No exponer stack traces internos.
+Não expor stack traces internos.
 
-## 15. Variables de entorno
+## 15. Variáveis de ambiente
 
-Utilizar variables de entorno para:
+Utilizar variáveis de ambiente para:
 
-- conexión PostgreSQL;
-- secretos de autenticación;
-- credenciales Cloudinary;
-- configuración Google Maps;
-- clave Web3Forms.
+- conexão com o PostgreSQL;
+- segredos de autenticação;
+- credenciais do Cloudinary;
+- configuração do Google Maps;
+- chave do Web3Forms.
 
-Crear `.env.example` sin secretos reales.
+Criar `.env.example` sem segredos reais.
 
-## 16. Validación
+## 16. Validação
 
-Como mínimo validar:
+Validar, no mínimo:
 
 - build;
-- migraciones;
+- migrações;
 - endpoints REST;
-- autenticación;
-- autorización;
+- autenticação;
+- autorização;
 - filtros;
 - favoritos;
 - consultas;
-- subida/eliminación Cloudinary;
+- upload/exclusão no Cloudinary;
 - CRUD ADMIN;
-- comportamiento responsive.
+- comportamento responsivo.
 
-## 17. Definición de terminado
+## 17. Definição de conclusão
 
-Una tarea está terminada cuando:
+Uma tarefa está concluída quando:
 
-- cumple `spec.md`;
-- respeta este plan;
-- el build pasa;
-- las validaciones correspondientes pasan;
-- no quedan errores bloqueantes;
-- su checkbox se actualiza en `tasks.md`.
+- atende a `spec.md`;
+- respeita este plano;
+- o build é executado com sucesso;
+- as validações correspondentes são aprovadas;
+- não há erros que impeçam a conclusão;
+- sua caixa de seleção é atualizada em `tasks.md`.

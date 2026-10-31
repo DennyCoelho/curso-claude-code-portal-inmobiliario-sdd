@@ -1,98 +1,98 @@
-# Especificación del producto — Portal Inmobiliario
+# Especificação do produto — Portal Imobiliário
 
-## 1. Visión del producto
+## 1. Visão do produto
 
-Construir un portal inmobiliario full stack orientado inicialmente al mercado chileno.
+Construir um portal imobiliário full stack voltado inicialmente ao mercado chileno.
 
-Los visitantes podrán descubrir propiedades en venta o arriendo, buscarlas y filtrarlas, consultar su información completa, visualizar fotografías y una ubicación aproximada en el mapa, y solicitar información sobre una propiedad.
+Os visitantes poderão descobrir imóveis à venda ou para aluguel, buscá-los e filtrá-los, consultar suas informações completas, visualizar fotografias e uma localização aproximada no mapa, além de solicitar informações sobre um imóvel.
 
-Los usuarios registrados podrán guardar propiedades de interés y consultar las propiedades por las cuales han realizado solicitudes.
+Os usuários cadastrados poderão salvar imóveis de interesse e consultar os imóveis sobre os quais enviaram solicitações.
 
-Los administradores podrán gestionar el portal desde un área privada de administración.
+Os administradores poderão gerenciar o portal por meio de uma área administrativa privada.
 
 ---
 
-## 2. Tipos de usuario
+## 2. Tipos de usuário
 
 ### Visitante
 
-Puede:
+Pode:
 
-- acceder a la landing page;
-- navegar por propiedades publicadas;
-- buscar propiedades;
+- acessar a landing page;
+- navegar pelos imóveis publicados;
+- buscar imóveis;
 - aplicar filtros;
 - ordenar resultados;
-- consultar el detalle de una propiedad;
-- visualizar la galería;
+- consultar os detalhes de um imóvel;
+- visualizar a galeria;
 - consultar características;
-- visualizar la ubicación mediante Google Maps;
-- enviar una solicitud de información;
-- registrarse;
-- iniciar sesión.
+- visualizar a localização pelo Google Maps;
+- enviar uma solicitação de informações;
+- cadastrar-se;
+- entrar na conta.
 
 ### USER
 
-Puede realizar todas las acciones públicas y además:
+Pode realizar todas as ações públicas e também:
 
-- cerrar sesión;
-- acceder a su cuenta;
-- guardar propiedades como favoritas o interesadas;
-- eliminar propiedades guardadas;
-- consultar sus propiedades interesadas;
-- consultar propiedades por las cuales ha realizado solicitudes.
+- sair da conta;
+- acessar sua conta;
+- salvar imóveis como favoritos ou de interesse;
+- remover imóveis salvos;
+- consultar seus imóveis de interesse;
+- consultar os imóveis sobre os quais enviou solicitações.
 
 ### ADMIN
 
-Puede realizar las acciones anteriores y además:
+Pode realizar as ações anteriores e também:
 
-- acceder al panel administrativo;
-- crear propiedades;
-- editar propiedades;
-- eliminar propiedades;
-- publicar y despublicar propiedades;
-- marcar propiedades como destacadas;
-- administrar imágenes;
-- administrar características;
-- administrar usuarios;
-- revisar solicitudes de información.
+- acessar o painel administrativo;
+- criar imóveis;
+- editar imóveis;
+- excluir imóveis;
+- publicar e despublicar imóveis;
+- marcar imóveis como destaque;
+- gerenciar imagens;
+- gerenciar características;
+- gerenciar usuários;
+- analisar solicitações de informações.
 
 ---
 
-## 3. Información de una propiedad
+## 3. Informações de um imóvel
 
-Cada propiedad debe soportar como mínimo:
+Cada imóvel deve oferecer suporte, no mínimo, a:
 
 - título;
-- descripción;
-- tipo de operación;
-- tipo de propiedad;
-- precio;
-- metros cuadrados útiles;
-- metros cuadrados totales;
-- número de dormitorios;
-- número de baños;
-- número de estacionamientos;
-- antigüedad;
-- dirección;
+- descrição;
+- tipo de operação;
+- tipo de imóvel;
+- preço;
+- área útil em metros quadrados;
+- área total em metros quadrados;
+- número de quartos;
+- número de banheiros;
+- número de vagas de garagem;
+- idade do imóvel;
+- endereço;
 - comuna;
-- ciudad;
-- región;
-- estado de publicación;
-- indicador de propiedad destacada;
-- fecha de creación;
-- fecha de actualización.
+- cidade;
+- região;
+- status de publicação;
+- indicador de imóvel em destaque;
+- data de criação;
+- data de atualização.
 
-### Tipo de operación
+### Tipo de operação
 
 Valores:
 
 - `SALE`
 - `RENT`
 
-### Tipo de propiedad
+### Tipo de imóvel
 
-Valores iniciales:
+Valores iniciais:
 
 - `HOUSE`
 - `APARTMENT`
@@ -101,74 +101,74 @@ Valores iniciales:
 - `COMMERCIAL`
 - `OTHER`
 
-### Moneda
+### Moeda
 
-Debe soportar `USD`
+Deve oferecer suporte a `USD`.
 
-Algunos campos podrán ser opcionales cuando no correspondan al tipo de propiedad.
+Alguns campos poderão ser opcionais quando não se aplicarem ao tipo de imóvel.
 
 ---
 
-## 4. Características del inmueble
+## 4. Características do imóvel
 
-Las características deben modelarse de forma flexible.
+As características devem ser modeladas de forma flexível.
 
-Ejemplos:
+Exemplos:
 
 - piscina;
-- gimnasio;
-- quincho;
-- lavandería;
-- jardín;
-- terraza;
-- bodega;
-- ascensor;
-- conserjería;
-- seguridad;
-- calefacción;
-- aire acondicionado;
-- pet friendly.
+- academia;
+- espaço para churrasco;
+- lavanderia;
+- jardim;
+- terraço;
+- depósito;
+- elevador;
+- portaria;
+- segurança;
+- aquecimento;
+- ar-condicionado;
+- aceita animais de estimação.
 
-No crear una columna booleana en `Property` para cada característica.
+Não criar uma coluna booleana em `Property` para cada característica.
 
-Una propiedad puede tener múltiples características y una característica puede pertenecer a múltiples propiedades.
+Um imóvel pode ter várias características, e uma característica pode pertencer a vários imóveis.
 
 ---
 
-## 5. Imágenes
+## 5. Imagens
 
-Una propiedad puede contener múltiples imágenes.
+Um imóvel pode conter várias imagens.
 
-Debe ser posible:
+Deve ser possível:
 
-- subir múltiples imágenes;
-- definir una imagen principal;
-- ordenar imágenes;
-- eliminar imágenes.
+- enviar várias imagens;
+- definir uma imagem principal;
+- ordenar imagens;
+- excluir imagens.
 
-Las imágenes se almacenan en Cloudinary.
+As imagens são armazenadas no Cloudinary.
 
-PostgreSQL almacena solamente la información necesaria para relacionarlas y administrarlas:
+O PostgreSQL armazena apenas as informações necessárias para relacioná-las e gerenciá-las:
 
 - URL;
-- `publicId` de Cloudinary;
-- posición;
-- indicador de imagen principal.
+- `publicId` do Cloudinary;
+- posição;
+- indicador de imagem principal.
 
 ---
 
-## 6. Ubicación
+## 6. Localização
 
-El administrador no debe ingresar latitud ni longitud manualmente.
+O administrador não deve inserir latitude nem longitude manualmente.
 
-El formulario utiliza:
+O formulário utiliza:
 
-- dirección;
+- endereço;
 - comuna;
-- ciudad;
-- región.
+- cidade;
+- região.
 
-Ejemplo:
+Exemplo:
 
 ```text
 Av. Apoquindo 3000
@@ -177,76 +177,76 @@ Santiago
 Región Metropolitana
 ```
 
-La aplicación construirá una dirección completa utilizable por Google Maps.
+A aplicação construirá um endereço completo que possa ser utilizado pelo Google Maps.
 
 ```text
 Av. Apoquindo 3000, Las Condes, Santiago, Región Metropolitana, Chile
 ```
 
-La ubicación mostrada públicamente puede ser aproximada cuando corresponda.
+A localização exibida publicamente pode ser aproximada quando apropriado.
 
-Latitud y longitud no deben ser campos obligatorios del formulario administrativo.
+Latitude e longitude não devem ser campos obrigatórios no formulário administrativo.
 
 ---
 
 ## 7. Landing page
 
-Debe incluir:
+Deve incluir:
 
-- header;
-- navegación;
-- hero;
-- buscador principal;
-- propiedades destacadas;
-- propiedades en venta;
-- propiedades en arriendo;
-- llamadas a la acción;
-- footer.
+- cabeçalho;
+- navegação;
+- seção principal de destaque (hero);
+- campo de busca principal;
+- imóveis em destaque;
+- imóveis à venda;
+- imóveis para aluguel;
+- chamadas para ação;
+- rodapé.
 
-Navegación pública inicial:
+Navegação pública inicial:
 
-- Inicio
-- Propiedades
+- Início
+- Imóveis
 - Comprar
-- Arrendar
-- Ingresar
+- Alugar
+- Entrar
 
 ---
 
 ## 8. Catálogo
 
-El catálogo debe:
+O catálogo deve:
 
-- mostrar únicamente propiedades publicadas;
-- utilizar un grid responsive;
-- utilizar tarjetas reutilizables;
-- contemplar estados de carga, vacío y error.
+- exibir apenas imóveis publicados;
+- utilizar uma grade responsiva;
+- utilizar cards reutilizáveis;
+- contemplar estados de carregamento, ausência de resultados e erro.
 
-Cada tarjeta mostrará, cuando corresponda:
+Cada card exibirá, quando aplicável:
 
-- imagen principal;
+- imagem principal;
 - título;
-- precio;
-- operación;
+- preço;
+- operação;
 - tipo;
-- comuna o ubicación;
-- dormitorios;
-- baños;
-- superficie útil.
+- comuna ou localização;
+- quartos;
+- banheiros;
+- área útil.
 
 ---
 
-## 9. Búsqueda
+## 9. Busca
 
-Permitir búsqueda textual sobre información relevante:
+Permitir busca textual nas informações relevantes:
 
 - título;
 - comuna;
-- ciudad;
-- región;
-- descripción.
+- cidade;
+- região;
+- descrição.
 
-La búsqueda debe quedar representada mediante parámetros de consulta.
+A busca deve ser representada por parâmetros de consulta.
 
 ```text
 /properties?search=providencia
@@ -258,18 +258,18 @@ La búsqueda debe quedar representada mediante parámetros de consulta.
 
 Permitir combinar:
 
-- venta/arriendo;
-- tipo de propiedad;
-- precio mínimo;
-- precio máximo;
-- dormitorios;
-- baños;
-- superficie útil mínima;
+- venda/aluguel;
+- tipo de imóvel;
+- preço mínimo;
+- preço máximo;
+- quartos;
+- banheiros;
+- área útil mínima;
 - comuna;
-- ciudad;
-- región.
+- cidade;
+- região.
 
-Los filtros deben representarse en la URL.
+Os filtros devem ser representados na URL.
 
 ```text
 /properties?operation=SALE&commune=las-condes&bedrooms=3
@@ -277,284 +277,284 @@ Los filtros deben representarse en la URL.
 
 ---
 
-## 11. Ordenamiento
+## 11. Ordenação
 
 Permitir:
 
-- más recientes;
-- precio menor a mayor;
-- precio mayor a menor;
-- superficie menor a mayor;
-- superficie mayor a menor.
+- mais recentes;
+- preço do menor para o maior;
+- preço do maior para o menor;
+- área da menor para a maior;
+- área da maior para a menor.
 
 ---
 
-## 12. Detalle de propiedad
+## 12. Detalhes do imóvel
 
-Mostrar:
+Exibir:
 
 - título;
-- precio;
-- descripción;
-- operación;
+- preço;
+- descrição;
+- operação;
 - tipo;
-- superficie útil;
-- superficie total;
-- dormitorios;
-- baños;
-- estacionamientos;
-- antigüedad;
+- área útil;
+- área total;
+- quartos;
+- banheiros;
+- vagas de garagem;
+- idade do imóvel;
 - características;
-- galería;
-- ubicación;
-- formulario de contacto.
+- galeria;
+- localização;
+- formulário de contato.
 
 ---
 
 ## 13. Google Maps
 
-El detalle debe mostrar Google Maps utilizando la dirección textual de la propiedad.
+A página de detalhes deve exibir o Google Maps utilizando o endereço textual do imóvel.
 
-La configuración debe manejarse mediante variables de entorno.
+A configuração deve ser gerenciada por variáveis de ambiente.
 
-El administrador no necesita conocer coordenadas geográficas.
+O administrador não precisa conhecer coordenadas geográficas.
 
 ---
 
-## 14. Contacto y solicitudes
+## 14. Contato e solicitações
 
-Integrar Web3Forms.
+Integrar o Web3Forms.
 
-Campos visibles:
+Campos visíveis:
 
-- nombre;
-- email;
-- teléfono;
-- mensaje.
+- nome;
+- e-mail;
+- telefone;
+- mensagem.
 
-Agregar automáticamente:
+Adicionar automaticamente:
 
-- ID de propiedad;
-- título de propiedad.
+- ID do imóvel;
+- título do imóvel.
 
-Mostrar estados:
+Exibir os estados:
 
 - enviando;
 - enviado;
-- error.
+- erro.
 
-La solicitud también debe persistirse en PostgreSQL.
+A solicitação também deve ser persistida no PostgreSQL.
 
-Si existe un usuario autenticado, relacionar la solicitud con él.
+Se houver um usuário autenticado, vincular a solicitação a ele.
 
-Los visitantes no autenticados también pueden realizar consultas.
+Visitantes não autenticados também podem realizar consultas.
 
 ---
 
-## 15. Autenticación
+## 15. Autenticação
 
-Soportar:
+Oferecer suporte a:
 
-- registro;
+- cadastro;
 - login;
 - logout;
-- consulta del usuario autenticado.
+- consulta do usuário autenticado.
 
-Las contraseñas deben almacenarse mediante hashing seguro.
+As senhas devem ser armazenadas utilizando hashing seguro.
 
-No almacenar información sensible de autenticación en `localStorage`.
-
----
-
-## 16. Favoritos o propiedades interesadas
-
-USER puede:
-
-- guardar una propiedad;
-- eliminarla de favoritos;
-- listar sus propiedades guardadas.
-
-No permitir duplicados para el mismo usuario y propiedad.
+Não armazenar informações sensíveis de autenticação em `localStorage`.
 
 ---
 
-## 17. Cuenta de usuario
+## 16. Favoritos ou imóveis de interesse
 
-El área privada debe mostrar:
+USER pode:
 
-- información básica;
-- propiedades interesadas;
-- propiedades consultadas.
+- salvar um imóvel;
+- removê-lo dos favoritos;
+- listar seus imóveis salvos.
+
+Não permitir duplicações para o mesmo usuário e imóvel.
 
 ---
 
-## 18. Dashboard administrativo
+## 17. Conta do usuário
 
-Mostrar indicadores como:
+A área privada deve exibir:
 
-- total de propiedades;
-- propiedades publicadas;
-- propiedades en venta;
-- propiedades en arriendo;
-- usuarios;
+- informações básicas;
+- imóveis de interesse;
+- imóveis sobre os quais foram enviadas consultas.
+
+---
+
+## 18. Painel administrativo
+
+Exibir indicadores como:
+
+- total de imóveis;
+- imóveis publicados;
+- imóveis à venda;
+- imóveis para aluguel;
+- usuários;
 - consultas.
 
 ---
 
-## 19. Administración de propiedades
+## 19. Administração de imóveis
 
-ADMIN puede:
+ADMIN pode:
 
 - listar;
 - buscar;
-- crear;
+- criar;
 - editar;
-- eliminar;
+- excluir;
 - publicar/despublicar;
 - destacar;
-- administrar características;
-- administrar imágenes.
+- gerenciar características;
+- gerenciar imagens.
 
-Formulario:
+Formulário:
 
 - título;
-- descripción;
-- operación;
+- descrição;
+- operação;
 - tipo;
-- precio;
-- superficie útil;
-- superficie total;
-- dormitorios;
-- baños;
-- estacionamientos;
-- antigüedad;
-- dirección;
+- preço;
+- área útil;
+- área total;
+- quartos;
+- banheiros;
+- vagas de garagem;
+- idade do imóvel;
+- endereço;
 - comuna;
-- ciudad;
-- región;
+- cidade;
+- região;
 - características;
-- publicada;
-- destacada.
+- publicado;
+- em destaque.
 
-No solicitar latitud ni longitud.
-
----
-
-## 20. Administración de imágenes
-
-ADMIN puede:
-
-- subir;
-- eliminar;
-- seleccionar imagen principal;
-- modificar el orden.
-
-Al eliminar una imagen se debe mantener sincronizado Cloudinary con PostgreSQL.
-
-No dejar referencias huérfanas.
+Não solicitar latitude nem longitude.
 
 ---
 
-## 21. Administración de usuarios
+## 20. Administração de imagens
 
-ADMIN puede:
+ADMIN pode:
+
+- enviar;
+- excluir;
+- selecionar a imagem principal;
+- modificar a ordem.
+
+Ao excluir uma imagem, o Cloudinary e o PostgreSQL devem permanecer sincronizados.
+
+Não deixar referências órfãs.
+
+---
+
+## 21. Administração de usuários
+
+ADMIN pode:
 
 - listar;
 - buscar;
 - consultar;
-- activar/desactivar;
-- modificar rol cuando corresponda.
+- ativar/desativar;
+- modificar o perfil de acesso quando apropriado.
 
-La autorización siempre debe comprobarse en backend.
-
----
-
-## 22. Administración de consultas
-
-ADMIN puede revisar:
-
-- propiedad;
-- usuario asociado cuando exista;
-- nombre;
-- email;
-- teléfono;
-- mensaje;
-- fecha.
-
-Debe poder navegar desde la consulta hacia la propiedad correspondiente.
+A autorização deve sempre ser verificada no backend.
 
 ---
 
-## 23. Responsive
+## 22. Administração de consultas
 
-La aplicación debe funcionar correctamente en:
+ADMIN pode analisar:
 
-- desktop;
-- tablet;
-- móvil.
+- imóvel;
+- usuário associado, quando houver;
+- nome;
+- e-mail;
+- telefone;
+- mensagem;
+- data.
 
-Revisar especialmente:
+Deve ser possível navegar da consulta para o imóvel correspondente.
 
-- navegación;
-- grid;
+---
+
+## 23. Responsividade
+
+A aplicação deve funcionar corretamente em:
+
+- computadores;
+- tablets;
+- celulares.
+
+Verificar especialmente:
+
+- navegação;
+- grade;
 - filtros;
-- tarjetas;
-- galería;
-- formularios;
+- cards;
+- galeria;
+- formulários;
 - mapa;
-- cuenta;
-- administración.
+- conta;
+- administração.
 
 ---
 
-## 24. Accesibilidad
+## 24. Acessibilidade
 
-Aplicar como mínimo:
+Aplicar, no mínimo:
 
-- HTML semántico;
-- labels;
-- navegación mediante teclado;
+- HTML semântico;
+- rótulos nos campos;
+- navegação pelo teclado;
 - estados de foco;
 - textos alternativos;
-- jerarquía correcta de encabezados.
+- hierarquia correta de títulos.
 
 ---
 
 ## 25. SEO
 
-Las páginas públicas de propiedades deben generar metadata dinámica:
+As páginas públicas dos imóveis devem gerar metadados dinâmicos:
 
 - título;
-- descripción;
+- descrição;
 - Open Graph;
-- imagen principal cuando corresponda.
+- imagem principal, quando aplicável.
 
 ---
 
-## 26. Criterios de aceptación finales
+## 26. Critérios finais de aceitação
 
-El producto está funcionalmente terminado cuando:
+O produto estará funcionalmente concluído quando:
 
-- los visitantes pueden explorar propiedades;
-- se diferencian venta y arriendo;
-- funciona la búsqueda;
-- funcionan filtros combinados;
-- funciona el ordenamiento;
-- funciona el detalle;
-- funciona la galería;
-- funciona Google Maps;
-- funciona el contacto;
-- los usuarios pueden registrarse y autenticarse;
-- USER puede administrar favoritos;
-- USER puede consultar propiedades contactadas;
-- ADMIN puede administrar propiedades;
-- ADMIN puede administrar imágenes con Cloudinary;
-- ADMIN puede administrar características;
-- ADMIN puede administrar usuarios;
-- ADMIN puede revisar consultas;
-- PostgreSQL persiste los datos;
-- el frontend se comunica con el backend mediante REST;
-- no se utilizan Server Actions;
-- la autorización se aplica en backend;
-- la aplicación es responsive;
-- no existen errores bloqueantes conocidos.
+- os visitantes puderem explorar imóveis;
+- houver diferenciação entre venda e aluguel;
+- a busca funcionar;
+- os filtros combinados funcionarem;
+- a ordenação funcionar;
+- a página de detalhes funcionar;
+- a galeria funcionar;
+- o Google Maps funcionar;
+- o contato funcionar;
+- os usuários puderem se cadastrar e se autenticar;
+- USER puder gerenciar favoritos;
+- USER puder consultar os imóveis sobre os quais entrou em contato;
+- ADMIN puder gerenciar imóveis;
+- ADMIN puder gerenciar imagens com o Cloudinary;
+- ADMIN puder gerenciar características;
+- ADMIN puder gerenciar usuários;
+- ADMIN puder analisar consultas;
+- o PostgreSQL persistir os dados;
+- o frontend se comunicar com o backend por REST;
+- não forem utilizadas Server Actions;
+- a autorização for aplicada no backend;
+- a aplicação for responsiva;
+- não houver erros conhecidos que impeçam o funcionamento.
