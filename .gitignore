@@ -5,9 +5,8 @@ node_modules/
 dist/
 dist-ssr/
 
-# Vite
+# Archivos locales
 *.local
-.vite/
 
 # Logs
 npm-debug.log*
@@ -25,11 +24,14 @@ Thumbs.db
 *.pem
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
 
 # vercel
 .vercel
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example

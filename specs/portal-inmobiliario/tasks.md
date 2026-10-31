@@ -4,16 +4,17 @@
 
 ## Fase 1 — Fundamentos
 
-- [ ] **Paso 1 — Crear proyecto Next.js**
+- [x] **Paso 1 — Crear proyecto Next.js**
   - Crear proyecto con React y TypeScript.
   - Configurar estructura básica.
   - Crear `.env.example`.
   - Validar servidor de desarrollo y build.
 
-- [ ] **Paso 2 — Layout y navegación**
+- [x] **Paso 2 — Layout y navegación**
   - Crear header, navegación, footer y layout.
   - Agregar diseño responsive base.
   - Navegación: Inicio, Propiedades, Comprar, Arrendar, Ingresar.
+  - Validado con `npm test`, `npm run build` y navegador en 360, 768 y 1280 px: enlaces, menú móvil, teclado, Escape, foco y salto al contenido; sin desbordamiento horizontal ni errores de consola.
 
 - [ ] **Paso 3 — Configurar PostgreSQL**
   - Configurar PostgreSQL.
