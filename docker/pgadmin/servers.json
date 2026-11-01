@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Portal Imobiliário — PostgreSQL local",
+      "Group": "Desenvolvimento",
+      "Host": "host.docker.internal",
+      "Port": 5432,
+      "MaintenanceDB": "portal_inmobiliario",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

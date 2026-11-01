@@ -105,16 +105,16 @@ Property * --- * Feature
 
 Na implementação de `Property`, utilizar os seguintes campos de localização:
 
-| Campo técnico | Significado | Regra |
-| --- | --- | --- |
-| `address` | Logradouro | Rua, avenida ou equivalente. |
-| `addressNumber` | Número | Texto, permitindo `s/n`. |
-| `addressComplement` | Complemento | Opcional. |
-| `neighborhood` | Bairro | Texto. |
-| `city` | Cidade | Texto. |
-| `state` | Estado (UF) | UF brasileira válida em maiúsculas. |
-| `postalCode` | CEP | Texto com oito dígitos, preservando zeros à esquerda; máscara apenas na interface. |
-| `country` | País | `BR`, atribuído pelo servidor. |
+| Campo técnico       | Significado | Regra                                                                              |
+| ------------------- | ----------- | ---------------------------------------------------------------------------------- |
+| `address`           | Logradouro  | Rua, avenida ou equivalente.                                                       |
+| `addressNumber`     | Número      | Texto, permitindo `s/n`.                                                           |
+| `addressComplement` | Complemento | Opcional.                                                                          |
+| `neighborhood`      | Bairro      | Texto.                                                                             |
+| `city`              | Cidade      | Texto.                                                                             |
+| `state`             | Estado (UF) | UF brasileira válida em maiúsculas.                                                |
+| `postalCode`        | CEP         | Texto com oito dígitos, preservando zeros à esquerda; máscara apenas na interface. |
+| `country`           | País        | `BR`, atribuído pelo servidor.                                                     |
 
 Os preços devem utilizar um tipo decimal exato com duas casas decimais no PostgreSQL, em BRL. Não armazenar o texto formatado com `R$`, pontos de milhar ou vírgula decimal. Na API, representar valores monetários como strings decimais, por exemplo, `"450000.00"`; a interface aplica a formatação brasileira.
 
@@ -122,7 +122,14 @@ Os preços devem utilizar um tipo decimal exato com duas casas decimais no Postg
 
 O PostgreSQL é o único banco de dados.
 
-Selecionar um ORM compatível com as versões atuais do Next.js e do PostgreSQL.
+ORM selecionado na Etapa 3, seguindo o curso: **Prisma ORM 7**, com Prisma Client, adaptador `@prisma/adapter-pg`, driver `pg` (node-postgres) e Prisma Migrate para migrações SQL versionadas.
+
+- Configuração em `apps/web/prisma.config.ts`, carregando `apps/web/.env.local` com `@next/env`.
+- Cliente com pool de conexões reutilizado no servidor, acessado pelos repositórios por `getDatabase()` em `src/lib/db/index.ts`, protegido com `server-only`.
+- Esquema em `apps/web/prisma/schema.prisma` e migrações em `apps/web/prisma/migrations/`.
+- Prisma Client gerado em `apps/web/src/generated/prisma/`, ignorado pelo Git e regenerado na instalação e antes do build. Na Etapa 3, o esquema ainda não tem modelos; a geração permite esse estado e a conexão é validada por uma consulta SQL pelo Prisma.
+- A migração inicial valida o fluxo de migrações sem criar entidades; o modelo de domínio será implementado na Etapa 4.
+- Desenvolvimento local: banco `portal_inmobiliario` no PostgreSQL já existente no Docker; pgAdmin em `http://localhost:5050`, com volume persistente e política `restart: always`.
 
 Requisitos:
 

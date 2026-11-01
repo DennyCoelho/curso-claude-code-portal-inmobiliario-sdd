@@ -6,16 +6,23 @@
     "apps/*"
   ],
   "engines": {
-    "node": ">=20.9.0",
+    "node": "^20.19.0 || ^22.12.0 || >=24.0.0",
     "npm": ">=10"
   },
   "packageManager": "npm@11.12.1",
   "scripts": {
+    "postinstall": "npm run db:generate",
     "dev": "npm run dev --workspace=@portal-inmobiliario/web --",
     "build": "npm run build --workspace=@portal-inmobiliario/web",
     "start": "npm run start --workspace=@portal-inmobiliario/web --",
     "lint": "npm run lint --workspace=@portal-inmobiliario/web",
     "typecheck": "npm run typecheck --workspace=@portal-inmobiliario/web",
-    "test": "npm run lint && npm run typecheck"
+    "test": "npm run lint && npm run typecheck",
+    "db:check": "npm run db:check --workspace=@portal-inmobiliario/web",
+    "db:generate": "npm run db:generate --workspace=@portal-inmobiliario/web --",
+    "db:migrate": "npm run db:migrate --workspace=@portal-inmobiliario/web",
+    "db:validate": "npm run db:validate --workspace=@portal-inmobiliario/web",
+    "db:status": "npm run db:status --workspace=@portal-inmobiliario/web",
+    "db:migrate:dev": "npm run db:migrate:dev --workspace=@portal-inmobiliario/web --"
   }
 }

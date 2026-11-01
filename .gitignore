@@ -29,6 +29,9 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
+# Prisma Client gerado por npm install e npm run db:generate.
+apps/web/src/generated/prisma/
+
 # Vercel
 .vercel
 

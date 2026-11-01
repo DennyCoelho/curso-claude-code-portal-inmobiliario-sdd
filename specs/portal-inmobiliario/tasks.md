@@ -21,11 +21,18 @@
   - Revisão pt-BR validada: interface, acessibilidade, metadados, idioma do HTML e página 404 em português do Brasil.
   - Direcionamento ao Brasil validado nos textos da página inicial, no rodapé e nos metadados.
 
-- [ ] **Etapa 3 — Configurar PostgreSQL**
+- [x] **Etapa 3 — Configurar PostgreSQL**
   - Configurar o PostgreSQL.
   - Selecionar e configurar o ORM.
   - Configurar as migrações.
   - Validar a conexão.
+  - Banco `portal_inmobiliario` criado no contêiner PostgreSQL existente; credenciais em `apps/web/.env.local`, ignorado pelo Git.
+  - Prisma ORM 7, alinhado ao curso, com adaptador `@prisma/adapter-pg`, driver `pg`, cliente reutilizado no servidor, proteção `server-only` e migrações SQL pelo Prisma Migrate.
+  - pgAdmin 4 instalado e em execução no Docker em `http://localhost:5050`, com volume persistente, servidor pré-cadastrado e `restart: always` confirmado.
+  - Prisma Client, adaptador e CLI na versão 7.10.1. Validação concluída com `npm test`, `npm run build`, `npm run db:generate`, `npm run db:validate`, `npm run db:check`, `npm run db:migrate` e `npm run db:status`.
+  - Geração do cliente e validação do esquema também verificadas sem credenciais. Migração reaplicada sem duplicação: um registro concluído em `_prisma_migrations` e nenhuma tabela de domínio antecipada.
+  - Histórico anterior substituído pelo Prisma Migrate após salvar uma cópia em `apps/web/.migrations-anteriores.sql.local`, ignorada pelo Git.
+  - pgAdmin validado por HTTP 200, login autenticado e conexão ao PostgreSQL a partir do contêiner. Cache do Turbopack regenerado para concluir o build.
 
 - [ ] **Etapa 4 — Criar modelo de domínio**
   - User.
