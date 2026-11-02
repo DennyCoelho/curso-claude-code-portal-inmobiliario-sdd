@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 6 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros e a API REST pública de imóveis. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 7 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis e a landing page. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
 ## Desenvolvimento local
 
@@ -31,7 +31,19 @@ Abra [http://localhost:3000](http://localhost:3000). A Etapa 2 inclui o layout c
 
 Os destinos `/properties` e `/login` são páginas provisórias de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`; o catálogo, os filtros e a autenticação serão implementados nas respectivas etapas.
 
-O Next.js carrega as variáveis de ambiente de `apps/web/.env.local`, pois esse é o diretório da aplicação. O arquivo `.env.example` documenta a configuração. A interface inicial ainda não consulta o banco; a API de imóveis e os comandos de banco exigem PostgreSQL e `DATABASE_URL`. Preencha as credenciais das integrações nas tarefas correspondentes e mantenha os segredos no servidor.
+O Next.js carrega as variáveis de ambiente de `apps/web/.env.local`, pois esse é o diretório da aplicação. O arquivo `.env.example` documenta a configuração. A landing page consome a API REST no navegador; a API de imóveis e os comandos de banco exigem PostgreSQL e `DATABASE_URL`. Preencha as credenciais das integrações nas tarefas correspondentes e mantenha os segredos no servidor.
+
+## Landing page
+
+A página inicial inclui um hero com ilustração vetorial, busca principal, imóveis em destaque, seleções de compra e aluguel e chamadas para o catálogo. O cabeçalho, a navegação e o rodapé compartilhados foram preservados. O ícone da aba reutiliza a marca do portal por meio de `apps/web/src/app/icon.svg`.
+
+Os componentes em `apps/web/src/components/home/` usam uma consulta a `GET /api/properties` pelo SWR, compartilhando o resultado entre as três seleções. Cada seção exibe até três imóveis, mantendo a ordem da API. A seleção de destaques usa `isFeatured`; compra e aluguel usam `SALE` e `RENT`. Os preços aparecem em BRL e os aluguéis têm `/mês`. Há estados de carregamento, seleção vazia e erro com botão para tentar novamente. A resposta REST é validada com Zod e a requisição tem limite de dez segundos.
+
+A busca usa React Hook Form e Zod para validar até 200 caracteres e a operação. Ao enviar, navega para `/properties?search=...&operation=...`, removendo espaços externos e codificando acentos e caracteres especiais. Campos vazios são omitidos; sem texto ou operação, abre `/properties`. O formulário também tem ação GET nativa. O destino `/properties` continua provisório: catálogo, busca efetiva e filtros serão implementados nas Etapas 9 a 11. A landing usa listas resumidas; o `PropertyCard` e a grade de imóveis pertencem à Etapa 8.
+
+Com o PostgreSQL em execução e o seed carregado, abra a página inicial para visualizar as seleções. Sem banco disponível, a busca e as chamadas para ação continuam acessíveis e as seleções mostram uma mensagem de erro. A ilustração do hero é decorativa; nenhuma fotografia de imóvel foi inventada ou adicionada ao banco.
+
+Execute `npm run home:test` para validar a seleção dos imóveis, os preços, a busca e seus parâmetros, o cliente REST e os estados das seções. `npm test` verifica ESLint e TypeScript, e `npm run build` valida a compilação de produção.
 
 ## PostgreSQL e migrações
 
@@ -199,6 +211,7 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run seed:test` | Validar os exemplos do seed sem conexão com o banco. |
 | `npm run api:test` | Testar os serviços e as rotas públicas sem banco. |
 | `npm run api:test:integration` | Testar as consultas públicas no PostgreSQL migrado. |
+| `npm run home:test` | Testar a landing page, a busca e o consumo REST sem banco. |
 | `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
 | `npm run db:generate` | Gerar o Prisma Client a partir do esquema. |
 | `npm run db:migrate` | Aplicar as migrações pendentes ao PostgreSQL. |
@@ -238,7 +251,7 @@ npm start
         └── tasks.md
 ```
 
-O frontend consumirá a API REST pública. Os Route Handlers de imóveis já coordenam serviços e repositórios para acessar o PostgreSQL; a integração das telas seguirá as próximas tarefas.
+A landing page já consome a API REST pública no navegador. Os Route Handlers de imóveis coordenam serviços e repositórios para acessar o PostgreSQL; as demais telas seguirão as próximas tarefas.
 
 ## Documentos
 

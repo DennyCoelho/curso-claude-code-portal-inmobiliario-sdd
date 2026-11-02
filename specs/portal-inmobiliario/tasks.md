@@ -74,12 +74,19 @@
   - Servidor de produção validado por HTTP: listagem e detalhes dos 14 publicados, dois rascunhos ocultos, ID inexistente, ID inválido, tentativa de incluir rascunhos por query string e método não permitido. Códigos `200`, `400`, `404` e `405`, contrato JSON e cache confirmados.
   - Contagem final preservada no PostgreSQL: 16 imóveis, 16 características, nenhuma imagem ou consulta de teste persistida. README e plano técnico atualizados.
 
-- [ ] **Etapa 7 — Landing page**
+- [x] **Etapa 7 — Landing page**
   - Seção principal de destaque (hero).
   - Campo de busca.
   - Imóveis em destaque.
   - Seções de compra e aluguel.
   - Chamadas para ação.
+  - Hero responsivo com ilustração SVG decorativa, busca principal e chamadas para compra, aluguel e catálogo. Cabeçalho, menu móvel, rodapé e salto para o conteúdo preservados. Ícone SVG da marca adicionado à aba do navegador.
+  - Uma consulta REST por SWR alimenta destaques, venda e aluguel, com até três imóveis por seleção e ordem preservada da API. Valores em BRL e `/mês` no aluguel, com bairro, cidade, UF e tipo do imóvel.
+  - Busca validada com React Hook Form e Zod: texto opcional de até 200 caracteres, operação opcional, remoção de espaços externos e codificação de parâmetros na URL de `/properties`. Formulário GET também validado sem JavaScript. Catálogo e filtragem efetiva seguem as Etapas 9 a 11.
+  - Cliente REST com validação Zod e timeout de dez segundos. Carregamento, seleções vazias e erro com nova tentativa, mantendo a busca e as chamadas para ação disponíveis.
+  - Validação concluída com `npm run home:test` (oito testes unitários), `npm test` e `npm run build`. Documentação, plano técnico, dependências e comandos atualizados.
+  - Edge validado em 320, 360, 768, 1280 e 1440 px, sem transbordamento horizontal: dados reais nas três seleções, uma requisição inicial à API, preços em BRL, busca com acentos e operação, busca vazia, menu móvel, Escape e salto por teclado. Estados de carregamento, lista vazia, erro 500 e recuperação por nova tentativa confirmados; console sem erros e ícone retornando `200`.
+  - Servidor de produção atualizado e mantido em `http://localhost:3000`. Esta etapa utiliza listas resumidas; `PropertyCard` e grade de imóveis continuam na Etapa 8.
 
 - [ ] **Etapa 8 — PropertyCard e grade responsiva**
   - Criar componente reutilizável.

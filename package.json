@@ -23,6 +23,7 @@
     "seed:test": "npm run seed:test --workspace=@portal-inmobiliario/web",
     "api:test": "npm run api:test --workspace=@portal-inmobiliario/web",
     "api:test:integration": "npm run api:test:integration --workspace=@portal-inmobiliario/web",
+    "home:test": "npm run home:test --workspace=@portal-inmobiliario/web",
     "db:seed": "npm run db:seed --workspace=@portal-inmobiliario/web",
     "db:generate": "npm run db:generate --workspace=@portal-inmobiliario/web --",
     "db:migrate": "npm run db:migrate --workspace=@portal-inmobiliario/web",

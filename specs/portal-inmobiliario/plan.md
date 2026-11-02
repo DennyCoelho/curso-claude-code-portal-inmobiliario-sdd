@@ -248,6 +248,14 @@ Criar recursos REST adicionais quando necessários para:
 - consumo de REST;
 - sem acesso direto ao banco de dados.
 
+### Landing page — Etapa 7
+
+- Página inicial em `src/app/page.tsx`, com hero, ilustração SVG decorativa, busca, seleções de imóveis e chamadas para o catálogo. Componentes específicos em `src/components/home/`, mantendo cabeçalho e rodapé compartilhados.
+- `HomePropertyCollections` consome `GET /api/properties` no navegador por SWR, com uma consulta compartilhada entre as seleções. Não importa serviços, repositórios ou Prisma. A resposta é validada com Zod somente nos campos usados pela landing, com timeout de dez segundos e erro genérico em português.
+- `selectHomeProperties` limita cada seleção a três itens, preservando a ordem da API: `isFeatured` para destaques e `operation` para venda/aluguel. Preços em BRL com `Intl.NumberFormat`, incluindo `/mês` no aluguel. Listas resumidas nesta etapa; `PropertyCard` e grade de imóveis seguem a Etapa 8.
+- `HomeSearch` utiliza React Hook Form e Zod, aceita texto opcional de até 200 caracteres e operação opcional `SALE`/`RENT`. Navega por GET para `/properties` usando `search` e `operation`, com valores codificados por `URLSearchParams`. A implementação do catálogo, da busca efetiva e dos filtros permanece nas Etapas 9 a 11.
+- Estados locais de carregamento, seleção vazia e falha com nova tentativa, sem impedir o uso da busca e das chamadas para ação. Testes unitários em `scripts/home.test.tsx`, executados por `npm run home:test`.
+
 ## 9. Busca e filtros
 
 `GET /api/properties` deve aceitar parâmetros como:
