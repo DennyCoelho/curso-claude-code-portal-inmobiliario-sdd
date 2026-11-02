@@ -34,7 +34,7 @@
   - Histórico anterior substituído pelo Prisma Migrate após salvar uma cópia em `apps/web/.migrations-anteriores.sql.local`, ignorada pelo Git.
   - pgAdmin validado por HTTP 200, login autenticado e conexão ao PostgreSQL a partir do contêiner. Cache do Turbopack regenerado para concluir o build.
 
-- [ ] **Etapa 4 — Criar modelo de domínio**
+- [x] **Etapa 4 — Criar modelo de domínio**
   - User.
   - Property.
   - PropertyImage.
@@ -44,11 +44,21 @@
   - Preços em BRL com precisão decimal e endereço brasileiro conforme os campos de `plan.md`.
   - Criar relacionamentos e restrições.
   - Executar as migrações.
+  - Seis modelos Prisma implementados com UUIDs, perfis e tipos enumerados, datas com fuso, preços `Decimal(14, 2)` em BRL e endereço brasileiro com país `BR` por padrão.
+  - Relacionamentos, e-mail e favoritos únicos, características compartilhadas, `publicId` único e no máximo uma imagem principal por imóvel. Consultas aceitam visitantes e preservam o contato ao excluir o usuário.
+  - Migração transacional `20261101040000_criar_modelo_dominio` aplicada ao PostgreSQL, com índices, chaves estrangeiras e restrições para UF, CEP, país, valores numéricos e formato internacional do telefone.
+  - Validação concluída com `npm test`, `npm run build`, `npm run db:validate`, `npm run db:generate`, `npm run db:check`, `npm run db:migrate`, `npm run db:status` e `npm run db:test` (11 testes de integração aprovados).
+  - Reaplicação sem migrações pendentes e comparação Prisma/PostgreSQL sem divergências. Todos os cenários de teste revertidos, com as sete tabelas do domínio vazias ao final. Cache do Turbopack regenerado para concluir o build.
 
-- [ ] **Etapa 5 — Criar seed**
+- [x] **Etapa 5 — Criar seed**
   - Imóveis realistas para venda e aluguel no Brasil, com preços em BRL e aluguel mensal.
   - Casas, apartamentos, terrenos e escritórios.
   - Diferentes bairros, cidades, UFs, CEPs, preços e características.
+  - Seed integrado ao Prisma 7, executado explicitamente por `npm run db:seed`, com carregamento de `apps/web/.env.local` e recusa de execução em produção.
+  - 16 imóveis fictícios em sete cidades/UFs nas cinco regiões: oito vendas e oito aluguéis mensais, quatro exemplos por tipo, 14 publicados, dois rascunhos e seis destaques. Endereços brasileiros, CEP com zero inicial, preços e áreas decimais, campos não aplicáveis nulos e 16 características reutilizáveis.
+  - Persistência em uma única transação, com IDs fixos e reexecução sem duplicações, preservando datas, edições e registros independentes. Duas execuções do comando confirmadas no PostgreSQL.
+  - Validação concluída com `npm run seed:test` (três testes), `npm run db:test` (13 testes de integração), `npm test`, `npm run db:status`, `npm run db:check` e `npm run build`. Cache do Turbopack regenerado para concluir o build.
+  - Contagem final confirmada no banco: 16 imóveis, 16 características e nenhum registro de teste persistido. Documentação e comandos atualizados; imagens seguem a etapa de integração com Cloudinary.
 
 ## Fase 2 — Portal público
 

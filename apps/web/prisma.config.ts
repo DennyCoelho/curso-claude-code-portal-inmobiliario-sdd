@@ -5,7 +5,10 @@ nextEnv.loadEnvConfig(process.cwd());
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
-  migrations: { path: "prisma/migrations" },
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
   // Gerar e validar o cliente não exige credenciais; os comandos de banco exigem.
   datasource: { url: process.env.DATABASE_URL },
 });

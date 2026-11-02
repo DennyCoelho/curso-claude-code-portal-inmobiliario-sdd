@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 3 estão implementadas, incluindo a conexão com PostgreSQL e o fluxo de migrações; as entidades, os valores monetários, os filtros, os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 5 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio e o seed de imóveis brasileiros. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
 ## Desenvolvimento local
 
@@ -56,14 +56,70 @@ npm run db:status
 npm run db:check
 ```
 
-A migração inicial verifica a execução do fluxo e registra o histórico em `_prisma_migrations`. As tabelas de domínio serão criadas na Etapa 4; até lá, `db:generate` permite gerar um cliente sem modelos para validar a conexão com uma consulta SQL pelo Prisma. Depois de modificar o esquema nessa etapa, crie a migração de desenvolvimento e gere novamente o cliente:
+A migração inicial verifica a execução do fluxo e registra o histórico em `_prisma_migrations`. A migração `20261101040000_criar_modelo_dominio`, da Etapa 4, cria `User`, `Property`, `PropertyImage`, `Feature`, `Favorite` e `Inquiry`, além da tabela de associação entre imóveis e características. Para futuras alterações no esquema, crie uma nova migração de desenvolvimento e gere novamente o cliente:
 
 ```powershell
-npm run db:migrate:dev -- --name=modelo_dominio
+npm run db:migrate:dev -- --name=nome_da_alteracao
 npm run db:generate
 ```
 
 Para revisar o SQL antes de aplicá-lo, acrescente `--create-only` a `db:migrate:dev`; depois da revisão, execute `npm run db:migrate` e `npm run db:generate`. `db:migrate` aplica apenas as migrações pendentes; executá-lo novamente mantém as migrações já registradas. `db:status` compara o histórico local com o aplicado no banco. Os comandos de banco carregam os mesmos arquivos de ambiente da aplicação usando `@next/env` em `apps/web/prisma.config.ts`.
+
+### Modelo de domínio
+
+- `User`: nome, e-mail único, hash da senha, perfil `USER`/`ADMIN` e indicador de conta ativa. O padrão é `USER` ativo.
+- `Property`: operações `SALE`/`RENT`, seis tipos de imóvel, preço `Decimal(14, 2)` em BRL, áreas `Decimal(12, 2)` em m², dados do imóvel e endereço brasileiro. Campos não aplicáveis, como quartos de um terreno, podem ser nulos. Novos imóveis começam despublicados e sem destaque.
+- `PropertyImage`: URL e `publicId` único do Cloudinary, posição e indicação de imagem principal. O banco permite no máximo uma principal por imóvel e não armazena arquivos binários.
+- `Feature`: características reutilizáveis com nome único e relacionamento de muitos para muitos com imóveis.
+- `Favorite`: vínculo único entre usuário e imóvel.
+- `Inquiry`: imóvel obrigatório, usuário opcional, nome, e-mail, telefone internacional e mensagem. Visitantes podem enviar consultas sem uma conta.
+
+As datas usam `timestamptz(3)` e são representadas por `Date` no Prisma, permitindo transmitir UTC. `User` e `Property` têm datas de criação e atualização. Para os futuros contratos REST, os preços devem ser serializados com `price.toFixed(2)`, preservando as duas casas decimais.
+
+As restrições SQL validam as 27 UFs, CEP textual de oito dígitos, país `BR`, preço e áreas positivos, contagens e posições não negativas e formato de telefone com `+55`. O país tem padrão `BR`. A atribuição no servidor e a validação completa dos dados de entrada serão implementadas com os respectivos serviços e endpoints.
+
+Ao excluir um usuário, seus favoritos são removidos e suas consultas são preservadas com `userId` nulo. Ao excluir um imóvel, imagens, favoritos, consultas e associações com características são removidos; os usuários e as características continuam existindo. O futuro serviço de exclusão deverá coordenar a remoção dos arquivos no Cloudinary.
+
+As restrições `CHECK` e o índice único parcial da imagem principal estão versionados no SQL da migração. Preserve essas regras ao criar migrações futuras; consulte o [fluxo de personalização de migrações do Prisma 7](https://www.prisma.io/docs/orm/v7/prisma-migrate/workflows/unsupported-database-features).
+
+Para verificar o modelo no PostgreSQL já migrado:
+
+```powershell
+npm run db:test
+```
+
+Os testes de integração verificam persistência, precisão decimal, endereços brasileiros, unicidade, relacionamentos, exclusões e o seed. Cada cenário usa uma transação revertida, inclusive quando ocorre uma falha; nenhum registro de teste é mantido no banco. Os testes do seed isolam os IDs de demonstração dentro da transação e restauram todos os dados ao final, inclusive os vínculos existentes.
+
+### Seed de desenvolvimento
+
+Depois de configurar `DATABASE_URL` e aplicar as migrações, execute na raiz:
+
+```powershell
+npm run db:seed
+```
+
+O comando usa `prisma db seed`, configurado em `apps/web/prisma.config.ts`, e carrega o ambiente de `apps/web/.env.local`. A execução é explícita e cria os dados em uma única transação: em caso de falha, nenhuma alteração é confirmada. O comando recusa execução com `NODE_ENV=production`.
+
+O conjunto inicial contém:
+
+- 16 imóveis fictícios: quatro casas, quatro apartamentos, quatro terrenos e quatro escritórios, com oito ofertas de venda e oito de aluguel mensal.
+- Sete cidades e UFs nas cinco regiões: São Paulo/SP, Curitiba/PR, Florianópolis/SC, Manaus/AM, Recife/PE, Salvador/BA e Brasília/DF.
+- 14 imóveis publicados, dois rascunhos e seis destaques publicados.
+- 16 características compartilhadas, como piscina, academia, jardim, elevador, acessibilidade e ar-condicionado.
+- Preços e áreas decimais, datas distintas em UTC, CEPs textuais com oito dígitos, complementos opcionais e campos não aplicáveis nulos nos terrenos.
+
+Os anúncios, números e complementos são fictícios, com localidades e CEPs brasileiros como referência; não representam ofertas reais. Os preços de venda são totais e os de aluguel são mensais em BRL, com encargos separados nas descrições. Imagens serão adicionadas pelo fluxo do Cloudinary na etapa correspondente.
+
+O seed usa IDs fixos para imóveis e nomes únicos para características. Pode ser executado novamente sem duplicar registros ou vínculos, preservando preços, títulos, datas, publicação, características e outras edições locais dos imóveis já existentes. Também preserva os registros criados fora do seed. Para alterar os exemplos iniciais, edite `apps/web/prisma/seed-properties.ts`; essas mudanças serão aplicadas somente aos IDs ainda ausentes no banco.
+
+Valide os exemplos sem banco e, depois, sua persistência no PostgreSQL:
+
+```powershell
+npm run seed:test
+npm run db:test
+```
+
+`seed:test` valida os dados de demonstração e a recusa em produção. Os testes de integração verificam a inserção, o compartilhamento de características, a reexecução sem duplicações e a preservação de edições e registros independentes.
 
 ## pgAdmin no Docker
 
@@ -105,13 +161,16 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run typecheck` | Gerar os tipos das rotas e verificar o TypeScript.     |
 | `npm test`          | Executar as validações estáticas: ESLint e TypeScript. |
 | `npm run db:check`  | Validar a conexão real com o PostgreSQL usando o ORM. |
+| `npm run db:test`   | Testar o modelo, as restrições e o seed no PostgreSQL migrado. |
+| `npm run seed:test` | Validar os exemplos do seed sem conexão com o banco. |
+| `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
 | `npm run db:generate` | Gerar o Prisma Client a partir do esquema. |
 | `npm run db:migrate` | Aplicar as migrações pendentes ao PostgreSQL. |
 | `npm run db:migrate:dev` | Criar e aplicar uma migração em desenvolvimento. |
 | `npm run db:validate` | Validar o esquema do Prisma. |
 | `npm run db:status` | Consultar a consistência do histórico de migrações. |
 
-`npm test` executa as validações estáticas. `npm run db:check` valida uma consulta real pelo ORM, exigindo o PostgreSQL em execução. Os testes das próximas funcionalidades serão incorporados durante sua implementação.
+`npm test` executa as validações estáticas. `npm run seed:test` valida os exemplos de demonstração sem banco. `npm run db:check` valida uma consulta real pelo ORM. `npm run db:test` executa os testes de integração do modelo de domínio e do seed. Os comandos que acessam o banco exigem PostgreSQL em execução e `DATABASE_URL` configurada.
 
 Para verificar a versão de produção:
 

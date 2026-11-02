@@ -103,6 +103,17 @@ Property * --- * Feature
 
 `Inquiry.userId` pode ser nulo para permitir consultas de visitantes.
 
+Implementação da Etapa 4:
+
+- Identificadores UUID e datas `timestamptz(3)`; `User` e `Property` possuem `createdAt` e `updatedAt`.
+- `User` armazena `passwordHash`, perfil `USER`/`ADMIN` e `isActive`, com padrões `USER` e `true`.
+- `Property` utiliza `PropertyOperation` (`SALE`, `RENT`) e `PropertyType` (os seis valores da especificação), `price Decimal(14, 2)` e áreas opcionais `Decimal(12, 2)`. Quartos, banheiros, vagas e idade podem ser nulos quando não se aplicarem. `isPublished` e `isFeatured` começam como `false`.
+- `PropertyImage` armazena `url`, `publicId` único, `position` e `isMain`. Um índice único parcial limita a uma imagem principal por imóvel, permitindo várias secundárias.
+- `Feature.name` é único; a associação de muitos para muitos é gerenciada pelo Prisma sem novas colunas em `Property`.
+- `Inquiry` mantém os dados de contato e aceita `userId` nulo. Excluir um usuário remove seus favoritos e mantém suas consultas, desvinculando a conta. Excluir um imóvel remove imagens, favoritos, consultas e vínculos com características; usuários e características são preservados. O serviço futuro deve coordenar a exclusão no Cloudinary.
+- Restrições `CHECK` em SQL protegem UF brasileira em maiúsculas, CEP com oito dígitos, país `BR`, valores positivos de preço e áreas, contagens e posições não negativas e formato internacional do telefone com `+55`. A validação completa de entrada e a normalização pertencem aos futuros serviços REST.
+- Índices apoiam listagens públicas por data, operação/tipo e preço, localização por UF/cidade/bairro, ordenação de imagens e consultas por usuário ou imóvel. A chave composta dos favoritos também atende à busca por usuário.
+
 Na implementação de `Property`, utilizar os seguintes campos de localização:
 
 | Campo técnico       | Significado | Regra                                                                              |
@@ -127,8 +138,13 @@ ORM selecionado na Etapa 3, seguindo o curso: **Prisma ORM 7**, com Prisma Clien
 - Configuração em `apps/web/prisma.config.ts`, carregando `apps/web/.env.local` com `@next/env`.
 - Cliente com pool de conexões reutilizado no servidor, acessado pelos repositórios por `getDatabase()` em `src/lib/db/index.ts`, protegido com `server-only`.
 - Esquema em `apps/web/prisma/schema.prisma` e migrações em `apps/web/prisma/migrations/`.
-- Prisma Client gerado em `apps/web/src/generated/prisma/`, ignorado pelo Git e regenerado na instalação e antes do build. Na Etapa 3, o esquema ainda não tem modelos; a geração permite esse estado e a conexão é validada por uma consulta SQL pelo Prisma.
-- A migração inicial valida o fluxo de migrações sem criar entidades; o modelo de domínio será implementado na Etapa 4.
+- Prisma Client gerado em `apps/web/src/generated/prisma/`, ignorado pelo Git e regenerado na instalação e antes do build. A conexão é validada por uma consulta SQL pelo Prisma.
+- A migração inicial valida o fluxo sem criar entidades; `20261101040000_criar_modelo_dominio` cria as seis entidades e a associação entre características e imóveis em uma transação, com chaves estrangeiras, índices e restrições adicionais em SQL.
+- `npm run db:test` valida o modelo no PostgreSQL com transações revertidas, sem manter registros de teste. Preservar os `CHECK` e o índice único parcial ao gerar novas migrações.
+- Seed da Etapa 5 em `apps/web/prisma/seed.ts`, com exemplos em `seed-properties.ts` e persistência em `seed-database.ts`. Executar explicitamente com `npm run db:seed`, integrado ao `prisma db seed`, após as migrações.
+- O seed de desenvolvimento cria 16 imóveis fictícios (casas, apartamentos, terrenos e escritórios), oito de venda e oito de aluguel mensal, em sete cidades/UFs nas cinco regiões brasileiras, com 16 características compartilhadas, 14 publicados, dois rascunhos e seis destaques. Valores monetários partem de strings decimais, país `BR` e datas fixas em UTC.
+- A execução é transacional e recusa `NODE_ENV=production`. IDs fixos e `upsert` com atualização vazia preservam edições e registros existentes, sem duplicar imóveis, características ou vínculos ao repetir o comando. A Etapa 5 não cria contas ou imagens; o fluxo de imagens segue a etapa de integração com Cloudinary.
+- `npm run seed:test` valida os exemplos sem conexão; `npm run db:test` também verifica a persistência e a reexecução do seed em transações revertidas.
 - Desenvolvimento local: banco `portal_inmobiliario` no PostgreSQL já existente no Docker; pgAdmin em `http://localhost:5050`, com volume persistente e política `restart: always`.
 
 Requisitos:
