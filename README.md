@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 5 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio e o seed de imóveis brasileiros. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 6 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros e a API REST pública de imóveis. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
 ## Desenvolvimento local
 
@@ -31,7 +31,7 @@ Abra [http://localhost:3000](http://localhost:3000). A Etapa 2 inclui o layout c
 
 Os destinos `/properties` e `/login` são páginas provisórias de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`; o catálogo, os filtros e a autenticação serão implementados nas respectivas etapas.
 
-O Next.js carrega as variáveis de ambiente de `apps/web/.env.local`, pois esse é o diretório da aplicação. O arquivo `.env.example` documenta a configuração. A interface inicial ainda não consulta o banco; os comandos de banco exigem PostgreSQL e `DATABASE_URL`. Preencha as credenciais das integrações nas tarefas correspondentes e mantenha os segredos no servidor.
+O Next.js carrega as variáveis de ambiente de `apps/web/.env.local`, pois esse é o diretório da aplicação. O arquivo `.env.example` documenta a configuração. A interface inicial ainda não consulta o banco; a API de imóveis e os comandos de banco exigem PostgreSQL e `DATABASE_URL`. Preencha as credenciais das integrações nas tarefas correspondentes e mantenha os segredos no servidor.
 
 ## PostgreSQL e migrações
 
@@ -121,6 +121,40 @@ npm run db:test
 
 `seed:test` valida os dados de demonstração e a recusa em produção. Os testes de integração verificam a inserção, o compartilhamento de características, a reexecução sem duplicações e a preservação de edições e registros independentes.
 
+## API REST pública de imóveis
+
+A Etapa 6 disponibiliza os seguintes endpoints, sem exigir autenticação:
+
+| Requisição | Resposta de sucesso |
+| ---------- | ------------------- |
+| `GET /api/properties` | `200` com um array de imóveis publicados; `[]` quando não houver resultados. |
+| `GET /api/properties/{id}` | `200` com um objeto de imóvel publicado. |
+
+As duas respostas usam o contrato `PublicProperty`, em `apps/web/src/types/public-property.ts`: dados do imóvel e endereço brasileiro, indicador de destaque, datas, imagens e características. O preço é uma string decimal com duas casas, como `"450000.00"`; no aluguel, representa o valor mensal em BRL. As áreas também são strings decimais com duas casas ou `null`. As datas são strings ISO 8601 em UTC. O CEP mantém os oito dígitos, incluindo zeros iniciais. Campos não aplicáveis permanecem `null`; imagens e características ausentes são arrays vazios.
+
+As imagens contêm `id`, `url`, `position` e `isMain`, em ordem de posição; as características contêm `id` e `name`, em ordem de nome. A API seleciona somente dados públicos: não retorna consultas, favoritos ou o `publicId` de gestão do Cloudinary. O seed ainda não inclui imagens.
+
+Um UUID malformado retorna `400`. Um UUID válido de imóvel inexistente ou despublicado retorna a mesma resposta `404`, sem revelar a existência de rascunhos. Falhas inesperadas retornam `500` com uma mensagem genérica. Os erros seguem o formato `{ "message": "Imóvel não encontrado.", "status": 404 }`, sem detalhes internos. As respostas usam `Cache-Control: no-store` e as rotas são dinâmicas para refletir mudanças de publicação.
+
+As rotas em `src/app/api/properties/` chamam o serviço em `src/services/public-property-service.ts`, que serializa os dados. O repositório em `src/repositories/public-property-repository.ts` consulta o Prisma com `isPublished: true` tanto na listagem quanto nos detalhes. A conexão é aberta somente quando uma consulta é executada. A listagem tem uma ordem estável por data de criação e ID; busca, filtros e opções de ordenação serão adicionados nas etapas correspondentes.
+
+Com o banco migrado, o seed executado e o servidor iniciado, consulte no PowerShell:
+
+```powershell
+$properties = Invoke-RestMethod http://localhost:3000/api/properties
+$properties.Count
+Invoke-RestMethod "http://localhost:3000/api/properties/$($properties[0].id)"
+```
+
+Execute os testes automatizados a partir da raiz:
+
+```powershell
+npm run api:test
+npm run api:test:integration
+```
+
+`api:test` verifica os serviços e os Route Handlers sem banco: serialização, campos opcionais, lista vazia, UUID, códigos HTTP, cache e mensagens de erro. `api:test:integration` exige PostgreSQL migrado e verifica as consultas reais, a exclusão de rascunhos, despublicação, relações e seleção de dados públicos. Os cenários de integração usam transações revertidas, sem manter registros ou alterações no banco. Os comandos usam a condição `react-server` do Node para respeitar os módulos protegidos com `server-only`.
+
 ## pgAdmin no Docker
 
 O arquivo `compose.pgadmin.yaml` inicia a imagem oficial do [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html), com `restart: always` (equivalente a `docker run --restart always`) e um volume persistente para contas, servidores e preferências.
@@ -163,6 +197,8 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run db:check`  | Validar a conexão real com o PostgreSQL usando o ORM. |
 | `npm run db:test`   | Testar o modelo, as restrições e o seed no PostgreSQL migrado. |
 | `npm run seed:test` | Validar os exemplos do seed sem conexão com o banco. |
+| `npm run api:test` | Testar os serviços e as rotas públicas sem banco. |
+| `npm run api:test:integration` | Testar as consultas públicas no PostgreSQL migrado. |
 | `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
 | `npm run db:generate` | Gerar o Prisma Client a partir do esquema. |
 | `npm run db:migrate` | Aplicar as migrações pendentes ao PostgreSQL. |
@@ -170,7 +206,7 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run db:validate` | Validar o esquema do Prisma. |
 | `npm run db:status` | Consultar a consistência do histórico de migrações. |
 
-`npm test` executa as validações estáticas. `npm run seed:test` valida os exemplos de demonstração sem banco. `npm run db:check` valida uma consulta real pelo ORM. `npm run db:test` executa os testes de integração do modelo de domínio e do seed. Os comandos que acessam o banco exigem PostgreSQL em execução e `DATABASE_URL` configurada.
+`npm test` executa as validações estáticas. `npm run seed:test` valida os exemplos de demonstração sem banco. `npm run api:test` verifica os serviços e as rotas da API pública sem banco. `npm run db:check` valida uma consulta real pelo ORM. `npm run db:test` executa os testes de integração do modelo de domínio e do seed. `npm run api:test:integration` verifica a persistência usada pela API pública. Os comandos que acessam o banco exigem PostgreSQL em execução e `DATABASE_URL` configurada.
 
 Para verificar a versão de produção:
 
@@ -186,7 +222,7 @@ npm start
 ├── apps/
 │   └── web/
 │       └── src/
-│           ├── app/           # App Router e futuros Route Handlers em api/
+│           ├── app/           # App Router e Route Handlers em api/
 │           ├── components/    # Interface reutilizável
 │           ├── services/      # Lógica da aplicação
 │           ├── repositories/  # Persistência
@@ -202,7 +238,7 @@ npm start
         └── tasks.md
 ```
 
-O frontend consumirá uma API REST; os Route Handlers coordenarão serviços e repositórios para acessar o PostgreSQL. As pastas estão preparadas, mas as funcionalidades das próximas tarefas ainda não foram implementadas.
+O frontend consumirá a API REST pública. Os Route Handlers de imóveis já coordenam serviços e repositórios para acessar o PostgreSQL; a integração das telas seguirá as próximas tarefas.
 
 ## Documentos
 

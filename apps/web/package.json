@@ -13,6 +13,8 @@
     "db:check": "tsx scripts/check-database.ts",
     "db:test": "tsx --test scripts/domain-model.test.ts scripts/seed.integration.test.ts",
     "seed:test": "tsx --test scripts/seed.test.ts",
+    "api:test": "node --conditions=react-server --import tsx --test scripts/public-property.test.ts",
+    "api:test:integration": "node --conditions=react-server --import tsx --test scripts/public-property.integration.test.ts",
     "db:seed": "prisma db seed",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",

@@ -62,11 +62,17 @@
 
 ## Fase 2 — Portal público
 
-- [ ] **Etapa 6 — API REST pública de imóveis**
+- [x] **Etapa 6 — API REST pública de imóveis**
   - `GET /api/properties`.
   - `GET /api/properties/{id}`.
   - Exibir publicamente apenas imóveis publicados.
   - Separar API, serviços e persistência.
+  - Route Handlers dinâmicos no Node.js, serviço de serialização e repositório Prisma com seleção explícita de dados públicos e `isPublished: true` nas duas consultas. Serviços e persistência protegidos com `server-only`.
+  - Contrato público compartilhado com preço e áreas em strings decimais de duas casas, datas ISO em UTC, endereço brasileiro e campos opcionais nulos. Imagens por posição e características por nome; consultas, favoritos e `publicId` do Cloudinary não são expostos.
+  - UUID inválido retorna `400` antes da consulta; imóvel inexistente ou despublicado retorna o mesmo `404`; falhas internas retornam `500` com mensagem genérica em português. Respostas com `Cache-Control: no-store`.
+  - Validação concluída com `npm test`, `npm run api:test` (oito testes unitários), `npm run api:test:integration` (dois testes no PostgreSQL com transações revertidas) e `npm run build`. Cache do Turbopack regenerado para concluir o build.
+  - Servidor de produção validado por HTTP: listagem e detalhes dos 14 publicados, dois rascunhos ocultos, ID inexistente, ID inválido, tentativa de incluir rascunhos por query string e método não permitido. Códigos `200`, `400`, `404` e `405`, contrato JSON e cache confirmados.
+  - Contagem final preservada no PostgreSQL: 16 imóveis, 16 características, nenhuma imagem ou consulta de teste persistida. README e plano técnico atualizados.
 
 - [ ] **Etapa 7 — Landing page**
   - Seção principal de destaque (hero).

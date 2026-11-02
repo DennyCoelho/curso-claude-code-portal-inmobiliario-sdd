@@ -169,6 +169,16 @@ GET /api/properties
 GET /api/properties/{id}
 ```
 
+Implementação da Etapa 6:
+
+- Route Handlers dinâmicos em `src/app/api/properties/`, executados no Node.js, com respostas JSON e `Cache-Control: no-store`.
+- Serviço `src/services/public-property-service.ts` para serialização e repositório `src/repositories/public-property-repository.ts` para consultas Prisma. Serviços e persistência são protegidos com `server-only`; o cliente do banco é obtido apenas ao executar consultas.
+- As duas consultas exigem `isPublished: true` no PostgreSQL e selecionam explicitamente os dados públicos. Consultas de contato, favoritos e `publicId` do Cloudinary não integram o contrato público.
+- `GET /api/properties` retorna um array de `PublicProperty` (ou `[]`), com ordem estável por `createdAt` decrescente e ID crescente. `GET /api/properties/{id}` retorna um objeto do mesmo tipo, com imagens por posição e características por nome. Busca, filtros e opções de ordenação seguem as etapas posteriores.
+- Contrato em `src/types/public-property.ts`: preço e áreas como strings decimais com duas casas, campos opcionais nulos, datas ISO 8601 em UTC, CEP textual de oito dígitos e país `BR`. Imagens expõem `id`, `url`, `position` e `isMain`; características expõem `id` e `name`.
+- UUID malformado retorna `400` antes da consulta; imóvel inexistente ou despublicado retorna a mesma resposta `404`. Erros inesperados retornam `500` com mensagem genérica em português, sem detalhes internos. Erros seguem `{ message, status }`.
+- `npm run api:test` verifica serviços e Route Handlers sem banco. `npm run api:test:integration` verifica a persistência real e o contrato público, com transações revertidas. Ambos usam a condição `react-server` para os módulos `server-only`.
+
 Autenticação:
 
 ```text
