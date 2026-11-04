@@ -4,6 +4,18 @@
 
 > Contexto do produto: Brasil (`BR`), idioma `pt-BR`, moeda BRL (R$), endereço com logradouro, número, complemento opcional, bairro, cidade, UF e CEP. As etapas pendentes devem seguir esse contexto.
 
+## Reestruturação solicitada — Monorepo
+
+- [x] Separar frontend Next.js (`apps/web`) e backend Next.js (`apps/api`) com npm workspaces.
+- [x] Compartilhar os contratos REST em `packages/contracts`, preservando os endpoints e o comportamento da landing page.
+- [x] Transferir Prisma, serviços, repositórios, migrações, seed, testes e ambiente privado para o backend.
+- [x] Atualizar comandos, instalação, documentação e instruções de arquitetura.
+- [x] Validar os dois builds, tipos, lint, testes existentes e comunicação HTTP entre os aplicativos.
+
+Validação concluída com `npm test` (lint, tipos dos três workspaces e 19 testes unitários), `npm run build` (dois apps), `npm run test:integration` (15 testes no PostgreSQL), `npm run test:smoke` (seis testes HTTP, aprovados em produção e desenvolvimento), `npm run db:validate`, `npm run db:check` e `npm run db:status`. Instalação pela raiz validada com geração automática do Prisma no ciclo de instalação de `apps/api`. Esquema e arquivos de migração conferidos com o histórico anterior; banco preservado com 16 imóveis, 16 características e duas migrações aplicadas.
+
+Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os registros abaixo descrevem as validações históricas; os caminhos atuais são os definidos no plano técnico.
+
 ## Fase 1 — Fundamentos
 
 - [x] **Etapa 1 — Criar projeto Next.js**

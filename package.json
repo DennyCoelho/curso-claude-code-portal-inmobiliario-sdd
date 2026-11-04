@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "engines": {
     "node": "^20.19.0 || ^22.12.0 || >=24.0.0",
@@ -11,24 +12,35 @@
   },
   "packageManager": "npm@11.12.1",
   "scripts": {
-    "postinstall": "npm run db:generate",
-    "dev": "npm run dev --workspace=@portal-inmobiliario/web --",
-    "build": "npm run build --workspace=@portal-inmobiliario/web",
-    "start": "npm run start --workspace=@portal-inmobiliario/web --",
-    "lint": "npm run lint --workspace=@portal-inmobiliario/web",
-    "typecheck": "npm run typecheck --workspace=@portal-inmobiliario/web",
-    "test": "npm run lint && npm run typecheck",
-    "db:check": "npm run db:check --workspace=@portal-inmobiliario/web",
-    "db:test": "npm run db:test --workspace=@portal-inmobiliario/web",
-    "seed:test": "npm run seed:test --workspace=@portal-inmobiliario/web",
-    "api:test": "npm run api:test --workspace=@portal-inmobiliario/web",
-    "api:test:integration": "npm run api:test:integration --workspace=@portal-inmobiliario/web",
+    "dev": "concurrently --kill-others --names web,api \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev --workspace=@portal-inmobiliario/web --",
+    "dev:api": "npm run dev --workspace=@portal-inmobiliario/api --",
+    "build": "npm run build --workspaces --if-present",
+    "build:web": "npm run build --workspace=@portal-inmobiliario/web",
+    "build:api": "npm run build --workspace=@portal-inmobiliario/api",
+    "start": "concurrently --kill-others --names web,api \"npm run start:web\" \"npm run start:api\"",
+    "start:web": "npm run start --workspace=@portal-inmobiliario/web --",
+    "start:api": "npm run start --workspace=@portal-inmobiliario/api --",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run lint && npm run typecheck && npm run test:unit",
+    "test:unit": "npm run api:test && npm run seed:test && npm run home:test",
+    "test:integration": "npm run db:test && npm run api:test:integration",
+    "test:smoke": "node --test scripts/monorepo.test.mjs",
+    "db:check": "npm run db:check --workspace=@portal-inmobiliario/api",
+    "db:test": "npm run db:test --workspace=@portal-inmobiliario/api",
+    "seed:test": "npm run seed:test --workspace=@portal-inmobiliario/api",
+    "api:test": "npm run api:test --workspace=@portal-inmobiliario/api",
+    "api:test:integration": "npm run api:test:integration --workspace=@portal-inmobiliario/api",
     "home:test": "npm run home:test --workspace=@portal-inmobiliario/web",
-    "db:seed": "npm run db:seed --workspace=@portal-inmobiliario/web",
-    "db:generate": "npm run db:generate --workspace=@portal-inmobiliario/web --",
-    "db:migrate": "npm run db:migrate --workspace=@portal-inmobiliario/web",
-    "db:validate": "npm run db:validate --workspace=@portal-inmobiliario/web",
-    "db:status": "npm run db:status --workspace=@portal-inmobiliario/web",
-    "db:migrate:dev": "npm run db:migrate:dev --workspace=@portal-inmobiliario/web --"
+    "db:seed": "npm run db:seed --workspace=@portal-inmobiliario/api",
+    "db:generate": "npm run db:generate --workspace=@portal-inmobiliario/api --",
+    "db:migrate": "npm run db:migrate --workspace=@portal-inmobiliario/api",
+    "db:validate": "npm run db:validate --workspace=@portal-inmobiliario/api",
+    "db:status": "npm run db:status --workspace=@portal-inmobiliario/api",
+    "db:migrate:dev": "npm run db:migrate:dev --workspace=@portal-inmobiliario/api --"
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1"
   }
 }

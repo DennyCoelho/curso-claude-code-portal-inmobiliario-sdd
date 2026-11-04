@@ -35,6 +35,9 @@ A especificação é a fonte de verdade do projeto.
 - Não utilize Server Actions.
 - Os componentes do frontend não devem acessar diretamente o banco de dados.
 - Mantenha separadas as responsabilidades de API, lógica de negócio e persistência.
+- Utilize npm workspaces: `apps/web` para o frontend Next.js, `apps/api` para o backend Next.js e `packages/contracts` para tipos públicos REST.
+- Mantenha serviços, repositórios, Prisma, migrações, seed e credenciais exclusivamente em `apps/api`. Os aplicativos comunicam-se por HTTP e não importam código um do outro.
+- O frontend utiliza `API_URL` no servidor para encaminhar `/api/**` ao backend. Configure essa variável antes do build; mantenha os contratos independentes do Prisma.
 - Utilize Cloudinary para as imagens dos imóveis.
 - Utilize Google Maps para exibir a localização dos imóveis.
 - Utilize Web3Forms para o formulário de contato.

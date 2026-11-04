@@ -5,7 +5,7 @@ import {
   type PublicPropertyRecord,
   type PublicPropertyRepository,
 } from "../repositories/public-property-repository";
-import type { PublicProperty } from "../types/public-property";
+import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
 
 function serializePublicProperty(property: PublicPropertyRecord): PublicProperty {
   return {

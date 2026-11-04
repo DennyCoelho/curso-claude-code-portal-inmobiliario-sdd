@@ -1,4 +1,4 @@
-import type { PublicProperty } from "../types/public-property";
+import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
 
 export type HomeProperty = Pick<
   PublicProperty,

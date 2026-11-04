@@ -6,6 +6,8 @@ Construir um portal imobiliário full stack voltado ao mercado brasileiro.
 
 A interface, os textos de acessibilidade e os metadados devem utilizar português do Brasil (`pt-BR`).
 
+O código será organizado em um monorepo com duas aplicações Next.js independentes: frontend em `apps/web` e backend REST em `apps/api`. A comunicação entre elas deve ocorrer exclusivamente por HTTP. Contratos públicos TypeScript ficam em `packages/contracts`; banco de dados, regras de negócio e credenciais pertencem ao backend.
+
 Os visitantes poderão descobrir imóveis à venda ou para aluguel, buscá-los e filtrá-los, consultar suas informações completas, visualizar fotografias e uma localização aproximada no mapa, além de solicitar informações sobre um imóvel.
 
 Os usuários cadastrados poderão salvar imóveis de interesse e consultar os imóveis sobre os quais enviaram solicitações.

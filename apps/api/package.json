@@ -1,0 +1,48 @@
+{
+  "name": "@portal-inmobiliario/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "prisma generate",
+    "dev": "next dev --port 3001",
+    "prebuild": "npm run db:generate",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:check": "tsx scripts/check-database.ts",
+    "db:test": "tsx --test scripts/domain-model.test.ts scripts/seed.integration.test.ts",
+    "seed:test": "tsx --test scripts/seed.test.ts",
+    "api:test": "node --conditions=react-server --import tsx --test scripts/public-property.test.ts",
+    "api:test:integration": "node --conditions=react-server --import tsx --test scripts/public-property.integration.test.ts",
+    "db:seed": "prisma db seed",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:validate": "prisma validate",
+    "db:status": "prisma migrate status",
+    "db:migrate:dev": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@portal-inmobiliario/contracts": "*",
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "next": "16.4.3",
+    "pg": "^8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@next/env": "^16.4.3",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "prisma": "^7.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.4.0"
+  }
+}

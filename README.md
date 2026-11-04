@@ -15,23 +15,59 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 
 Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 7 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis e a landing page. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
+## Estrutura do monorepo
+
+O repositório utiliza npm workspaces, com instalação e `package-lock.json` únicos na raiz:
+
+```text
+apps/
+├── web/                # Frontend Next.js: páginas, componentes e consumo REST
+└── api/                # Backend Next.js: Route Handlers, serviços, repositórios e Prisma
+packages/
+└── contracts/          # Tipos públicos REST compartilhados, sem dependências de banco
+scripts/                # Testes HTTP entre os aplicativos
+specs/                  # Especificação, plano técnico e tarefas SDD
+```
+
+Cada app possui seu `package.json`, configurações e ambiente. O frontend não importa código do backend; ambos utilizam `@portal-inmobiliario/contracts/public-property` para o contrato público dos imóveis. O ESLint bloqueia importações diretas entre os apps e dependências de banco no frontend.
+
 ## Desenvolvimento local
 
 Requisitos: Node.js 20.19+, 22.12+ ou 24+ em uma versão compatível com Prisma 7, e npm 10 ou superior. A estrutura inicial foi preparada com Next.js 16.4.3, React 19.3.1 e TypeScript em modo estrito.
 
-Execute a partir da raiz do repositório:
+Na primeira configuração, execute a partir da raiz do repositório. Se os arquivos `.env.local` já existirem, preserve-os e pule as duas cópias:
 
 ```powershell
 npm install
-Copy-Item .env.example apps/web/.env.local
+Copy-Item apps/web/.env.example apps/web/.env.local
+Copy-Item apps/api/.env.example apps/api/.env.local
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000). A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
+Na migração para o monorepo, o ambiente privado existente foi transferido de `apps/web/.env.local` para `apps/api/.env.local`.
+
+`npm run dev` inicia o frontend em [http://localhost:3000](http://localhost:3000) e o backend em [http://localhost:3001](http://localhost:3001), com logs identificados e encerramento conjunto. Para trabalhar em terminais separados, utilize `npm run dev:web` e `npm run dev:api`.
+
+A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
 
 Os destinos `/properties` e `/login` são páginas provisórias de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`; o catálogo, os filtros e a autenticação serão implementados nas respectivas etapas.
 
-O Next.js carrega as variáveis de ambiente de `apps/web/.env.local`, pois esse é o diretório da aplicação. O arquivo `.env.example` documenta a configuração. A landing page consome a API REST no navegador; a API de imóveis e os comandos de banco exigem PostgreSQL e `DATABASE_URL`. Preencha as credenciais das integrações nas tarefas correspondentes e mantenha os segredos no servidor.
+Cada app Next.js carrega seu próprio `.env.local`. O frontend recebe somente `API_URL`, com padrão local `http://127.0.0.1:3001`; o backend recebe `DATABASE_URL` e as credenciais privadas descritas em `apps/api/.env.example`.
+
+A landing page mantém as chamadas relativas a `/api/properties`. O Next.js do frontend encaminha `/api/**` ao backend usando `rewrites`, preservando o caminho, os parâmetros de consulta e as respostas REST. O navegador utiliza a mesma origem da interface. O backend implementa os endpoints e acessa o PostgreSQL; as credenciais ficam exclusivamente nele.
+
+O endpoint `GET /api/health` verifica se o backend está respondendo, sem consultar o banco. Pode ser acessado diretamente na porta 3001 ou pelo encaminhamento na porta 3000.
+
+## Build e execução independente
+
+```powershell
+npm run build
+npm start
+```
+
+O build compila cada aplicação separadamente. `npm start` serve as duas compilações nas portas 3000 e 3001. Para executar somente um app, use `npm run build:web` / `npm run start:web` ou `npm run build:api` / `npm run start:api`.
+
+Para publicar em serviços separados, configure a raiz do app correspondente (`apps/web` ou `apps/api`) e disponibilize os workspaces do repositório durante a instalação. Defina `API_URL` no ambiente do frontend **antes do build**, apontando para a origem HTTP(S) do backend, sem o sufixo `/api`. O destino dos rewrites faz parte da compilação: alterá-lo exige recompilar o frontend. Configure banco e segredos somente no serviço do backend.
 
 ## Landing page
 
@@ -43,13 +79,13 @@ A busca usa React Hook Form e Zod para validar até 200 caracteres e a operaçã
 
 Com o PostgreSQL em execução e o seed carregado, abra a página inicial para visualizar as seleções. Sem banco disponível, a busca e as chamadas para ação continuam acessíveis e as seleções mostram uma mensagem de erro. A ilustração do hero é decorativa; nenhuma fotografia de imóvel foi inventada ou adicionada ao banco.
 
-Execute `npm run home:test` para validar a seleção dos imóveis, os preços, a busca e seus parâmetros, o cliente REST e os estados das seções. `npm test` verifica ESLint e TypeScript, e `npm run build` valida a compilação de produção.
+Execute `npm run home:test` para validar a seleção dos imóveis, os preços, a busca e seus parâmetros, o cliente REST e os estados das seções. `npm test` verifica ESLint, TypeScript e testes unitários dos apps; `npm run build` valida as duas compilações de produção.
 
 ## PostgreSQL e migrações
 
-A Etapa 3 utiliza [Prisma ORM 7](https://www.prisma.io/docs/orm/v7), seguindo o curso, com Prisma Client, Prisma Migrate e o adaptador PostgreSQL `@prisma/adapter-pg`. O esquema fica em `apps/web/prisma/schema.prisma`, e as migrações SQL versionadas ficam em `apps/web/prisma/migrations/`. Os repositórios poderão obter o cliente pelo `getDatabase()` de `apps/web/src/lib/db/index.ts`, protegido com `server-only` e com reutilização das conexões.
+A Etapa 3 utiliza [Prisma ORM 7](https://www.prisma.io/docs/orm/v7), seguindo o curso, com Prisma Client, Prisma Migrate e o adaptador PostgreSQL `@prisma/adapter-pg`. O esquema fica em `apps/api/prisma/schema.prisma`, e as migrações SQL versionadas ficam em `apps/api/prisma/migrations/`. Os repositórios poderão obter o cliente pelo `getDatabase()` de `apps/api/src/lib/db/index.ts`, protegido com `server-only` e com reutilização das conexões.
 
-`npm install` gera o Prisma Client automaticamente, e o build também o regenera antes de compilar. O código gerado fica em `apps/web/src/generated/prisma/`, ignorado pelo Git. A geração e a validação do esquema podem ser executadas antes de configurar as credenciais do banco.
+`npm install` gera o Prisma Client automaticamente, e o build do backend também o regenera antes de compilar. O código gerado fica em `apps/api/src/generated/prisma/`, ignorado pelo Git. O frontend pode ser compilado sem gerar o Prisma Client. A geração e a validação do esquema podem ser executadas antes de configurar as credenciais do banco.
 
 O ambiente local reutiliza o contêiner `postgres`, publicado na porta `5432`. Crie o banco do portal uma única vez, caso ainda não exista:
 
@@ -57,7 +93,7 @@ O ambiente local reutiliza o contêiner `postgres`, publicado na porta `5432`. C
 docker exec postgres createdb -U postgres --encoding=UTF8 --template=template0 portal_inmobiliario
 ```
 
-Em `apps/web/.env.local`, configure `DATABASE_URL` com o usuário e a senha do seu PostgreSQL, apontando para `localhost:5432/portal_inmobiliario`. Codifique caracteres especiais do usuário e da senha na URL. Esse arquivo é ignorado pelo Git.
+Em `apps/api/.env.local`, configure `DATABASE_URL` com o usuário e a senha do seu PostgreSQL, apontando para `localhost:5432/portal_inmobiliario`. Codifique caracteres especiais do usuário e da senha na URL. Esse arquivo é ignorado pelo Git.
 
 Execute na raiz do repositório:
 
@@ -75,7 +111,7 @@ npm run db:migrate:dev -- --name=nome_da_alteracao
 npm run db:generate
 ```
 
-Para revisar o SQL antes de aplicá-lo, acrescente `--create-only` a `db:migrate:dev`; depois da revisão, execute `npm run db:migrate` e `npm run db:generate`. `db:migrate` aplica apenas as migrações pendentes; executá-lo novamente mantém as migrações já registradas. `db:status` compara o histórico local com o aplicado no banco. Os comandos de banco carregam os mesmos arquivos de ambiente da aplicação usando `@next/env` em `apps/web/prisma.config.ts`.
+Para revisar o SQL antes de aplicá-lo, acrescente `--create-only` a `db:migrate:dev`; depois da revisão, execute `npm run db:migrate` e `npm run db:generate`. `db:migrate` aplica apenas as migrações pendentes; executá-lo novamente mantém as migrações já registradas. `db:status` compara o histórico local com o aplicado no banco. Os comandos de banco carregam os mesmos arquivos de ambiente da aplicação usando `@next/env` em `apps/api/prisma.config.ts`.
 
 ### Modelo de domínio
 
@@ -110,7 +146,7 @@ Depois de configurar `DATABASE_URL` e aplicar as migrações, execute na raiz:
 npm run db:seed
 ```
 
-O comando usa `prisma db seed`, configurado em `apps/web/prisma.config.ts`, e carrega o ambiente de `apps/web/.env.local`. A execução é explícita e cria os dados em uma única transação: em caso de falha, nenhuma alteração é confirmada. O comando recusa execução com `NODE_ENV=production`.
+O comando usa `prisma db seed`, configurado em `apps/api/prisma.config.ts`, e carrega o ambiente de `apps/api/.env.local`. A execução é explícita e cria os dados em uma única transação: em caso de falha, nenhuma alteração é confirmada. O comando recusa execução com `NODE_ENV=production`.
 
 O conjunto inicial contém:
 
@@ -122,7 +158,7 @@ O conjunto inicial contém:
 
 Os anúncios, números e complementos são fictícios, com localidades e CEPs brasileiros como referência; não representam ofertas reais. Os preços de venda são totais e os de aluguel são mensais em BRL, com encargos separados nas descrições. Imagens serão adicionadas pelo fluxo do Cloudinary na etapa correspondente.
 
-O seed usa IDs fixos para imóveis e nomes únicos para características. Pode ser executado novamente sem duplicar registros ou vínculos, preservando preços, títulos, datas, publicação, características e outras edições locais dos imóveis já existentes. Também preserva os registros criados fora do seed. Para alterar os exemplos iniciais, edite `apps/web/prisma/seed-properties.ts`; essas mudanças serão aplicadas somente aos IDs ainda ausentes no banco.
+O seed usa IDs fixos para imóveis e nomes únicos para características. Pode ser executado novamente sem duplicar registros ou vínculos, preservando preços, títulos, datas, publicação, características e outras edições locais dos imóveis já existentes. Também preserva os registros criados fora do seed. Para alterar os exemplos iniciais, edite `apps/api/prisma/seed-properties.ts`; essas mudanças serão aplicadas somente aos IDs ainda ausentes no banco.
 
 Valide os exemplos sem banco e, depois, sua persistência no PostgreSQL:
 
@@ -142,13 +178,13 @@ A Etapa 6 disponibiliza os seguintes endpoints, sem exigir autenticação:
 | `GET /api/properties` | `200` com um array de imóveis publicados; `[]` quando não houver resultados. |
 | `GET /api/properties/{id}` | `200` com um objeto de imóvel publicado. |
 
-As duas respostas usam o contrato `PublicProperty`, em `apps/web/src/types/public-property.ts`: dados do imóvel e endereço brasileiro, indicador de destaque, datas, imagens e características. O preço é uma string decimal com duas casas, como `"450000.00"`; no aluguel, representa o valor mensal em BRL. As áreas também são strings decimais com duas casas ou `null`. As datas são strings ISO 8601 em UTC. O CEP mantém os oito dígitos, incluindo zeros iniciais. Campos não aplicáveis permanecem `null`; imagens e características ausentes são arrays vazios.
+As duas respostas usam o contrato `PublicProperty`, em `packages/contracts/src/public-property.ts`: dados do imóvel e endereço brasileiro, indicador de destaque, datas, imagens e características. O preço é uma string decimal com duas casas, como `"450000.00"`; no aluguel, representa o valor mensal em BRL. As áreas também são strings decimais com duas casas ou `null`. As datas são strings ISO 8601 em UTC. O CEP mantém os oito dígitos, incluindo zeros iniciais. Campos não aplicáveis permanecem `null`; imagens e características ausentes são arrays vazios.
 
 As imagens contêm `id`, `url`, `position` e `isMain`, em ordem de posição; as características contêm `id` e `name`, em ordem de nome. A API seleciona somente dados públicos: não retorna consultas, favoritos ou o `publicId` de gestão do Cloudinary. O seed ainda não inclui imagens.
 
 Um UUID malformado retorna `400`. Um UUID válido de imóvel inexistente ou despublicado retorna a mesma resposta `404`, sem revelar a existência de rascunhos. Falhas inesperadas retornam `500` com uma mensagem genérica. Os erros seguem o formato `{ "message": "Imóvel não encontrado.", "status": 404 }`, sem detalhes internos. As respostas usam `Cache-Control: no-store` e as rotas são dinâmicas para refletir mudanças de publicação.
 
-As rotas em `src/app/api/properties/` chamam o serviço em `src/services/public-property-service.ts`, que serializa os dados. O repositório em `src/repositories/public-property-repository.ts` consulta o Prisma com `isPublished: true` tanto na listagem quanto nos detalhes. A conexão é aberta somente quando uma consulta é executada. A listagem tem uma ordem estável por data de criação e ID; busca, filtros e opções de ordenação serão adicionados nas etapas correspondentes.
+No backend `apps/api`, as rotas em `src/app/api/properties/` chamam o serviço em `src/services/public-property-service.ts`, que serializa os dados. O repositório em `src/repositories/public-property-repository.ts` consulta o Prisma com `isPublished: true` tanto na listagem quanto nos detalhes. A conexão é aberta somente quando uma consulta é executada. A listagem tem uma ordem estável por data de criação e ID; busca, filtros e opções de ordenação serão adicionados nas etapas correspondentes.
 
 Com o banco migrado, o seed executado e o servidor iniciado, consulte no PowerShell:
 
@@ -166,6 +202,8 @@ npm run api:test:integration
 ```
 
 `api:test` verifica os serviços e os Route Handlers sem banco: serialização, campos opcionais, lista vazia, UUID, códigos HTTP, cache e mensagens de erro. `api:test:integration` exige PostgreSQL migrado e verifica as consultas reais, a exclusão de rascunhos, despublicação, relações e seleção de dados públicos. Os cenários de integração usam transações revertidas, sem manter registros ou alterações no banco. Os comandos usam a condição `react-server` do Node para respeitar os módulos protegidos com `server-only`.
+
+Com os dois apps em execução, rode `npm run test:smoke` em outro terminal. O teste HTTP verifica a landing, a saúde do backend, o encaminhamento REST, listagem, detalhes e códigos `400` e `405`. A listagem exige PostgreSQL configurado e migrado. As URLs dos testes podem ser substituídas por `WEB_URL` e `API_URL` no ambiente do terminal.
 
 ## pgAdmin no Docker
 
@@ -200,12 +238,18 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 
 | Comando             | Finalidade                                             |
 | ------------------- | ------------------------------------------------------ |
-| `npm run dev`       | Iniciar o servidor de desenvolvimento.                 |
-| `npm run build`     | Gerar e verificar a compilação de produção.            |
-| `npm start`         | Servir a compilação de produção.                       |
+| `npm run dev`       | Iniciar frontend e backend em desenvolvimento.        |
+| `npm run dev:web` / `npm run dev:api` | Iniciar somente o app escolhido. |
+| `npm run build`     | Gerar e verificar as duas compilações de produção.     |
+| `npm run build:web` / `npm run build:api` | Compilar somente o app escolhido. |
+| `npm start`         | Servir frontend e backend em produção.                 |
+| `npm run start:web` / `npm run start:api` | Servir somente o app escolhido. |
 | `npm run lint`      | Executar o ESLint sem permitir avisos.                 |
 | `npm run typecheck` | Gerar os tipos das rotas e verificar o TypeScript.     |
-| `npm test`          | Executar as validações estáticas: ESLint e TypeScript. |
+| `npm test`          | Executar ESLint, TypeScript e testes unitários.        |
+| `npm run test:unit` | Executar os testes de API, seed e landing sem banco.   |
+| `npm run test:integration` | Executar os testes de domínio, seed e API no PostgreSQL. |
+| `npm run test:smoke` | Validar por HTTP os dois apps já iniciados.           |
 | `npm run db:check`  | Validar a conexão real com o PostgreSQL usando o ORM. |
 | `npm run db:test`   | Testar o modelo, as restrições e o seed no PostgreSQL migrado. |
 | `npm run seed:test` | Validar os exemplos do seed sem conexão com o banco. |
@@ -219,7 +263,7 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run db:validate` | Validar o esquema do Prisma. |
 | `npm run db:status` | Consultar a consistência do histórico de migrações. |
 
-`npm test` executa as validações estáticas. `npm run seed:test` valida os exemplos de demonstração sem banco. `npm run api:test` verifica os serviços e as rotas da API pública sem banco. `npm run db:check` valida uma consulta real pelo ORM. `npm run db:test` executa os testes de integração do modelo de domínio e do seed. `npm run api:test:integration` verifica a persistência usada pela API pública. Os comandos que acessam o banco exigem PostgreSQL em execução e `DATABASE_URL` configurada.
+`npm test` executa as validações estáticas e os testes unitários. `npm run seed:test` valida os exemplos de demonstração sem banco. `npm run api:test` verifica os serviços e as rotas da API pública sem banco. `npm run db:check` valida uma consulta real pelo ORM. `npm run db:test` executa os testes de integração do modelo de domínio e do seed. `npm run api:test:integration` verifica a persistência usada pela API pública. Os comandos que acessam o banco exigem PostgreSQL em execução e `DATABASE_URL` configurada.
 
 Para verificar a versão de produção:
 
@@ -233,15 +277,22 @@ npm start
 ```text
 .
 ├── apps/
-│   └── web/
+│   ├── web/                  # Frontend Next.js
+│   │   ├── .env.example      # Origem HTTP do backend
+│   │   └── src/
+│   │       ├── app/          # Páginas e layouts
+│   │       ├── components/   # Interface reutilizável
+│   │       └── lib/          # Interface e cliente REST
+│   └── api/                  # Backend Next.js
+│       ├── .env.example      # Banco e integrações privadas
+│       ├── prisma/           # Esquema, migrações e seed
 │       └── src/
-│           ├── app/           # App Router e Route Handlers em api/
-│           ├── components/    # Interface reutilizável
-│           ├── services/      # Lógica da aplicação
-│           ├── repositories/  # Persistência
-│           ├── lib/           # Utilitários e clientes
-│           └── types/         # Tipos compartilhados
-├── .env.example
+│           ├── app/api/      # Route Handlers REST
+│           ├── services/     # Lógica da aplicação
+│           ├── repositories/ # Persistência
+│           └── lib/          # Banco e respostas HTTP
+├── packages/contracts/      # Contratos REST TypeScript
+├── scripts/                  # Testes HTTP do monorepo
 ├── package.json              # Monorepo com npm workspaces
 ├── CLAUDE.md
 └── specs/
