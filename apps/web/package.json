@@ -9,7 +9,8 @@
     "start": "next start --port 3000",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "home:test": "tsx --test scripts/home.test.tsx"
+    "home:test": "tsx --test scripts/home.test.tsx",
+    "property:test": "tsx --test scripts/property-card.test.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.1",

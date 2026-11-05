@@ -265,6 +265,14 @@ Os caminhos desta seção são relativos a `apps/web`. A interface acessa o back
 - `HomeSearch` utiliza React Hook Form e Zod, aceita texto opcional de até 200 caracteres e operação opcional `SALE`/`RENT`. Navega por GET para `/properties` usando `search` e `operation`, com valores codificados por `URLSearchParams`. A implementação do catálogo, da busca efetiva e dos filtros permanece nas Etapas 9 a 11.
 - Estados locais de carregamento, seleção vazia e falha com nova tentativa, sem impedir o uso da busca e das chamadas para ação. Testes unitários em `scripts/home.test.tsx`, executados por `npm run home:test`.
 
+### PropertyCard e grade responsiva — Etapa 8
+
+- Componentes reutilizáveis em `apps/web/src/components/properties/`: `PropertyCard` recebe os campos públicos necessários à apresentação e `PropertyGrid` organiza os cards em uma, duas ou três colunas conforme a largura da tela.
+- Integrar a grade às três seleções da landing, preservando a consulta REST compartilhada, os limites e os estados existentes. Expandir o tipo e a validação Zod da landing para imagens, quartos, banheiros e áreas, sem alterar o contrato REST ou o backend.
+- Exibir imagem principal ou, na ausência dela, a primeira por posição, sem modificar a coleção recebida. Usar `next/image` para URLs HTTPS de entrega do Cloudinary, com proporção reservada, carregamento sob demanda e texto alternativo. Ausência de imagem, URL incompatível ou falha no carregamento apresenta um espaço reservado com texto em português.
+- Compartilhar a formatação de preço em BRL e aluguel mensal entre os cards. Exibir tipo, operação, título, bairro/cidade/UF, quartos e banheiros quando não forem nulos, incluindo zero e concordância no singular. Mostrar área útil em m² com formatação `pt-BR`; quando ausente, mostrar a área total, identificada como tal.
+- Validar seleção de imagem, formatação, campos opcionais, contrato REST e renderização dos componentes com testes unitários, além de lint, tipos, build e conferência visual da grade em celular, tablet e computador. Catálogo, filtros e páginas de detalhes permanecem nas respectivas etapas.
+
 ## 9. Busca e filtros
 
 `GET /api/properties` deve aceitar parâmetros como:

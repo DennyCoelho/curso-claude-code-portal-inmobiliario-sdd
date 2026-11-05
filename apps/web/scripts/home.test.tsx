@@ -4,7 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { HomePropertySection } from "../src/components/home/home-property-section";
 import { fetchHomeProperties } from "../src/lib/api/home-properties";
-import { formatHomePrice, selectHomeProperties, type HomeProperty } from "../src/lib/home";
+import { selectHomeProperties, type HomeProperty } from "../src/lib/home";
+import { formatPropertyPrice } from "../src/lib/property";
 import { buildHomeSearchUrl, homeSearchSchema } from "../src/lib/home-search";
 
 const property: HomeProperty = {
@@ -17,6 +18,11 @@ const property: HomeProperty = {
   city: "São Paulo",
   state: "SP",
   isFeatured: true,
+  bedrooms: 3,
+  bathrooms: 2,
+  usableArea: "85.50",
+  totalArea: "120.00",
+  images: [],
 };
 
 afterEach(() => mock.restoreAll());
@@ -39,9 +45,9 @@ test("as seleções usam destaque e operação, limitam três itens e preservam 
 
 test("os preços usam BRL e pt-BR, com indicação mensal somente no aluguel", () => {
   const normalize = (value: string) => value.replace(/\s/g, " ");
-  assert.equal(normalize(formatHomePrice(property)), "R$ 450.000,10");
-  assert.equal(normalize(formatHomePrice({ price: "2500.00", operation: "RENT" })), "R$ 2.500,00/mês");
-  assert.equal(normalize(formatHomePrice({ price: "999999999999.99", operation: "SALE" })), "R$ 999.999.999.999,99");
+  assert.equal(normalize(formatPropertyPrice(property)), "R$ 450.000,10");
+  assert.equal(normalize(formatPropertyPrice({ price: "2500.00", operation: "RENT" })), "R$ 2.500,00/mês");
+  assert.equal(normalize(formatPropertyPrice({ price: "999999999999.99", operation: "SALE" })), "R$ 999.999.999.999,99");
 });
 
 test("a busca valida limites, remove espaços externos e permite explorar sem texto", () => {
@@ -85,6 +91,10 @@ test("o cliente aceita uma lista vazia e apresenta erro genérico para falha HTT
     Response.json({ properties: [] }),
     Response.json([{ ...property, price: 450000 }]),
     Response.json([{ ...property, operation: "INVALID" }]),
+    Response.json([{ ...property, bedrooms: -1 }]),
+    Response.json([{ ...property, bathrooms: 1.5 }]),
+    Response.json([{ ...property, usableArea: 85.5 }]),
+    Response.json([{ ...property, images: [{ url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" }] }]),
   ]) {
     fetchMock.mock.mockImplementation(async () => response);
     await assert.rejects(fetchHomeProperties("/api/properties"), {
@@ -95,6 +105,24 @@ test("o cliente aceita uma lista vazia e apresenta erro genérico para falha HTT
   await assert.rejects(fetchHomeProperties("/api/properties"), {
     message: "Não foi possível carregar os imóveis.",
   });
+});
+
+test("o cliente REST preserva imagens e características opcionais usadas pelos cards", async () => {
+  const propertyWithImage = {
+    ...property,
+    bedrooms: null,
+    bathrooms: 0,
+    usableArea: null,
+    totalArea: "1000.50",
+    images: [{
+      id: "a2050000-0000-4000-8000-000000000002",
+      url: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      position: 0,
+      isMain: true,
+    }],
+  };
+  mock.method(globalThis, "fetch", async () => Response.json([propertyWithImage]));
+  assert.deepEqual(await fetchHomeProperties("/api/properties"), [propertyWithImage]);
 });
 
 const sectionProps = {

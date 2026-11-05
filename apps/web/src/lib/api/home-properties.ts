@@ -12,6 +12,16 @@ const homePropertiesSchema = z.array(z.object({
   city: z.string(),
   state: z.string().length(2),
   isFeatured: z.boolean(),
+  bedrooms: z.number().int().nonnegative().nullable(),
+  bathrooms: z.number().int().nonnegative().nullable(),
+  usableArea: z.string().regex(/^\d+\.\d{2}$/).nullable(),
+  totalArea: z.string().regex(/^\d+\.\d{2}$/).nullable(),
+  images: z.array(z.object({
+    id: z.uuid(),
+    url: z.string(),
+    position: z.number().int().nonnegative(),
+    isMain: z.boolean(),
+  })),
 })) satisfies z.ZodType<HomeProperty[]>;
 
 export async function fetchHomeProperties(url: string): Promise<HomeProperty[]> {

@@ -100,11 +100,18 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Edge validado em 320, 360, 768, 1280 e 1440 px, sem transbordamento horizontal: dados reais nas três seleções, uma requisição inicial à API, preços em BRL, busca com acentos e operação, busca vazia, menu móvel, Escape e salto por teclado. Estados de carregamento, lista vazia, erro 500 e recuperação por nova tentativa confirmados; console sem erros e ícone retornando `200`.
   - Servidor de produção atualizado e mantido em `http://localhost:3000`. Esta etapa utiliza listas resumidas; `PropertyCard` e grade de imóveis continuam na Etapa 8.
 
-- [ ] **Etapa 8 — PropertyCard e grade responsiva**
+- [x] **Etapa 8 — PropertyCard e grade responsiva**
   - Criar componente reutilizável.
   - Imagem, título, preço em BRL, operação, bairro/cidade/UF, quartos, banheiros e área.
   - Formatação monetária `pt-BR` e indicação `/mês` para aluguel.
   - Criar grade responsiva.
+  - Componentes reutilizáveis `PropertyCard`, `PropertyGrid` e `PropertyImage` em `apps/web/src/components/properties/`, integrados às seleções de destaques, venda e aluguel da landing. Uma coluna no celular, duas a partir de 640 px e três a partir de 1024 px.
+  - Cards com operação, tipo, título, bairro/cidade/UF, preços em BRL e `/mês` no aluguel. Quartos e banheiros preservam zero e concordância no singular; campos nulos são omitidos. Área útil em m² com formatação brasileira e área total identificada quando a útil não estiver disponível.
+  - Imagem principal com prioridade e alternativa pela menor posição, sem alterar a coleção recebida. `next/image` com URLs HTTPS do Cloudinary, proporção reservada, texto alternativo e carregamento sob demanda. Ausência de foto, URL incompatível ou falha de carregamento apresenta “Imagem indisponível”.
+  - Tipo da landing e validação Zod ampliados para os campos dos cards, preservando uma consulta REST compartilhada e os estados existentes. Backend, banco, seed e contrato REST preservados; catálogo e detalhes seguem suas respectivas etapas.
+  - Validação concluída com `npm test`: lint, tipos dos três workspaces e 27 testes unitários, incluindo nove da landing e sete de cards/grade. Builds de produção dos dois apps aprovados; cache do Turbopack do frontend regenerado antes de `npm run build:web`.
+  - Edge em produção validado em 320, 360, 640, 768, 1024 e 1440 px, com respostas HTTP de teste isoladas do banco: nove cards nas três seleções, uma requisição inicial, uma/duas/três colunas e nenhum transbordamento horizontal. Imagem principal, texto alternativo, carregamento sob demanda, falha de imagem, lista vazia, erro e recuperação, carregamento e foco do salto para o conteúdo confirmados; console sem erros. Capturas de celular, tablet e computador conferidas.
+  - Docker Desktop existente iniciado, com PostgreSQL e pgAdmin em execução. Seis testes HTTP do monorepo aprovados contra os dois apps de produção. Cards conferidos novamente em 360 e 1440 px com os imóveis existentes do PostgreSQL: nove cards, uma consulta REST, sem transbordamento ou erros no console. Aplicativos mantidos em `http://localhost:3000` e `http://localhost:3001`.
 
 - [ ] **Etapa 9 — Catálogo**
   - Criar `/properties`.

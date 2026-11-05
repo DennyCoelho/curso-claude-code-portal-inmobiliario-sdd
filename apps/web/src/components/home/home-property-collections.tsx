@@ -35,7 +35,7 @@ export function HomePropertyCollections() {
         emptyMessage="Ainda não há imóveis em destaque. Explore as demais opções do portal."
         status={status}
       />
-      <div className="grid gap-12 border-t border-slate-200 pt-12 lg:grid-cols-2 lg:gap-16">
+      <div className="space-y-14 border-t border-slate-200 pt-12">
         <HomePropertySection
           id="sale-properties"
           eyebrow="Para chamar de seu"

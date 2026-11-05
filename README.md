@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 7 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis e a landing page. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 8 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis, a landing page e os cards em grade responsiva. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
 ## Estrutura do monorepo
 
@@ -75,11 +75,15 @@ A página inicial inclui um hero com ilustração vetorial, busca principal, im�
 
 Os componentes em `apps/web/src/components/home/` usam uma consulta a `GET /api/properties` pelo SWR, compartilhando o resultado entre as três seleções. Cada seção exibe até três imóveis, mantendo a ordem da API. A seleção de destaques usa `isFeatured`; compra e aluguel usam `SALE` e `RENT`. Os preços aparecem em BRL e os aluguéis têm `/mês`. Há estados de carregamento, seleção vazia e erro com botão para tentar novamente. A resposta REST é validada com Zod e a requisição tem limite de dez segundos.
 
-A busca usa React Hook Form e Zod para validar até 200 caracteres e a operação. Ao enviar, navega para `/properties?search=...&operation=...`, removendo espaços externos e codificando acentos e caracteres especiais. Campos vazios são omitidos; sem texto ou operação, abre `/properties`. O formulário também tem ação GET nativa. O destino `/properties` continua provisório: catálogo, busca efetiva e filtros serão implementados nas Etapas 9 a 11. A landing usa listas resumidas; o `PropertyCard` e a grade de imóveis pertencem à Etapa 8.
+A busca usa React Hook Form e Zod para validar até 200 caracteres e a operação. Ao enviar, navega para `/properties?search=...&operation=...`, removendo espaços externos e codificando acentos e caracteres especiais. Campos vazios são omitidos; sem texto ou operação, abre `/properties`. O formulário também tem ação GET nativa. O destino `/properties` continua provisório: catálogo, busca efetiva e filtros serão implementados nas Etapas 9 a 11.
+
+A Etapa 8 apresenta as três seleções com `PropertyCard` e `PropertyGrid`, reutilizáveis em `apps/web/src/components/properties/`. A grade usa uma coluna no celular, duas a partir de 640 px e três a partir de 1024 px. Cada card mostra operação, tipo, título, preço, bairro/cidade/UF, quartos e banheiros quando aplicáveis. A área útil aparece em m² com separadores brasileiros; na ausência dela, a área total é exibida e identificada. Campos nulos são omitidos e contagens iguais a zero são preservadas.
+
+A imagem principal tem prioridade; sem principal, o card usa a menor posição. Imagens HTTPS do Cloudinary são exibidas com `next/image`, texto alternativo, proporção reservada e carregamento sob demanda. Imóvel sem foto, URL incompatível ou falha de carregamento exibe “Imagem indisponível”. O seed continua sem fotografias; nenhum dado do banco foi alterado. A landing mantém uma única consulta REST compartilhada entre as seleções, e a validação Zod também verifica os novos campos dos cards.
 
 Com o PostgreSQL em execução e o seed carregado, abra a página inicial para visualizar as seleções. Sem banco disponível, a busca e as chamadas para ação continuam acessíveis e as seleções mostram uma mensagem de erro. A ilustração do hero é decorativa; nenhuma fotografia de imóvel foi inventada ou adicionada ao banco.
 
-Execute `npm run home:test` para validar a seleção dos imóveis, os preços, a busca e seus parâmetros, o cliente REST e os estados das seções. `npm test` verifica ESLint, TypeScript e testes unitários dos apps; `npm run build` valida as duas compilações de produção.
+Execute `npm run home:test` para validar a seleção dos imóveis, os preços, a busca e seus parâmetros, o cliente REST e os estados das seções. `npm run property:test` verifica os cards e a grade, seleção de imagens, campos opcionais, áreas e conteúdo recebido da API. `npm test` verifica ESLint, TypeScript e testes unitários dos apps; `npm run build` valida as duas compilações de produção.
 
 ## PostgreSQL e migrações
 
