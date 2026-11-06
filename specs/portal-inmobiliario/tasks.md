@@ -113,10 +113,16 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Edge em produção validado em 320, 360, 640, 768, 1024 e 1440 px, com respostas HTTP de teste isoladas do banco: nove cards nas três seleções, uma requisição inicial, uma/duas/três colunas e nenhum transbordamento horizontal. Imagem principal, texto alternativo, carregamento sob demanda, falha de imagem, lista vazia, erro e recuperação, carregamento e foco do salto para o conteúdo confirmados; console sem erros. Capturas de celular, tablet e computador conferidas.
   - Docker Desktop existente iniciado, com PostgreSQL e pgAdmin em execução. Seis testes HTTP do monorepo aprovados contra os dois apps de produção. Cards conferidos novamente em 360 e 1440 px com os imóveis existentes do PostgreSQL: nove cards, uma consulta REST, sem transbordamento ou erros no console. Aplicativos mantidos em `http://localhost:3000` e `http://localhost:3001`.
 
-- [ ] **Etapa 9 — Catálogo**
+- [x] **Etapa 9 — Catálogo**
   - Criar `/properties`.
   - Consumir a API REST.
   - Exibir imóveis publicados.
+  - Página provisória substituída pelo catálogo com introdução, quantidade de imóveis e a grade reutilizável, exibindo todos os resultados na ordem da API. Preços em BRL, aluguel mensal, localização brasileira, imagens e campos opcionais mantêm o comportamento da Etapa 8.
+  - Cliente REST com validação Zod e timeout de dez segundos extraído para `apps/web/src/lib/api/properties.ts`. Hook `usePublicProperties` compartilhado entre landing e catálogo, com a mesma chave SWR e uma consulta inicial por abertura direta. A seleção de publicados permanece exclusivamente no backend existente.
+  - Estados básicos de carregamento, catálogo vazio e erro com nova tentativa, com anúncios acessíveis e hierarquia de títulos. Busca, filtros, ordenação e detalhes permanecem nas próximas etapas.
+  - Validação concluída com `npm test` (lint, tipos dos três workspaces e 33 testes unitários, incluindo seis do catálogo), builds de produção dos dois apps, `npm run test:smoke` (sete testes HTTP) e `npm run api:test:integration` (dois testes transacionais no PostgreSQL). Build executado fora do isolamento após bloqueios de links/processos do Turbopack; cache gerado do frontend regenerado.
+  - Chrome em produção conferido em 320, 360, 640, 768, 1024 e 1440 px: 14 imóveis publicados na ordem da API, uma requisição inicial, uma/duas/três colunas e nenhum transbordamento horizontal. Carregamento, lista vazia, erro e recuperação por nova tentativa validados com respostas HTTP isoladas do banco. Navegação da landing para o catálogo, menu móvel, Escape e salto para o conteúdo confirmados; console inicial sem erros. Capturas de celular, tablet e computador conferidas.
+  - Docker Desktop recuperado por reinício normal após falha de inicialização, com PostgreSQL e pgAdmin em execução. API de publicação validada com transações revertidas. README e plano técnico atualizados; aplicativos mantidos em `http://localhost:3000` e `http://localhost:3001`.
 
 - [ ] **Etapa 10 — Busca**
   - Busca textual.

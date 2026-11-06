@@ -1,15 +1,11 @@
 "use client";
 
-import useSWR from "swr";
-import { fetchHomeProperties } from "@/lib/api/home-properties";
+import { usePublicProperties } from "@/hooks/use-public-properties";
 import { selectHomeProperties } from "@/lib/home";
 import { HomePropertySection } from "./home-property-section";
 
 export function HomePropertyCollections() {
-  const { data, error, isLoading, mutate } = useSWR(
-    "/api/properties", fetchHomeProperties,
-    { shouldRetryOnError: false, revalidateOnFocus: false },
-  );
+  const { data, error, isLoading, mutate } = usePublicProperties();
   const groups = selectHomeProperties(data ?? []);
   const status = isLoading ? "loading" : error ? "error" : "ready";
 

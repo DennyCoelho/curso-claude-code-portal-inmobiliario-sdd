@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { HomeProperty } from "../home";
+import type { PropertyListItem } from "../property";
 
-// Validar somente os campos usados nas seleções da página inicial.
-const homePropertiesSchema = z.array(z.object({
+// Validar os campos públicos usados pela landing e pelo catálogo.
+const propertiesSchema = z.array(z.object({
   id: z.uuid(),
   title: z.string().min(1),
   operation: z.enum(["SALE", "RENT"]),
@@ -22,9 +22,9 @@ const homePropertiesSchema = z.array(z.object({
     position: z.number().int().nonnegative(),
     isMain: z.boolean(),
   })),
-})) satisfies z.ZodType<HomeProperty[]>;
+})) satisfies z.ZodType<PropertyListItem[]>;
 
-export async function fetchHomeProperties(url: string): Promise<HomeProperty[]> {
+export async function fetchPublicProperties(url: string): Promise<PropertyListItem[]> {
   try {
     const response = await fetch(url, {
       cache: "no-store",
@@ -33,7 +33,7 @@ export async function fetchHomeProperties(url: string): Promise<HomeProperty[]> 
 
     if (!response.ok) throw new Error("Resposta indisponível.");
 
-    return homePropertiesSchema.parse(await response.json());
+    return propertiesSchema.parse(await response.json());
   } catch {
     throw new Error("Não foi possível carregar os imóveis.");
   }

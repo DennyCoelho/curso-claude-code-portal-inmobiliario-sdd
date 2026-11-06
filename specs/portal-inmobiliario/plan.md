@@ -273,6 +273,13 @@ Os caminhos desta seção são relativos a `apps/web`. A interface acessa o back
 - Compartilhar a formatação de preço em BRL e aluguel mensal entre os cards. Exibir tipo, operação, título, bairro/cidade/UF, quartos e banheiros quando não forem nulos, incluindo zero e concordância no singular. Mostrar área útil em m² com formatação `pt-BR`; quando ausente, mostrar a área total, identificada como tal.
 - Validar seleção de imagem, formatação, campos opcionais, contrato REST e renderização dos componentes com testes unitários, além de lint, tipos, build e conferência visual da grade em celular, tablet e computador. Catálogo, filtros e páginas de detalhes permanecem nas respectivas etapas.
 
+### Catálogo — Etapa 9
+
+- Substituir a página provisória de `/properties` pelo catálogo público, com título, introdução e a grade reutilizável de imóveis, exibindo todos os itens retornados pela API na mesma ordem.
+- Compartilhar entre a landing e o catálogo o cliente REST com validação Zod, timeout de dez segundos e um hook SWR para `GET /api/properties`. A regra de publicação continua no backend existente; o frontend não acessa o banco.
+- Apresentar a quantidade de imóveis disponíveis e estados básicos de carregamento, catálogo vazio e erro com nova tentativa, usando semântica acessível e os estilos existentes.
+- Validar o consumo REST, a listagem completa, contagem, estados e responsividade, além de lint, tipos, testes e builds dos dois aplicativos. Busca, filtros, opções de ordenação e detalhes permanecem nas próximas etapas.
+
 ## 9. Busca e filtros
 
 `GET /api/properties` deve aceitar parâmetros como:

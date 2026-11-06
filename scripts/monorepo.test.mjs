@@ -33,6 +33,18 @@ test("o frontend continua servindo a landing page em português", async () => {
   assert.match(html, /Imóveis/);
 });
 
+test("o frontend serve o catálogo público com navegação e carregamento acessível", async () => {
+  const response = await request(webUrl, "/properties");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /text\/html/);
+  const html = await response.text();
+  assert.match(html, /lang="pt-BR"/);
+  assert.match(html, /<h1[^>]*>Imóveis<\/h1>/);
+  assert.match(html, /id="main-content"/);
+  assert.match(html, /Carregando imóveis…/);
+  assert.doesNotMatch(html, /catálogo.*disponível em breve/);
+});
+
 test("o encaminhamento preserva o erro REST e o cache de IDs inválidos", async () => {
   for (const origin of [apiUrl, webUrl]) {
     const response = await request(origin, "/api/properties/invalido");

@@ -1,7 +1,6 @@
-import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
-import type { PropertyCardData } from "./property";
+import type { PropertyListItem } from "./property";
 
-export type HomeProperty = PropertyCardData & Pick<PublicProperty, "isFeatured">;
+export type HomeProperty = PropertyListItem;
 
 export function selectHomeProperties(properties: HomeProperty[]) {
   return {

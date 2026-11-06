@@ -6,6 +6,8 @@ export type PropertyCardData = Pick<
   | "images" | "bedrooms" | "bathrooms" | "usableArea" | "totalArea"
 >;
 
+export type PropertyListItem = PropertyCardData & Pick<PublicProperty, "isFeatured">;
+
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",

@@ -3,7 +3,7 @@ import { afterEach, mock, test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { HomePropertySection } from "../src/components/home/home-property-section";
-import { fetchHomeProperties } from "../src/lib/api/home-properties";
+import { fetchPublicProperties } from "../src/lib/api/properties";
 import { selectHomeProperties, type HomeProperty } from "../src/lib/home";
 import { formatPropertyPrice } from "../src/lib/property";
 import { buildHomeSearchUrl, homeSearchSchema } from "../src/lib/home-search";
@@ -75,7 +75,7 @@ test("o cliente REST consulta sem cache e valida somente os campos usados pela l
   const fetchMock = mock.method(globalThis, "fetch", async () => Response.json([
     { ...property, description: "Outro campo do contrato público" },
   ]));
-  assert.deepEqual(await fetchHomeProperties("/api/properties"), [property]);
+  assert.deepEqual(await fetchPublicProperties("/api/properties"), [property]);
   const [url, options] = fetchMock.mock.calls[0].arguments;
   assert.equal(url, "/api/properties");
   assert.equal(options?.cache, "no-store");
@@ -84,7 +84,7 @@ test("o cliente REST consulta sem cache e valida somente os campos usados pela l
 
 test("o cliente aceita uma lista vazia e apresenta erro genérico para falha HTTP, rede ou contrato inválido", async () => {
   const fetchMock = mock.method(globalThis, "fetch", async () => Response.json([]));
-  assert.deepEqual(await fetchHomeProperties("/api/properties"), []);
+  assert.deepEqual(await fetchPublicProperties("/api/properties"), []);
 
   for (const response of [
     Response.json({ message: "Detalhe interno" }, { status: 500 }),
@@ -97,12 +97,12 @@ test("o cliente aceita uma lista vazia e apresenta erro genérico para falha HTT
     Response.json([{ ...property, images: [{ url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" }] }]),
   ]) {
     fetchMock.mock.mockImplementation(async () => response);
-    await assert.rejects(fetchHomeProperties("/api/properties"), {
+    await assert.rejects(fetchPublicProperties("/api/properties"), {
       message: "Não foi possível carregar os imóveis.",
     });
   }
   fetchMock.mock.mockImplementation(async () => { throw new Error("Falha de rede"); });
-  await assert.rejects(fetchHomeProperties("/api/properties"), {
+  await assert.rejects(fetchPublicProperties("/api/properties"), {
     message: "Não foi possível carregar os imóveis.",
   });
 });
@@ -122,7 +122,7 @@ test("o cliente REST preserva imagens e características opcionais usadas pelos 
     }],
   };
   mock.method(globalThis, "fetch", async () => Response.json([propertyWithImage]));
-  assert.deepEqual(await fetchHomeProperties("/api/properties"), [propertyWithImage]);
+  assert.deepEqual(await fetchPublicProperties("/api/properties"), [propertyWithImage]);
 });
 
 const sectionProps = {
