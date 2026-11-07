@@ -96,3 +96,37 @@ test("o encaminhamento preserva métodos HTTP não permitidos", async () => {
     assert.equal(response.status, 405);
   }
 });
+
+test("a busca chega ao PostgreSQL pelo frontend e preserva resultados, ordem e contrato", async () => {
+  const response = await request(apiUrl, "/api/properties");
+  assert.equal(response.status, 200);
+  const properties = await response.json();
+  for (const search of [" São Paulo ", "pinheiros", "sp", "sem-resultado-etapa-10", "%_\\", "   "]) {
+    const path = `/api/properties?${new URLSearchParams({ search })}`;
+    const expected = properties.filter((property) => [
+      property.title, property.neighborhood, property.city, property.state, property.description,
+    ].some((value) => value.toLowerCase().includes(search.trim().toLowerCase())));
+    for (const origin of [apiUrl, webUrl]) {
+      const result = await request(origin, path);
+      assert.equal(result.status, 200);
+      assert.equal(result.headers.get("cache-control"), "no-store");
+      assert.deepEqual(await result.json(), expected);
+    }
+  }
+});
+
+test("a busca preserva erros 400 no proxy e preenche o formulário ao abrir a URL diretamente", async () => {
+  for (const path of ["/api/properties?search=SP&search=PR", `/api/properties?search=${"a".repeat(201)}`]) {
+    const direct = await request(apiUrl, path);
+    const proxied = await request(webUrl, path);
+    assert.equal(direct.status, 400);
+    assert.equal(proxied.status, 400);
+    assert.deepEqual(await proxied.json(), await direct.json());
+  }
+  const response = await request(webUrl, "/properties?search=S%C3%A3o+Paulo&operation=SALE");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /role="search" aria-label="Buscar no catálogo"/);
+  assert.match(html, /value="São Paulo"/);
+  assert.match(html, /type="hidden" name="operation" value="SALE"/);
+});

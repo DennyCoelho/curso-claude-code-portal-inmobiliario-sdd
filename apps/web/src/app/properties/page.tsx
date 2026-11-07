@@ -1,6 +1,17 @@
 import { PropertyCatalog } from "@/components/properties/property-catalog";
+import { PropertyCatalogSearch } from "@/components/properties/property-catalog-search";
 
-export default function PropertiesPage() {
+export default async function PropertiesPage({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const parameters = new URLSearchParams();
+  for (const [name, value] of Object.entries(await searchParams)) {
+    for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
+      parameters.append(name, item);
+    }
+  }
+  const query = parameters.toString();
+
   return (
     <div className="space-y-10">
       <header className="max-w-2xl">
@@ -13,7 +24,8 @@ export default function PropertiesPage() {
           Conheça as opções e descubra um lugar para os seus planos.
         </p>
       </header>
-      <PropertyCatalog />
+      <PropertyCatalogSearch key={query} parameters={query} />
+      <PropertyCatalog parameters={query} />
     </div>
   );
 }

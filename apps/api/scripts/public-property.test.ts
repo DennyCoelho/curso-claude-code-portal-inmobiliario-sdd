@@ -66,6 +66,10 @@ function detailRequest(id: string) {
   });
 }
 
+function listRequest(query = "") {
+  return listProperties(new Request(`http://localhost/api/properties${query}`));
+}
+
 afterEach(() => mock.restoreAll());
 
 test("o serviço serializa BRL e áreas com precisão e datas em UTC sem alterar os registros", async () => {
@@ -133,14 +137,14 @@ test("o serviço representa ausência de imóveis e propaga falhas de persistên
 test("GET da listagem retorna JSON 200 sem cache, incluindo uma lista vazia", async () => {
   const expected = await createPublicPropertyService(repositoryWith()).list();
   const listMock = mock.method(publicPropertyService, "list", async () => expected);
-  const response = await listProperties();
+  const response = await listRequest();
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.match(response.headers.get("Content-Type")!, /application\/json/);
   assert.deepEqual(await response.json(), expected);
 
   listMock.mock.mockImplementation(async () => []);
-  const emptyResponse = await listProperties();
+  const emptyResponse = await listRequest();
   assert.equal(emptyResponse.status, 200);
   assert.deepEqual(await emptyResponse.json(), []);
 });
@@ -194,7 +198,7 @@ test("as duas rotas retornam 500 em português sem expor detalhes internos", asy
   });
   const logMock = mock.method(console, "error", () => {});
 
-  for (const response of [await listProperties(), await detailRequest(propertyId)]) {
+  for (const response of [await listRequest(), await detailRequest(propertyId)]) {
     assert.equal(response.status, 500);
     assert.equal(response.headers.get("Cache-Control"), "no-store");
     assert.deepEqual(await response.json(), {
@@ -203,4 +207,40 @@ test("as duas rotas retornam 500 em português sem expor detalhes internos", asy
     });
   }
   assert.equal(logMock.mock.callCount(), 2);
+});
+
+test("a listagem normaliza search e encaminha o termo ao serviço sem misturar parâmetros futuros", async () => {
+  const listMock = mock.method(publicPropertyService, "list", async () => []);
+  for (const search of ["", "   ", " São Paulo & jardim? ", "a".repeat(200), "%_\\", "' OR 1=1--"]) {
+    const query = new URLSearchParams({ search, isPublished: "false", operation: "RENT" });
+    const response = await listRequest(`?${query}`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), []);
+    assert.equal(listMock.mock.calls.at(-1)!.arguments[0], search.trim());
+  }
+});
+
+test("a API rejeita busca longa ou repetida antes de consultar o serviço", async () => {
+  const listMock = mock.method(publicPropertyService, "list", async () => []);
+  for (const [query, message] of [
+    [`?search=${"a".repeat(201)}`, "Use até 200 caracteres na busca."],
+    ["?search=SP&search=PR", "Informe apenas um termo de busca."],
+    ["?search=&search=", "Informe apenas um termo de busca."],
+  ]) {
+    const response = await listRequest(query);
+    assert.equal(response.status, 400);
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+    assert.deepEqual(await response.json(), { message, status: 400 });
+  }
+  assert.equal(listMock.mock.callCount(), 0);
+});
+
+test("o serviço encaminha a busca ao repositório e mantém a serialização pública", async () => {
+  const repository = repositoryWith();
+  const findMock = mock.method(repository, "findPublished");
+  const service = createPublicPropertyService(repository);
+  const [result] = await service.list("São Paulo");
+  assert.equal(findMock.mock.calls[0].arguments[0], "São Paulo");
+  assert.equal(result.price, "2500.00");
+  assert.equal(result.createdAt, "2026-10-01T12:00:00.000Z");
 });

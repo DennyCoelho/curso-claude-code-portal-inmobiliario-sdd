@@ -150,3 +150,74 @@ test("o contrato público preserva dados brasileiros e relações ordenadas sem 
     );
   });
 });
+
+test("a busca consulta os cinco campos no PostgreSQL sem distinguir maiúsculas e exclui rascunhos", async () => {
+  await withRollback(async (transaction) => {
+    const { features: seedFeatures, ...propertyData } = seedProperties[0];
+    assert.ok(seedFeatures.length > 0);
+    const marker = `Busca-${randomUUID()}`;
+    const base = {
+      ...propertyData,
+      title: "Imóvel para teste",
+      description: "Descrição neutra",
+      neighborhood: "Centro",
+      city: "São Paulo",
+      state: "SP",
+      country: "BR",
+      isPublished: true,
+      createdAt: new Date("2026-11-01T12:00:00Z"),
+    };
+    const fields = ["title", "neighborhood", "city", "description"] as const;
+    const records = [];
+    for (const field of fields) {
+      records.push(await transaction.property.create({
+        data: { ...base, id: randomUUID(), [field]: `${marker}-${field} São José` },
+      }));
+    }
+    const draft = await transaction.property.create({
+      data: { ...base, id: randomUUID(), title: marker, isPublished: false },
+    });
+    const stateRecord = await transaction.property.create({
+      data: { ...base, id: randomUUID(), state: "AP" },
+    });
+    const service = createPublicPropertyService(createPublicPropertyRepository(transaction));
+    for (const [index, field] of fields.entries()) {
+      const results = await service.list(`${marker}-${field}`.toUpperCase());
+      assert.deepEqual(results.map(({ id }) => id), [records[index].id], field);
+    }
+    const results = await service.list(marker.toLowerCase());
+    assert.deepEqual(results.map(({ id }) => id), records.map(({ id }) => id).sort());
+    assert.ok(results.every(({ id }) => id !== draft.id));
+    const stateResults = await service.list("ap");
+    assert.ok(stateResults.some(({ id }) => id === stateRecord.id));
+    const all = await service.list();
+    assert.deepEqual(
+      stateResults.map(({ id }) => id),
+      all.filter((property) => [property.title, property.neighborhood, property.city, property.state, property.description]
+        .some((value) => value.toLowerCase().includes("ap"))).map(({ id }) => id),
+    );
+    const accented = await service.list(`${marker}-title São José`);
+    assert.deepEqual(accented.map(({ id }) => id), [records[0].id]);
+    assert.deepEqual(await service.list(`ausente-${randomUUID()}`), []);
+    assert.deepEqual(await service.list("' OR 1=1--"), []);
+    assert.deepEqual(await service.list(""), all);
+  });
+});
+
+test("a busca trata porcentagem, sublinhado e barra invertida como caracteres literais", async () => {
+  await withRollback(async (transaction) => {
+    const { features: seedFeatures, ...propertyData } = seedProperties[0];
+    assert.ok(seedFeatures.length > 0);
+    const marker = randomUUID();
+    const literal = await transaction.property.create({
+      data: { ...propertyData, id: randomUUID(), title: `${marker} 100%_\\ varanda`, isPublished: true, country: "BR" },
+    });
+    await transaction.property.create({
+      data: { ...propertyData, id: randomUUID(), title: `${marker} 100AB varanda`, isPublished: true, country: "BR" },
+    });
+    const service = createPublicPropertyService(createPublicPropertyRepository(transaction));
+    for (const term of [`${marker} 100%`, `${marker} 100%_`, `${marker} 100%_\\`]) {
+      assert.deepEqual((await service.list(term)).map(({ id }) => id), [literal.id]);
+    }
+  });
+});

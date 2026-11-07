@@ -124,10 +124,15 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Chrome em produção conferido em 320, 360, 640, 768, 1024 e 1440 px: 14 imóveis publicados na ordem da API, uma requisição inicial, uma/duas/três colunas e nenhum transbordamento horizontal. Carregamento, lista vazia, erro e recuperação por nova tentativa validados com respostas HTTP isoladas do banco. Navegação da landing para o catálogo, menu móvel, Escape e salto para o conteúdo confirmados; console inicial sem erros. Capturas de celular, tablet e computador conferidas.
   - Docker Desktop recuperado por reinício normal após falha de inicialização, com PostgreSQL e pgAdmin em execução. API de publicação validada com transações revertidas. README e plano técnico atualizados; aplicativos mantidos em `http://localhost:3000` e `http://localhost:3001`.
 
-- [ ] **Etapa 10 — Busca**
+- [x] **Etapa 10 — Busca**
   - Busca textual.
   - Título, bairro, cidade, UF e descrição.
   - Representar a busca nos parâmetros de consulta da URL.
+  - `GET /api/properties?search=...` valida um único termo de até 200 caracteres, remove espaços externos e pesquisa os cinco campos no PostgreSQL por correspondência parcial sem distinguir maiúsculas e minúsculas. Acentos e caracteres literais preservados, inclusive `%`, `_` e barra invertida; publicados e ordem estável mantidos. Texto vazio equivale ao catálogo completo; entrada longa ou repetida retorna `400` antes da consulta.
+  - Formulário do catálogo com React Hook Form, Zod e ação GET, preenchido pela URL. Busca e limpeza preservam os demais parâmetros existentes. Integração da busca da landing, acesso direto, recarga e voltar/avançar conferidos. Filtros de operação e demais campos continuam na Etapa 11.
+  - Uma chave SWR por termo normalizado, sem filtragem do catálogo no navegador nem uso de resultados de outro termo. Busca vazia compartilha o cache da landing. Termo, contagem, carregamento, ausência de correspondências, falha com nova tentativa e recuperação de URL inválida tratados com textos acessíveis.
+  - Validação concluída com `npm test` (lint, tipos dos três workspaces e 41 testes unitários), quatro testes de integração da API no PostgreSQL com transações revertidas, nove testes HTTP de `npm run test:smoke` e builds de produção dos dois aplicativos. Bloqueios de links, processos e conexão local do sandbox resolvidos com execução fora do isolamento; cache gerado do frontend regenerado para concluir o build.
+  - Navegador em produção validado em 320, 360, 640, 768, 1024 e 1440 px, sem transbordamento horizontal. Busca da landing, pesquisa pelo catálogo e Enter, termo com acento, limpar, lista sem resultados, limite de 200 caracteres, parâmetros repetidos, preservação de operação, histórico e recarga conferidos; console sem erros ou avisos. README e plano técnico atualizados; aplicativos em `http://localhost:3000` e `http://localhost:3001`.
 
 - [ ] **Etapa 11 — Filtros**
   - Venda/aluguel.

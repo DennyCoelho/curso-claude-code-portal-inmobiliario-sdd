@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 9 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis, a landing page, os cards em grade responsiva e o catálogo público. A busca efetiva, os filtros, os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 10 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis, a landing page, os cards em grade responsiva, o catálogo público e a busca textual. Os filtros, os mapas e o contato serão implementados nas respectivas etapas.
 
 ## Estrutura do monorepo
 
@@ -50,7 +50,7 @@ Na migração para o monorepo, o ambiente privado existente foi transferido de `
 
 A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
 
-O destino `/properties` exibe o catálogo público; `/login` continua como página provisória de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`. Os parâmetros de busca e operação continuam na URL, mas sua aplicação ao catálogo será implementada nas Etapas 10 e 11. A autenticação segue a Etapa 17.
+O destino `/properties` exibe o catálogo público; `/login` continua como página provisória de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`. O parâmetro `search` pesquisa efetivamente o catálogo na Etapa 10. A operação continua na URL e será aplicada junto aos demais filtros na Etapa 11. A autenticação segue a Etapa 17.
 
 Cada app Next.js carrega seu próprio `.env.local`. O frontend recebe somente `API_URL`, com padrão local `http://127.0.0.1:3001`; o backend recebe `DATABASE_URL` e as credenciais privadas descritas em `apps/api/.env.example`.
 
@@ -75,7 +75,7 @@ A página inicial inclui um hero com ilustração vetorial, busca principal, im�
 
 Os componentes em `apps/web/src/components/home/` usam uma consulta a `GET /api/properties` pelo SWR, compartilhando o resultado entre as três seleções. Cada seção exibe até três imóveis, mantendo a ordem da API. A seleção de destaques usa `isFeatured`; compra e aluguel usam `SALE` e `RENT`. Os preços aparecem em BRL e os aluguéis têm `/mês`. Há estados de carregamento, seleção vazia e erro com botão para tentar novamente. A resposta REST é validada com Zod e a requisição tem limite de dez segundos.
 
-A busca usa React Hook Form e Zod para validar até 200 caracteres e a operação. Ao enviar, navega para `/properties?search=...&operation=...`, removendo espaços externos e codificando acentos e caracteres especiais. Campos vazios são omitidos; sem texto ou operação, abre `/properties`. O formulário também tem ação GET nativa. O destino `/properties` já apresenta o catálogo completo; busca efetiva e filtros serão implementados nas Etapas 10 e 11.
+A busca usa React Hook Form e Zod para validar até 200 caracteres e a operação. Ao enviar, navega para `/properties?search=...&operation=...`, removendo espaços externos e codificando acentos e caracteres especiais. Campos vazios são omitidos; sem texto ou operação, abre `/properties`. O formulário também tem ação GET nativa. O destino `/properties` aplica a busca textual no PostgreSQL; a operação e os demais filtros seguem a Etapa 11.
 
 A Etapa 8 apresenta as três seleções com `PropertyCard` e `PropertyGrid`, reutilizáveis em `apps/web/src/components/properties/`. A grade usa uma coluna no celular, duas a partir de 640 px e três a partir de 1024 px. Cada card mostra operação, tipo, título, preço, bairro/cidade/UF, quartos e banheiros quando aplicáveis. A área útil aparece em m² com separadores brasileiros; na ausência dela, a área total é exibida e identificada. Campos nulos são omitidos e contagens iguais a zero são preservadas.
 
@@ -91,7 +91,17 @@ A Etapa 9 substitui a página provisória de `/properties` pelo catálogo de im�
 
 O catálogo informa a quantidade disponível, com singular e plural, e usa uma, duas ou três colunas conforme a largura da tela. Inclui carregamento anunciado, mensagem para catálogo vazio e erro com botão “Tentar novamente”. Os cards mantêm preços em BRL, aluguel mensal, localização brasileira, campos opcionais e o tratamento de imagens da Etapa 8.
 
-O cliente REST em `apps/web/src/lib/api/properties.ts` e o hook `usePublicProperties` são compartilhados com a landing: SWR com a mesma chave `/api/properties`, validação Zod dos campos utilizados, timeout de dez segundos e erro genérico em português. Cada abertura direta do catálogo usa uma consulta para a listagem inteira. Não há acesso ao banco pelo frontend.
+O cliente REST em `apps/web/src/lib/api/properties.ts` e o hook `usePublicProperties` são compartilhados com a landing: SWR com a mesma chave `/api/properties` quando não houver busca, validação Zod dos campos utilizados, timeout de dez segundos e erro genérico em português. Cada abertura direta do catálogo usa uma consulta REST para a listagem solicitada. Não há acesso ao banco pelo frontend.
+
+### Busca textual
+
+A Etapa 10 permite pesquisar por título, bairro, cidade, UF e descrição. O formulário do catálogo permite alterar e limpar a busca, preservando os demais parâmetros da URL. A busca da landing chega ao mesmo fluxo. Por exemplo, [buscar São Paulo](http://localhost:3000/properties?search=S%C3%A3o+Paulo) preenche o campo ao abrir diretamente ou recarregar; voltar e avançar mantêm a correspondência entre URL, campo e resultados.
+
+`GET /api/properties?search=...` executa a correspondência parcial no PostgreSQL, sem distinguir maiúsculas e minúsculas e mantendo os acentos. O termo é tratado literalmente, inclusive `%`, `_` e barra invertida. Apenas imóveis publicados são retornados, na ordem existente. O termo vazio ou formado por espaços equivale à listagem completa. A API remove espaços externos e retorna `400` para mais de 200 caracteres ou parâmetros `search` repetidos, antes de consultar o banco.
+
+Cada termo normalizado possui uma chave SWR própria; o catálogo não filtra todos os imóveis no navegador nem apresenta dados de outra busca durante o carregamento. O resultado informa o termo e a quantidade encontrada. Sem correspondências, orienta a tentar outras palavras ou limpar a busca; falhas preservam a opção de tentar novamente. URLs inválidas exibem uma orientação e permitem corrigir ou limpar o termo sem consultar a API.
+
+`npm run catalog:test` inclui validação, URLs, cache por termo, formulário GET e resultados da busca. `npm run api:test` verifica entrada HTTP e propagação ao serviço/repositório. `npm run api:test:integration` valida os cinco campos, publicação e caracteres literais no PostgreSQL com transações revertidas. `npm run test:smoke` verifica a busca e os erros pelo proxy entre os apps.
 
 Para conferir a implementação, inicie os dois apps com o PostgreSQL existente em execução e abra [http://localhost:3000/properties](http://localhost:3000/properties). Execute `npm run catalog:test` para os testes de listagem completa, ordem, contagem, estados, integração com o cache SWR e composição da página. Esses testes também fazem parte de `npm test`; `npm run test:smoke` inclui a resposta HTTP da rota do catálogo.
 

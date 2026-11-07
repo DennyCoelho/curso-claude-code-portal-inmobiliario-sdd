@@ -22,8 +22,8 @@ export function createPublicPropertyService(
   repository: PublicPropertyRepository = createPublicPropertyRepository(),
 ) {
   return {
-    async list(): Promise<PublicProperty[]> {
-      const properties = await repository.findPublished();
+    async list(search = ""): Promise<PublicProperty[]> {
+      const properties = await repository.findPublished(search);
       return properties.map(serializePublicProperty);
     },
     async findById(id: string): Promise<PublicProperty | null> {

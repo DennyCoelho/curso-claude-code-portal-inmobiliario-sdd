@@ -43,7 +43,7 @@ export type PublicPropertyRecord = Prisma.PropertyGetPayload<{
 }>;
 
 export interface PublicPropertyRepository {
-  findPublished(): Promise<PublicPropertyRecord[]>;
+  findPublished(search?: string): Promise<PublicPropertyRecord[]>;
   findPublishedById(id: string): Promise<PublicPropertyRecord | null>;
 }
 
@@ -51,9 +51,18 @@ export function createPublicPropertyRepository(
   database?: Pick<Prisma.TransactionClient, "property">,
 ): PublicPropertyRepository {
   return {
-    async findPublished() {
+    async findPublished(search = "") {
+      // Escapar os curingas do LIKE para pesquisar o texto literalmente.
+      const contains = search.replace(/[\\%_]/g, "\\$&");
       return (database ?? getDatabase()).property.findMany({
-        where: { isPublished: true },
+        where: {
+          isPublished: true,
+          ...(search ? {
+            OR: ["title", "neighborhood", "city", "state", "description"].map((field) => ({
+              [field]: { contains, mode: "insensitive" },
+            })),
+          } : {}),
+        },
         select: publicPropertySelect,
         orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       });

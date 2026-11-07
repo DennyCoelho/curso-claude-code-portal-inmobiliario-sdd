@@ -309,6 +309,15 @@ Os parâmetros `minPrice` e `maxPrice` representam valores em BRL, sem formataç
 
 A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, sem carregar todo o catálogo no navegador.
 
+### Busca textual — Etapa 10
+
+- Receber `search` em `/properties` e em `GET /api/properties`, removendo espaços externos e limitando o termo a 200 caracteres. Ausência ou texto vazio mantém a listagem completa; parâmetros `search` repetidos ou acima do limite retornam `400` na API.
+- Consultar título, bairro, cidade, UF e descrição com correspondência parcial sem distinção entre maiúsculas e minúsculas no PostgreSQL, sempre combinada com `isPublished: true`. Acentos são preservados; `%`, `_` e barra invertida são tratados como texto literal. Manter o contrato público e a ordem estável existentes.
+- Adicionar formulário de busca ao catálogo, com React Hook Form e Zod, ação GET e navegação pela URL. Preservar os demais parâmetros existentes ao buscar ou limpar o termo. Venda/aluguel e os demais filtros continuam na Etapa 11.
+- Usar uma chave SWR por termo normalizado, compartilhando `/api/properties` com a landing quando não houver busca. Não filtrar a lista no navegador nem mostrar resultados de outro termo durante o carregamento.
+- Preencher o campo pela URL, incluindo acesso direto, recarga e voltar/avançar. Apresentar o termo pesquisado, contagem e estado específico sem resultados; entradas inválidas permitem corrigir a busca sem consultar a API.
+- Validar entrada HTTP, propagação ao repositório, cinco campos no PostgreSQL, publicação, caracteres literais, URLs, cache e interface, além de lint, tipos, testes e builds dos dois apps. Testes de banco usam transações revertidas.
+
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.

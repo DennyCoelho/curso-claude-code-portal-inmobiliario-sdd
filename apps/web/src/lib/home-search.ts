@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { propertySearchSchema } from "./property-search";
 
 export const homeSearchSchema = z.object({
-  search: z.string().trim().max(200, "Use até 200 caracteres na busca."),
+  search: propertySearchSchema,
   operation: z.enum(["", "SALE", "RENT"]),
 });
 

@@ -2,12 +2,18 @@ import assert from 'node:assert/strict'
 import { afterEach, mock, test } from 'node:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { SWRConfig } from 'swr'
+import { AppRouterContext, type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 
 import PropertiesPage from '../src/app/properties/page'
 import { PropertyCatalog } from '../src/components/properties/property-catalog'
 import { PropertyCatalogResults } from '../src/components/properties/property-catalog-results'
 import { fetchPublicProperties } from '../src/lib/api/properties'
 import type { PropertyListItem } from '../src/lib/property'
+import { buildCatalogSearchUrl, buildPublicPropertiesUrl, parseCatalogSearch, propertySearchSchema } from '../src/lib/property-search'
+
+const router: AppRouterInstance = {
+  back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {}, bfcacheId: 'catalog-test',
+}
 
 const property: PropertyListItem = {
   id: 'a2050000-0000-4000-8000-000000000001',
@@ -122,14 +128,84 @@ test('o componente conectado usa a resposta pública da mesma chave SWR da landi
   assert.ok(markup.includes(property.title))
 })
 
-test('a rota apresenta título e introdução em português enquanto aguarda a API', () => {
+test('a rota apresenta título e introdução em português enquanto aguarda a API', async () => {
+  const page = await PropertiesPage({ searchParams: Promise.resolve({}) })
   const markup = renderToStaticMarkup(
-    <SWRConfig value={{ provider: () => new Map() }}>
-      <PropertiesPage />
-    </SWRConfig>,
+    <AppRouterContext.Provider value={router}>
+      <SWRConfig value={{ provider: () => new Map() }}>{page}</SWRConfig>
+    </AppRouterContext.Provider>,
   )
   assert.match(markup, /<h1[^>]*>Imóveis<\/h1>/)
   assert.match(markup, /imóveis à venda e para alugar/)
   assert.match(markup, /Carregando imóveis…/)
   assert.doesNotMatch(markup, /catálogo.*disponível em breve/)
+})
+
+test('a busca normaliza o termo, valida o limite e rejeita parâmetros repetidos', () => {
+  assert.deepEqual(parseCatalogSearch('search=+S%C3%A3o+Paulo+'), { success: true, search: 'São Paulo' })
+  assert.deepEqual(parseCatalogSearch('search=+++'), { success: true, search: '' })
+  assert.deepEqual(parseCatalogSearch('operation=SALE'), { success: true, search: '' })
+  assert.ok(propertySearchSchema.safeParse('a'.repeat(200)).success)
+  assert.equal(parseCatalogSearch(`search=${'a'.repeat(201)}`).success, false)
+  assert.equal(parseCatalogSearch('search=SP&search=PR').success, false)
+})
+
+test('buscar e limpar preservam os demais parâmetros e codificam o texto sem criar novos parâmetros', () => {
+  const search = ' São José & jardim? <casa> %_\\ '
+  const url = new URL(buildCatalogSearchUrl(search, 'operation=SALE&search=antigo&city=Recife'), 'http://localhost')
+  assert.equal(url.pathname, '/properties')
+  assert.equal(url.searchParams.get('search'), search.trim())
+  assert.equal(url.searchParams.get('operation'), 'SALE')
+  assert.equal(url.searchParams.get('city'), 'Recife')
+  assert.equal(url.searchParams.size, 3)
+  assert.equal(buildCatalogSearchUrl('   '), '/properties')
+  assert.equal(buildCatalogSearchUrl('', 'operation=RENT&search=SP'), '/properties?operation=RENT')
+  assert.equal(buildPublicPropertiesUrl('   '), '/api/properties')
+  assert.equal(buildPublicPropertiesUrl(' São Paulo '), '/api/properties?search=S%C3%A3o+Paulo')
+})
+
+test('o catálogo usa a chave SWR do termo e não reutiliza a listagem geral ou de outra busca', () => {
+  const fallback = { '/api/properties': [property], '/api/properties?search=Curitiba': [{ ...property, title: 'Casa em Curitiba' }] }
+  const render = (parameters: string) => renderToStaticMarkup(
+    <SWRConfig value={{ provider: () => new Map(), revalidateOnMount: false, fallback }}>
+      <PropertyCatalog parameters={parameters} />
+    </SWRConfig>,
+  )
+  const matches = render('search=+Curitiba+&operation=SALE')
+  assert.match(matches, /1 imóvel encontrado/)
+  assert.match(matches, /Casa em Curitiba/)
+  assert.doesNotMatch(matches, /Casa com jardim em São Paulo/)
+  const pending = render('search=Recife')
+  assert.doesNotMatch(pending, /<article/)
+  assert.match(pending, /Resultados para:/)
+  const invalid = render('search=SP&search=PR')
+  assert.match(invalid, /role="alert"/)
+  assert.match(invalid, /Informe apenas um termo de busca/)
+  assert.doesNotMatch(invalid, /<article|Carregando imóveis/)
+})
+
+test('a busca sem resultados orienta a corrigir ou limpar e escapa o termo pesquisado', () => {
+  const markup = renderToStaticMarkup(
+    <PropertyCatalogResults properties={[]} status="ready" onRetry={() => {}} search="<script>teste</script>" />,
+  )
+  assert.match(markup, /Nenhum imóvel encontrado para esta busca/)
+  assert.match(markup, /Tente outras palavras ou limpe a busca/)
+  assert.match(markup, /role="status"/)
+  assert.match(markup, /&lt;script&gt;teste&lt;\/script&gt;/)
+  assert.doesNotMatch(markup, /<script>|<article/)
+})
+
+test('a rota preenche o formulário GET pela URL e preserva os parâmetros ao limpar', async () => {
+  const page = await PropertiesPage({ searchParams: Promise.resolve({ search: 'São Paulo', operation: 'RENT' }) })
+  const markup = renderToStaticMarkup(
+    <AppRouterContext.Provider value={router}>
+      <SWRConfig value={{ provider: () => new Map() }}>{page}</SWRConfig>
+    </AppRouterContext.Provider>,
+  )
+  assert.match(markup, /<form[^>]*role="search"[^>]*aria-label="Buscar no catálogo"[^>]*action="\/properties"[^>]*method="get"/)
+  assert.match(markup, /<label for="catalog-search"/)
+  assert.match(markup, /value="São Paulo"/)
+  assert.match(markup, /type="hidden" name="operation" value="RENT"/)
+  assert.match(markup, /href="\/properties\?operation=RENT"/)
+  assert.match(markup, /Limpar busca/)
 })
