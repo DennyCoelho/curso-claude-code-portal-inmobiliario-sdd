@@ -130,3 +130,60 @@ test("a busca preserva erros 400 no proxy e preenche o formulário ao abrir a UR
   assert.match(html, /value="São Paulo"/);
   assert.match(html, /type="hidden" name="operation" value="SALE"/);
 });
+
+test("os filtros combinados chegam ao PostgreSQL e mantêm o contrato pelo proxy", async () => {
+  const allResponse = await request(apiUrl, "/api/properties");
+  assert.equal(allResponse.status, 200);
+  const properties = await allResponse.json();
+  for (const operation of ["SALE", "RENT"]) {
+    const path = `/api/properties?operation=${operation}&minPrice=0&bathrooms=2&minUsableArea=0`;
+    const expected = properties.filter((property) => property.operation === operation && property.bathrooms === 2 && property.usableArea !== null);
+    for (const origin of [apiUrl, webUrl]) {
+      const response = await request(origin, path);
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), expected);
+    }
+  }
+  for (const query of ["state=XX", "operation=SALE&operation=RENT", "minPrice=100&maxPrice=99", "bathrooms=-1"]) {
+    const direct = await request(apiUrl, `/api/properties?${query}`);
+    const proxied = await request(webUrl, `/api/properties?${query}`);
+    assert.equal(direct.status, 400);
+    assert.equal(proxied.status, 400);
+    assert.deepEqual(await proxied.json(), await direct.json());
+  }
+  const response = await request(webUrl, "/properties?search=jardim&operation=RENT&type=HOUSE&city=Recife&state=PE");
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(html, /aria-labelledby="catalog-filters-title"/);
+  assert.match(html, /value="RENT" selected=""/);
+  assert.match(html, /id="filter-city"[^>]*value="Recife"/);
+  assert.match(html, /href="\/properties\?search=jardim"/);
+});
+
+test("seleção múltipla, quartos exatos e faixa de preço funcionam pelos dois aplicativos", async () => {
+  const listResponse = await request(apiUrl, "/api/properties");
+  assert.equal(listResponse.status, 200);
+  const properties = await listResponse.json();
+  for (const name of ["bedrooms", "bathrooms"]) for (const value of ["1", "2", "3", "4+"]) {
+    const query = new URLSearchParams({ [name]: value });
+    query.append("type", "HOUSE");
+    query.append("type", "APARTMENT");
+    const expected = properties.filter((property) => ["HOUSE", "APARTMENT"].includes(property.type)
+      && (value === "4+" ? property[name] >= 4 : property[name] === Number(value)));
+    for (const origin of [apiUrl, webUrl]) {
+      const response = await request(origin, `/api/properties?${query}`);
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), expected);
+    }
+  }
+  for (const operation of ["", "SALE", "RENT"]) {
+    const prices = properties.filter((property) => !operation || property.operation === operation)
+      .map(({ price }) => price).sort((first, second) => Number(first) - Number(second));
+    for (const origin of [apiUrl, webUrl]) {
+      const response = await request(origin, `/api/properties/price-range${operation ? `?operation=${operation}` : ""}`);
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.deepEqual(await response.json(), { minPrice: prices[0] ?? null, maxPrice: prices.at(-1) ?? null });
+    }
+  }
+});

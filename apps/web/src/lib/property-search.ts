@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
 
 export const propertySearchSchema = z.string().trim().max(200, "Use até 200 caracteres na busca.");
 export const catalogSearchSchema = z.object({ search: propertySearchSchema });
@@ -26,8 +27,15 @@ export function buildCatalogSearchUrl(search: string, currentParameters = ""): s
   return query ? `/properties?${query}` : "/properties";
 }
 
-export function buildPublicPropertiesUrl(search: string): string {
+export function buildPublicPropertiesUrl(search: string, filters: PublicPropertyFilters = {}): string {
   const normalizedSearch = propertySearchSchema.parse(search);
-  const query = new URLSearchParams({ search: normalizedSearch });
-  return normalizedSearch ? `/api/properties?${query}` : "/api/properties";
+  const query = new URLSearchParams();
+  if (normalizedSearch) query.set("search", normalizedSearch);
+  for (const name of Object.keys(filters).sort() as (keyof PublicPropertyFilters)[]) {
+    const value = filters[name];
+    if (value !== undefined) {
+      for (const item of Array.isArray(value) ? [...new Set(value)].sort() : [value]) query.append(name, String(item));
+    }
+  }
+  return query.size ? `/api/properties?${query}` : "/api/properties";
 }

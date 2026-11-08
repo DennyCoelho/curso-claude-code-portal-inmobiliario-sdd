@@ -291,6 +291,12 @@ Permitir combinar:
 
 Os filtros devem ser representados na URL.
 
+O catálogo deve apresentar os filtros em um painel lateral à esquerda dos cards, com opção de recolher e expandir. No celular, o painel pode se acomodar acima dos resultados. Tipos de imóvel devem utilizar checkboxes com seleção múltipla; os tipos selecionados são combinados por OR, e os demais filtros por AND. A faixa de preço deve utilizar uma barra com duas alças, exibindo mínimo e máximo em BRL. Quartos deve oferecer qualquer quantidade, 1, 2, 3 ou 4 ou mais: 1, 2 e 3 correspondem a quantidades exatas e 4 ou mais a um mínimo de quatro.
+
+A barra de preço deve iniciar em R$ 0 e terminar em R$ 10.000.000, independentemente da operação. Os passos são de R$ 50 até R$ 10.000, R$ 100 acima de R$ 10.000 até R$ 100.000, R$ 500 acima de R$ 100.000 até R$ 1.000.000 e R$ 1.000 acima de R$ 1.000.000. Banheiros deve oferecer as mesmas opções de quartos, com igualdade em 1/2/3 e mínimo de quatro em 4 ou mais. Depois de área útil, os campos devem seguir Estado (UF), Cidade e Bairro.
+
+Os valores mínimo e máximo devem ser campos editáveis, sincronizados com as duas alças. Digitar um valor atualiza a posição correspondente na barra e mover uma alça preenche o campo. A digitação deve aceitar valores em reais, inclusive centavos, dentro de zero a R$ 10 milhões; os incrementos continuam aplicados ao movimento da barra. Não exibir a legenda que descreve os incrementos.
+
 ```text
 /properties?operation=SALE&neighborhood=pinheiros&city=sao-paulo&state=SP&bedrooms=3
 ```

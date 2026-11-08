@@ -5,7 +5,7 @@ import {
   type PublicPropertyRecord,
   type PublicPropertyRepository,
 } from "../repositories/public-property-repository";
-import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
+import type { PublicProperty, PublicPropertyFilters, PublicPropertyPriceRange } from "@portal-inmobiliario/contracts/public-property";
 
 function serializePublicProperty(property: PublicPropertyRecord): PublicProperty {
   return {
@@ -22,8 +22,12 @@ export function createPublicPropertyService(
   repository: PublicPropertyRepository = createPublicPropertyRepository(),
 ) {
   return {
-    async list(search = ""): Promise<PublicProperty[]> {
-      const properties = await repository.findPublished(search);
+    async priceRange(operation?: PublicPropertyFilters["operation"]): Promise<PublicPropertyPriceRange> {
+      const range = await repository.findPublishedPriceRange(operation);
+      return { minPrice: range.minPrice?.toFixed(2) ?? null, maxPrice: range.maxPrice?.toFixed(2) ?? null };
+    },
+    async list(search = "", filters: PublicPropertyFilters = {}): Promise<PublicProperty[]> {
+      const properties = await repository.findPublished(search, filters);
       return properties.map(serializePublicProperty);
     },
     async findById(id: string): Promise<PublicProperty | null> {

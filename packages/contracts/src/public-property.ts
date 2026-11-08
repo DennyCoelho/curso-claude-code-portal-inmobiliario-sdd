@@ -1,3 +1,21 @@
+export interface PublicPropertyFilters {
+  operation?: PublicProperty["operation"];
+  type?: PublicProperty["type"][];
+  minPrice?: string;
+  maxPrice?: string;
+  bedrooms?: 1 | 2 | 3 | "4+";
+  bathrooms?: 1 | 2 | 3 | "4+";
+  minUsableArea?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface PublicPropertyPriceRange {
+  minPrice: string | null;
+  maxPrice: string | null;
+}
+
 export interface PublicProperty {
   id: string;
   title: string;

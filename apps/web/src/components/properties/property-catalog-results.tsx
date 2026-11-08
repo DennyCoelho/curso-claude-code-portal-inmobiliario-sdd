@@ -6,9 +6,10 @@ interface PropertyCatalogResultsProps {
   status: "loading" | "error" | "ready";
   onRetry: () => void;
   search?: string;
+  filtered?: boolean;
 }
 
-export function PropertyCatalogResults({ properties, status, onRetry, search = "" }: PropertyCatalogResultsProps) {
+export function PropertyCatalogResults({ properties, status, onRetry, search = "", filtered = false }: PropertyCatalogResultsProps) {
   return (
     <section aria-labelledby="catalog-results-title" aria-busy={status === "loading"}>
       <h2 id="catalog-results-title" className="sr-only">{search ? "Resultados da busca" : "Imóveis disponíveis"}</h2>
@@ -26,13 +27,13 @@ export function PropertyCatalogResults({ properties, status, onRetry, search = "
         </div>
       ) : properties.length === 0 ? (
         <div role="status" className="rounded-xl border border-slate-200 bg-white px-5 py-10">
-          <p className="font-semibold text-slate-900">{search ? "Nenhum imóvel encontrado para esta busca." : "Nenhum imóvel disponível no momento."}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{search ? "Tente outras palavras ou limpe a busca para ver todos os imóveis." : "Novas oportunidades podem aparecer em breve. Volte para conferir."}</p>
+          <p className="font-semibold text-slate-900">{filtered ? "Nenhum imóvel encontrado com estes filtros." : search ? "Nenhum imóvel encontrado para esta busca." : "Nenhum imóvel disponível no momento."}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{filtered ? "Ajuste ou limpe os filtros e a busca para ampliar os resultados." : search ? "Tente outras palavras ou limpe a busca para ver todos os imóveis." : "Novas oportunidades podem aparecer em breve. Volte para conferir."}</p>
         </div>
       ) : (
         <div className="space-y-6">
           <p role="status" className="text-sm text-slate-600">
-            {properties.length} {search
+            {properties.length} {search || filtered
               ? properties.length === 1 ? "imóvel encontrado" : "imóveis encontrados"
               : properties.length === 1 ? "imóvel disponível" : "imóveis disponíveis"}
           </p>

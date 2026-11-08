@@ -1,5 +1,6 @@
 import { PropertyCatalog } from "@/components/properties/property-catalog";
 import { PropertyCatalogSearch } from "@/components/properties/property-catalog-search";
+import { PropertyCatalogLayout } from "@/components/properties/property-catalog-layout";
 
 export default async function PropertiesPage({ searchParams }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -25,7 +26,9 @@ export default async function PropertiesPage({ searchParams }: {
         </p>
       </header>
       <PropertyCatalogSearch key={query} parameters={query} />
-      <PropertyCatalog parameters={query} />
+      <PropertyCatalogLayout parameters={query}>
+        <PropertyCatalog parameters={query} />
+      </PropertyCatalogLayout>
     </div>
   );
 }

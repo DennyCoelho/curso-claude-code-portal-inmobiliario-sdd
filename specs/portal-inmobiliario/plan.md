@@ -318,6 +318,40 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 - Preencher o campo pela URL, incluindo acesso direto, recarga e voltar/avançar. Apresentar o termo pesquisado, contagem e estado específico sem resultados; entradas inválidas permitem corrigir a busca sem consultar a API.
 - Validar entrada HTTP, propagação ao repositório, cinco campos no PostgreSQL, publicação, caracteres literais, URLs, cache e interface, além de lint, tipos, testes e builds dos dois apps. Testes de banco usam transações revertidas.
 
+### Filtros combinados — Etapa 11
+
+- Aceitar `operation`, `type`, `minPrice`, `maxPrice`, `bedrooms`, `bathrooms`, `minUsableArea`, `neighborhood`, `city` e `state`, combinados entre si e com `search` por AND no PostgreSQL, sempre com `isPublished: true`. Preservar a ordem estável e o contrato público.
+- Operação e tipo usam os enums públicos; UF é normalizada para maiúsculas e validada entre as 27 UFs. Bairro e cidade usam correspondência parcial sem distinção de maiúsculas, preservando acentos e escapando `%`, `_` e barra invertida.
+- Preços são limites inclusivos em BRL; área mínima considera somente `usableArea`. Quartos e banheiros usam igualdade para 1/2/3 e mínimo de quatro para `4+`. Campos nulos não correspondem às quantidades selecionadas. A interface identifica essas regras e o valor mensal de aluguel.
+- Validar um único valor por parâmetro, exceto `type`, que aceita até seis valores. Campos de localização têm até 200 caracteres; quartos e banheiros aceitam `1`, `2`, `3` e `4+`; limites decimais são não negativos com até duas casas e compatíveis com `Decimal(14,2)` para preço e `Decimal(12,2)` para área. Rejeitar faixa de preço invertida. Vazios são omitidos; erros retornam `400` antes da consulta. Decimais permanecem strings, sem perda por ponto flutuante.
+- Formulário GET com React Hook Form e Zod, rótulos e erros acessíveis, em painel lateral responsivo. Preço utiliza barra de duas alças; a API e as URLs geradas usam ponto decimal. Área aceita vírgula ou ponto na interface.
+- Aplicar e limpar filtros preserva busca e parâmetros não relacionados; a busca preserva os filtros. Preencher campos pela URL e reiniciar o formulário por chave ao navegar, inclusive voltar/avançar. Chave SWR canônica por busca e combinação normalizada, sem reutilizar outra listagem nem filtrar no navegador.
+- Validar filtros individuais e combinados, limites, nulos, rascunhos e caracteres literais em transações revertidas no PostgreSQL; cobrir API, formulários, URLs, cache e proxy com testes. Conferir lint, tipos, builds e interface responsiva. Ordenação permanece na Etapa 12.
+
+### Ajuste solicitado — Painel lateral de filtros
+
+- Posicionar um painel recolhível à esquerda dos cards em telas a partir de 1024 px. Quando recolhido, a grade ocupa a largura disponível. Em telas menores, acomodar o painel como seção recolhível acima dos resultados. Preservar os valores e filtros ativos ao recolher; usar botão com `aria-expanded`, `aria-controls` e conteúdo oculto fora da navegação por teclado.
+- Substituir o tipo único por checkboxes. Repetir `type` na URL, validar até seis valores dos enums, eliminar duplicações e ordenar para o cache. No Prisma, usar `type: { in: [...] }`. Tipos usam OR entre si e AND com os demais filtros. Um único `type` continua válido.
+- Quartos e banheiros são escolhas únicas `1`, `2`, `3` ou `4+`; ausência representa qualquer quantidade. Consultar igualdade para 1/2/3 e `gte: 4` para `4+`.
+- Usar uma barra de duas alças acessíveis, com rótulos, valores BRL, teclado e impedimento de cruzamento. A escala fixa de zero a R$ 10 milhões e seus incrementos seguem o ajuste abaixo. O endpoint `GET /api/properties/price-range?operation=...` continua disponível para consultar os extremos de preços publicados, independentemente da barra.
+- Manter busca, localização, banheiros e área, submissão GET, histórico, validações e estado SWR por combinação. Validar os novos contratos e a agregação no backend; conferir seleção múltipla, quartos exatos/4+, barra, teclado e layout expandido/recolhido no navegador.
+
+### Ajuste solicitado — Escala fixa, banheiros e localização
+
+- A barra passa a usar os limites fixos de R$ 0 a R$ 10 milhões em ambas as operações, sem consultar a faixa agregada. Cada posição corresponde a um valor permitido: 200 passos de R$ 50 até R$ 10 mil; mais 900 de R$ 100 até R$ 100 mil; mais 1.800 de R$ 500 até R$ 1 milhão; mais 9.000 de R$ 1.000 até R$ 10 milhões. Mapear os índices de 0 a 11.900 para preços e vice-versa, com aritmética inteira, teclado, arraste e bloqueio de cruzamento.
+- Usar os campos editáveis de preço no formulário GET, conforme o ajuste abaixo; os índices são exclusivos da apresentação e não seguem na URL nem na API. Valores iniciais válidos na URL mantêm seu preço exato; movimentar uma alça seleciona os passos da escala. Valores fora do intervalo fixo são rejeitados no catálogo com orientação para correção. A API preserva a validação decimal do contrato existente.
+- Alterar operação preserva os limites, pois a escala é comum. O endpoint agregado de preços existente continua independente da barra.
+- Banheiros passa a aceitar apenas `1`, `2`, `3` e `4+`, ou ausência para qualquer quantidade, assim como quartos. Usar igualdade para 1/2/3 e `gte: 4` para `4+` no PostgreSQL; validar os dois contratos e substituir o campo numérico por opções de escolha única.
+- Exibir área útil seguida por Estado (UF), Cidade e Bairro, na mesma ordem do teclado. Validar extremos e transições da escala em ambos os sentidos, URLs em reais, filtros de banheiros, builds e responsividade.
+
+### Ajuste solicitado — Preços digitáveis e sincronizados
+
+- Substituir os valores de mínimo e máximo por dois campos de texto com `inputMode="decimal"`, rótulos em reais e referências do React Hook Form para foco em erros. Os mesmos valores do formulário alimentam a barra, sem estado duplicado ou efeitos de sincronização.
+- Aceitar números sem formatação, ponto ou vírgula decimal e formatação brasileira com milhar (`1.234,56`), inclusive colagem com `R$`. Preservar o texto durante a digitação; formatar em `pt-BR` ao sair do campo e ao mover a alça. Validar o intervalo de zero a R$ 10 milhões, duas casas decimais e mínimo menor ou igual ao máximo. Entradas inválidas permanecem disponíveis para correção.
+- A digitação preserva valores exatos, sem arredondar aos passos. A posição da alça acompanha o preço informado; mover a barra ou usar suas setas continua selecionando os incrementos já definidos e bloqueando o cruzamento.
+- Enviar os valores reais dos campos pelo formulário GET e normalizar para strings decimais sem milhar na URL gerada e na API. Usar apenas um campo com cada nome no formulário, sem duplicar os parâmetros. Remover a legenda de incrementos e manter uma orientação curta sobre digitar ou arrastar.
+- Validar formatação, sincronização nas duas direções, precisão, extremos, faixa invertida, URL/histórico, teclado e layout em celular e computador.
+
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.

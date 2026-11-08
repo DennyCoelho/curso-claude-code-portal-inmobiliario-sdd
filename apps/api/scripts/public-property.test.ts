@@ -3,7 +3,9 @@ import { afterEach, mock, test } from "node:test";
 
 import { GET as listProperties } from "../src/app/api/properties/route";
 import { GET as getProperty } from "../src/app/api/properties/[id]/route";
+import { GET as getPriceRange } from "../src/app/api/properties/price-range/route";
 import { Prisma } from "../src/generated/prisma/client";
+import { parsePropertyFilters } from "../src/lib/api/property-filters";
 import type {
   PublicPropertyRecord,
   PublicPropertyRepository,
@@ -51,6 +53,9 @@ function repositoryWith(
   record: PublicPropertyRecord | null = property,
 ): PublicPropertyRepository {
   return {
+    async findPublishedPriceRange() {
+      return { minPrice: record?.price ?? null, maxPrice: record?.price ?? null };
+    },
     async findPublished() {
       return record ? [record] : [];
     },
@@ -123,6 +128,7 @@ test("o serviço representa ausência de imóveis e propaga falhas de persistên
 
   const failure = new Error("Falha de persistência");
   const failingService = createPublicPropertyService({
+    async findPublishedPriceRange() { throw failure; },
     async findPublished() {
       throw failure;
     },
@@ -209,7 +215,7 @@ test("as duas rotas retornam 500 em português sem expor detalhes internos", asy
   assert.equal(logMock.mock.callCount(), 2);
 });
 
-test("a listagem normaliza search e encaminha o termo ao serviço sem misturar parâmetros futuros", async () => {
+test("a listagem normaliza search e combina os filtros sem aceitar controle de publicação", async () => {
   const listMock = mock.method(publicPropertyService, "list", async () => []);
   for (const search of ["", "   ", " São Paulo & jardim? ", "a".repeat(200), "%_\\", "' OR 1=1--"]) {
     const query = new URLSearchParams({ search, isPublished: "false", operation: "RENT" });
@@ -217,7 +223,80 @@ test("a listagem normaliza search e encaminha o termo ao serviço sem misturar p
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), []);
     assert.equal(listMock.mock.calls.at(-1)!.arguments[0], search.trim());
+    assert.deepEqual(listMock.mock.calls.at(-1)!.arguments[1], { operation: "RENT" });
   }
+});
+
+test("a API valida todos os filtros e encaminha decimais exatos, quartos e UF normalizada", async () => {
+  const listMock = mock.method(publicPropertyService, "list", async () => []);
+  const query = new URLSearchParams({
+    search: " jardim ", operation: "SALE", type: "HOUSE", minPrice: "000250000.1", maxPrice: "999999999999.99",
+    bedrooms: "3", bathrooms: "2", minUsableArea: "85.50", neighborhood: " Pinheiros ", city: " São Paulo ", state: " sp ",
+  });
+  assert.equal((await listRequest(`?${query}`)).status, 200);
+  assert.deepEqual(listMock.mock.calls[0].arguments, ["jardim", {
+    operation: "SALE", type: ["HOUSE"], minPrice: "250000.10", maxPrice: "999999999999.99",
+    bedrooms: 3, bathrooms: 2, minUsableArea: "85.50", neighborhood: "Pinheiros", city: "São Paulo", state: "SP",
+  }]);
+  const repository = repositoryWith();
+  const findMock = mock.method(repository, "findPublished");
+  await createPublicPropertyService(repository).list("jardim", { operation: "SALE", bedrooms: "4+" });
+  assert.deepEqual(findMock.mock.calls[0].arguments, ["jardim", { operation: "SALE", bedrooms: "4+" }]);
+  assert.deepEqual(parsePropertyFilters(new URLSearchParams("minPrice=&city=+++&state=")), { success: true, filters: {} });
+});
+
+test("filtros inválidos, repetidos e faixas invertidas retornam 400 antes de consultar o serviço", async () => {
+  const listMock = mock.method(publicPropertyService, "list", async () => []);
+  const invalid = [
+    "operation=BUY", "type=FLAT", "state=XX", "state=São+Paulo", "minPrice=-1", "maxPrice=NaN", "minPrice=1e3",
+    "minPrice=1,50", "maxPrice=1.001", "minPrice=1000000000000", "minUsableArea=10000000000", "minUsableArea=Infinity",
+    "bedrooms=-1", "bedrooms=0", "bedrooms=4", "bedrooms=5", "bathrooms=0", "bathrooms=4", "bathrooms=5", "bathrooms=1.5", "bathrooms=2147483648", "bedrooms=2147483648", "minPrice=100.01&maxPrice=100.00", "type=HOUSE&type=FLAT",
+    `city=${"a".repeat(201)}`, `neighborhood=${"a".repeat(201)}`,
+  ];
+  for (const name of ["operation", "minPrice", "maxPrice", "bedrooms", "bathrooms", "minUsableArea", "neighborhood", "city", "state"]) {
+    invalid.push(`${name}=&${name}=`);
+  }
+  for (const query of invalid) {
+    const response = await listRequest(`?${query}`);
+    assert.equal(response.status, 400, query);
+    const body = await response.json();
+    assert.equal(body.status, 400);
+    assert.ok(body.message.length > 0);
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+  }
+  assert.equal(listMock.mock.callCount(), 0);
+  for (const query of ["minPrice=0&maxPrice=0", "minPrice=999999999999.98&maxPrice=999999999999.99", "bedrooms=4%2B&minUsableArea=9999999999.99"]) {
+    assert.equal((await listRequest(`?${query}`)).status, 200, query);
+  }
+});
+
+test("tipos múltiplos usam valores únicos ordenados e quartos distinguem exatos de quatro ou mais", async () => {
+  const listMock = mock.method(publicPropertyService, "list", async () => []);
+  assert.equal((await listRequest("?type=HOUSE&type=APARTMENT&type=HOUSE&bedrooms=4%2B&bathrooms=4%2B")).status, 200);
+  assert.deepEqual(listMock.mock.calls[0].arguments[1], { type: ["APARTMENT", "HOUSE"], bedrooms: "4+", bathrooms: "4+" });
+  assert.equal((await listRequest("?type=&type=&bedrooms=1")).status, 200);
+  assert.deepEqual(listMock.mock.calls[1].arguments[1], { bedrooms: 1 });
+  assert.equal((await listRequest(`?${Array(7).fill("type=HOUSE").join("&")}`)).status, 400);
+});
+
+test("a faixa de preço serializa decimais e nulos e valida a operação antes de consultar", async () => {
+  assert.deepEqual(await createPublicPropertyService(repositoryWith()).priceRange("RENT"), { minPrice: "2500.00", maxPrice: "2500.00" });
+  assert.deepEqual(await createPublicPropertyService(repositoryWith(null)).priceRange(), { minPrice: null, maxPrice: null });
+  const rangeMock = mock.method(publicPropertyService, "priceRange", async () => ({ minPrice: "100.01", maxPrice: "999999999999.99" }));
+  const response = await getPriceRange(new Request("http://localhost/api/properties/price-range?operation=RENT"));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.deepEqual(await response.json(), { minPrice: "100.01", maxPrice: "999999999999.99" });
+  assert.deepEqual(rangeMock.mock.calls[0].arguments, ["RENT"]);
+  for (const query of ["operation=BUY", "operation=SALE&operation=RENT"]) {
+    assert.equal((await getPriceRange(new Request(`http://localhost/api/properties/price-range?${query}`))).status, 400);
+  }
+  assert.equal(rangeMock.mock.callCount(), 1);
+  rangeMock.mock.mockImplementation(async () => { throw new Error("Detalhe privado"); });
+  mock.method(console, "error", () => {});
+  const errorResponse = await getPriceRange(new Request("http://localhost/api/properties/price-range"));
+  assert.equal(errorResponse.status, 500);
+  assert.doesNotMatch(JSON.stringify(await errorResponse.json()), /Detalhe privado/);
 });
 
 test("a API rejeita busca longa ou repetida antes de consultar o serviço", async () => {

@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
 import type { Prisma } from "../generated/prisma/client";
 import { getDatabase } from "../lib/db";
 
@@ -43,20 +44,30 @@ export type PublicPropertyRecord = Prisma.PropertyGetPayload<{
 }>;
 
 export interface PublicPropertyRepository {
-  findPublished(search?: string): Promise<PublicPropertyRecord[]>;
+  findPublished(search?: string, filters?: PublicPropertyFilters): Promise<PublicPropertyRecord[]>;
   findPublishedById(id: string): Promise<PublicPropertyRecord | null>;
+  findPublishedPriceRange(operation?: PublicPropertyFilters["operation"]): Promise<{ minPrice: PublicPropertyRecord["price"] | null; maxPrice: PublicPropertyRecord["price"] | null }>;
 }
 
 export function createPublicPropertyRepository(
   database?: Pick<Prisma.TransactionClient, "property">,
 ): PublicPropertyRepository {
   return {
-    async findPublished(search = "") {
+    async findPublished(search = "", filters = {}) {
       // Escapar os curingas do LIKE para pesquisar o texto literalmente.
       const contains = search.replace(/[\\%_]/g, "\\$&");
       return (database ?? getDatabase()).property.findMany({
         where: {
           isPublished: true,
+          operation: filters.operation,
+          type: filters.type?.length ? { in: filters.type } : undefined,
+          price: { gte: filters.minPrice, lte: filters.maxPrice },
+          bedrooms: filters.bedrooms === "4+" ? { gte: 4 } : filters.bedrooms,
+          bathrooms: filters.bathrooms === "4+" ? { gte: 4 } : filters.bathrooms,
+          usableArea: filters.minUsableArea === undefined ? undefined : { gte: filters.minUsableArea },
+          state: filters.state,
+          ...(filters.neighborhood ? { neighborhood: { contains: filters.neighborhood.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } } : {}),
+          ...(filters.city ? { city: { contains: filters.city.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } } : {}),
           ...(search ? {
             OR: ["title", "neighborhood", "city", "state", "description"].map((field) => ({
               [field]: { contains, mode: "insensitive" },
@@ -66,6 +77,14 @@ export function createPublicPropertyRepository(
         select: publicPropertySelect,
         orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       });
+    },
+    async findPublishedPriceRange(operation) {
+      const result = await (database ?? getDatabase()).property.aggregate({
+        where: { isPublished: true, operation },
+        _min: { price: true },
+        _max: { price: true },
+      });
+      return { minPrice: result._min.price, maxPrice: result._max.price };
     },
     async findPublishedById(id) {
       return (database ?? getDatabase()).property.findFirst({

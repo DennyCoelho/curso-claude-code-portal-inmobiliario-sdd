@@ -134,7 +134,7 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Validação concluída com `npm test` (lint, tipos dos três workspaces e 41 testes unitários), quatro testes de integração da API no PostgreSQL com transações revertidas, nove testes HTTP de `npm run test:smoke` e builds de produção dos dois aplicativos. Bloqueios de links, processos e conexão local do sandbox resolvidos com execução fora do isolamento; cache gerado do frontend regenerado para concluir o build.
   - Navegador em produção validado em 320, 360, 640, 768, 1024 e 1440 px, sem transbordamento horizontal. Busca da landing, pesquisa pelo catálogo e Enter, termo com acento, limpar, lista sem resultados, limite de 200 caracteres, parâmetros repetidos, preservação de operação, histórico e recarga conferidos; console sem erros ou avisos. README e plano técnico atualizados; aplicativos em `http://localhost:3000` e `http://localhost:3001`.
 
-- [ ] **Etapa 11 — Filtros**
+- [x] **Etapa 11 — Filtros**
   - Venda/aluguel.
   - Tipo.
   - Faixa de preço em BRL.
@@ -143,6 +143,40 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Área mínima.
   - Bairro/cidade/UF, usando `neighborhood`, `city` e `state` na URL e na API.
   - Permitir filtros combinados.
+  - API REST com validação de operação, tipo, UF brasileira, limites decimais e inteiros, faixa de preço e parâmetros repetidos antes da consulta. Valores vazios são ignorados; decimais são preservados como strings. Filtros combinados por AND com a busca no PostgreSQL, sempre limitados aos publicados e mantendo a ordem estável.
+  - Preços mínimo e máximo inclusivos em BRL; quartos e banheiros são quantidades mínimas, incluindo zero, identificadas na interface. Área mínima considera somente a útil; campos nulos não atendem aos mínimos. Bairro e cidade usam correspondência parcial sem distinção de maiúsculas, com acentos e caracteres literais preservados; UF é normalizada para maiúsculas.
+  - Formulário GET responsivo com React Hook Form, Zod, rótulos e erros acessíveis. Aceita vírgula ou ponto decimal sem milhar e gera valores com ponto na URL e na API. Aplicar e limpar filtros preserva a busca; a busca preserva os filtros. Campos preenchidos pela URL, com acesso direto, recarga e histórico; chave SWR canônica por combinação normalizada e orientação específica para ausência de resultados.
+  - Validação concluída com `npm test` (lint, tipos dos três workspaces e 48 testes unitários), cinco testes de integração da API no PostgreSQL com transações revertidas, dez testes HTTP de `npm run test:smoke` e builds de produção dos dois aplicativos. Bloqueios do sandbox resolvidos com execução fora do isolamento; cache gerado do frontend regenerado. Docker Desktop iniciado com PostgreSQL e pgAdmin existentes; timeouts durante a inicialização do banco resolvidos antes da execução final aprovada.
+  - Navegador em produção conferido em 320, 360, 640, 768, 1024 e 1440 px: formulário com uma/duas/três colunas, sem transbordamento horizontal. Todos os dez filtros junto à busca retornaram o imóvel esperado; vírgula decimal, faixa invertida com erro associado ao campo, limpeza preservando a busca, voltar/avançar, recarga, ausência de resultados e recuperação confirmados; console sem erros ou avisos. README e plano técnico atualizados. Aplicativos em `http://localhost:3000` e `http://localhost:3001`; ordenação permanece na Etapa 12.
+
+- [x] **Ajuste solicitado — Painel lateral de filtros da Etapa 11**
+  - Painel à esquerda dos cards, recolhível e expansível, com adaptação ao celular.
+  - Checkboxes de tipos com seleção múltipla na interface, URL e PostgreSQL.
+  - Barra de preço com duas alças, valores em BRL e faixa real dos imóveis publicados.
+  - Quartos: qualquer quantidade, 1, 2, 3 ou 4 ou mais.
+  - Validar contratos, testes, builds, teclado e responsividade.
+  - Painel à esquerda dos cards a partir de 1024 px, com duas colunas de cards enquanto expandido e três ao recolher. Em telas menores, seção recolhível acima dos resultados. O botão anuncia expansão e controla o painel; recolher preserva os campos e filtros ativos.
+  - Tipos com checkboxes e parâmetros `type` repetidos, validados, deduplicados e ordenados no cache; consulta por OR entre os tipos e AND com os demais filtros. Quartos agora usa igualdade para 1/2/3 ou mínimo de quatro em `bedrooms=4%2B`, substituindo a regra inicial de quantidade mínima registrada acima.
+  - Barra com duas alças, preços em BRL e precisão de centavos, suporte a arraste e teclado e bloqueio de cruzamento. Novo `GET /api/properties/price-range` agrega somente os preços de publicados, opcionalmente por operação, sem transferir o catálogo. Troca de operação limpa os limites do formulário; preços válidos na URL ampliam a faixa quando necessário. Carregamento, ausência de preços e erro com nova tentativa tratados.
+  - Validação aprovada com `npm test` (lint, tipos e 52 testes unitários), seis testes de integração da API em transações revertidas, onze testes HTTP e `npm run build` dos dois aplicativos. Navegador em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal; alinhamento lateral, recolher/expandir sem perder seleção, tipos múltiplos, quartos exatos e 4+, arraste das duas alças, teclado, centavos, impedimento de cruzamento, recarga e histórico conferidos; console sem erros ou avisos. Especificação, plano e README atualizados; aplicativos locais reiniciados com os builds novos.
+
+- [x] **Ajuste solicitado — Escala de preço, banheiros e localização**
+  - Barra fixa de R$ 0 a R$ 10 milhões, com incrementos de R$ 50, R$ 100, R$ 500 e R$ 1.000 conforme a faixa.
+  - Banheiros com qualquer quantidade, 1, 2, 3 ou 4 ou mais, na interface, URL e API.
+  - Sequência: área útil, Estado (UF), Cidade e Bairro.
+  - Validar escala, filtros, teclado, builds e responsividade.
+  - Barra disponível imediatamente de R$ 0 a R$ 10.000.000, com 11.900 passos: R$ 50 até R$ 10 mil, R$ 100 até R$ 100 mil, R$ 500 até R$ 1 milhão e R$ 1.000 acima. As duas alças seguem a escala por arraste e teclado, sem cruzar. Campos ocultos enviam preços em reais, sem expor os índices internos na URL. Trocar operação preserva a seleção; preços válidos de URLs anteriores dentro da faixa mantêm os centavos até movimentar a alça.
+  - Banheiros agora usa opções de escolha única: qualquer quantidade, 1, 2, 3 ou 4 ou mais, com igualdade em 1/2/3 e `gte: 4` em `4+`. Contrato compartilhado, validação no frontend/backend e consulta no PostgreSQL atualizados; zero e números fora das opções são rejeitados. Campos na ordem área útil, Estado (UF), Cidade e Bairro, incluindo navegação por teclado.
+  - Validação concluída com `npm test` (lint, tipos e 53 testes unitários), seis testes de integração da API em transações revertidas, onze testes HTTP e builds dos dois aplicativos. Todos os passos e as transições foram testados, incluindo avanço e retorno nos limites e URLs anteriores. Navegador em produção conferido em 320, 360, 768, 1024 e 1440 px sem transbordamento; arraste das duas alças, teclado, extremos, bloqueio de cruzamento, envio de preços reais, troca de operação, banheiros exatos/4+, recarga, histórico e sequência dos campos confirmados. Console sem erros ou avisos; documentação atualizada e aplicativos reiniciados com os builds novos.
+
+- [x] **Ajuste solicitado — Preços digitáveis e sincronizados**
+  - Mínimo e máximo editáveis, sincronizados com as duas alças.
+  - Aceitar valores em reais e preservar centavos digitados, validando limites e faixa.
+  - Remover a legenda de incrementos, mantendo os passos da barra.
+  - Validar digitação, arraste, teclado, URLs, builds e responsividade.
+  - Valores mínimo e máximo substituídos por campos editáveis com rótulos em reais e teclado decimal, usando os mesmos valores do formulário que alimentam as alças. Digitar preserva centavos e atualiza a posição; arrastar ou usar as setas preenche os campos em `pt-BR`, mantendo os incrementos da barra. Legenda de incrementos removida.
+  - Aceita números simples, ponto ou vírgula decimal e milhar brasileiro, inclusive colagem com `R$`. Formatação aplicada ao sair do campo, sem alterar o texto durante a digitação. Valida preço não negativo, teto de R$ 10 milhões, duas casas decimais e mínimo menor ou igual ao máximo. Foco de erro direcionado ao campo editável correspondente. URL e API recebem valores reais normalizados, sem duplicar parâmetros no formulário GET.
+  - `npm test` aprovado com lint, tipos e 54 testes unitários; build do frontend e onze testes HTTP aprovados. Navegador conferido em 320, 360, 768, 1024 e 1440 px sem transbordamento: entrada com `R$`, milhar e centavos, atualização das duas alças, formatação, arraste, teclado, faixa invertida, teto excedido, foco de erro, recarga e envio normalizado confirmados. Console sem erros ou avisos. Especificação, plano e README atualizados; aplicativo local reiniciado com o novo build.
 
 - [ ] **Etapa 12 — Ordenação e estados**
   - Mais recentes.

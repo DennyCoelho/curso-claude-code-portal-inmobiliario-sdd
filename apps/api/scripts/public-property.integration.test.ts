@@ -8,6 +8,7 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { createDatabaseClient } from "../src/lib/db/client";
 import { createPublicPropertyRepository } from "../src/repositories/public-property-repository";
 import { createPublicPropertyService } from "../src/services/public-property-service";
+import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
 
 nextEnv.loadEnvConfig(process.cwd());
 const database = createDatabaseClient();
@@ -219,5 +220,81 @@ test("a busca trata porcentagem, sublinhado e barra invertida como caracteres li
     for (const term of [`${marker} 100%`, `${marker} 100%_`, `${marker} 100%_\\`]) {
       assert.deepEqual((await service.list(term)).map(({ id }) => id), [literal.id]);
     }
+  });
+});
+
+test("o PostgreSQL aplica cada filtro, limites inclusivos, valores nulos e combinações com busca e publicação", async () => {
+  await withRollback(async (transaction) => {
+    const { features: seedFeatures, ...propertyData } = seedProperties[0];
+    assert.ok(seedFeatures.length > 0);
+    const marker = `Filtros-${randomUUID()}`;
+    const base = {
+      ...propertyData, title: marker, country: "BR", isPublished: true,
+      operation: "SALE" as const, type: "HOUSE" as const, price: "100.10", usableArea: "85.50",
+      bedrooms: 3, bathrooms: 2, neighborhood: "Centro%_\\", city: "São José%_\\", state: "SP",
+      createdAt: new Date("2026-11-01T12:00:00Z"),
+    };
+    const first = await transaction.property.create({ data: { ...base, id: randomUUID() } });
+    const second = await transaction.property.create({ data: { ...base, id: randomUUID(), price: "100.11", usableArea: "90.00", bedrooms: 4, bathrooms: 3, neighborhood: "CentroAB", city: "SÃO JOSÉAB" } });
+    const rent = await transaction.property.create({ data: { ...base, id: randomUUID(), operation: "RENT", type: "APARTMENT", price: "100.09", usableArea: "70.00", bedrooms: 1, bathrooms: 1, city: "Recife", state: "PE", neighborhood: "Boa Viagem" } });
+    const land = await transaction.property.create({ data: { ...base, id: randomUUID(), type: "LAND", price: "999999999999.99", usableArea: null, bedrooms: null, bathrooms: null, city: "Recife", state: "PE", neighborhood: "Centro" } });
+    await transaction.property.create({ data: { ...base, id: randomUUID(), isPublished: false } });
+    const service = createPublicPropertyService(createPublicPropertyRepository(transaction));
+    const cases: [PublicPropertyFilters, string[]][] = [
+      [{ operation: "SALE" }, [first.id, second.id, land.id]],
+      [{ operation: "RENT" }, [rent.id]],
+      [{ type: ["HOUSE"] }, [first.id, second.id]],
+      [{ type: ["LAND"] }, [land.id]],
+      [{ type: ["HOUSE", "APARTMENT"] }, [first.id, second.id, rent.id]],
+      [{ type: ["COMMERCIAL"] }, []],
+      [{ minPrice: "100.10" }, [first.id, second.id, land.id]],
+      [{ maxPrice: "100.10" }, [first.id, rent.id]],
+      [{ minPrice: "100.10", maxPrice: "100.10" }, [first.id]],
+      [{ minPrice: "999999999999.99", maxPrice: "999999999999.99" }, [land.id]],
+      [{ bedrooms: 3 }, [first.id]],
+      [{ bedrooms: "4+" }, [second.id]],
+      [{ bedrooms: 1 }, [rent.id]],
+      [{ bathrooms: 3 }, [second.id]],
+      [{ bathrooms: 1 }, [rent.id]],
+      [{ bathrooms: 2 }, [first.id]],
+      [{ bathrooms: "4+" }, []],
+      [{ minUsableArea: "85.50" }, [first.id, second.id]],
+      [{ minUsableArea: "0.00" }, [first.id, second.id, rent.id]],
+      [{ neighborhood: "centro" }, [first.id, second.id, land.id]],
+      [{ neighborhood: "%_\\" }, [first.id]],
+      [{ city: "são josé" }, [first.id, second.id]],
+      [{ city: "%_\\" }, [first.id]],
+      [{ state: "SP" }, [first.id, second.id]],
+      [{ state: "PE" }, [rent.id, land.id]],
+      [{ operation: "SALE", type: ["HOUSE", "APARTMENT"], minPrice: "100.10", maxPrice: "100.10", bedrooms: 3, bathrooms: 2, minUsableArea: "85.50", neighborhood: "centro%", city: "são josé%", state: "SP" }, [first.id]],
+      [{ operation: "RENT", type: ["LAND"] }, []],
+    ];
+    for (const [filters, expected] of cases) {
+      const results = await service.list(marker, filters);
+      assert.deepEqual(results.map(({ id }) => id), expected.toSorted(), JSON.stringify(filters));
+      assert.ok(results.every(({ price }) => /^\d+\.\d{2}$/.test(price)));
+    }
+    await transaction.property.update({ where: { id: second.id }, data: { bedrooms: 5, bathrooms: 4 } });
+    assert.deepEqual((await service.list(marker, { bedrooms: "4+" })).map(({ id }) => id), [second.id]);
+    assert.deepEqual((await service.list(marker, { bathrooms: "4+" })).map(({ id }) => id), [second.id]);
+    await transaction.property.update({ where: { id: second.id }, data: { bathrooms: 5 } });
+    assert.deepEqual((await service.list(marker, { bedrooms: "4+", bathrooms: "4+" })).map(({ id }) => id), [second.id]);
+  });
+});
+
+test("a faixa de preços agrega somente publicados e separa venda de aluguel com precisão", async () => {
+  await withRollback(async (transaction) => {
+    const { features: seedFeatures, ...propertyData } = seedProperties[0];
+    assert.ok(seedFeatures.length > 0);
+    for (const [operation, prices] of [["SALE", ["0.01", "999999999999.99"]], ["RENT", ["0.02", "999999999999.98"]]] as const) {
+      for (const price of prices) await transaction.property.create({ data: { ...propertyData, id: randomUUID(), operation, price, country: "BR", isPublished: true } });
+    }
+    for (const price of ["0.01", "999999999999.99"]) await transaction.property.create({ data: { ...propertyData, id: randomUUID(), operation: "RENT", price, country: "BR", isPublished: false } });
+    const service = createPublicPropertyService(createPublicPropertyRepository(transaction));
+    assert.deepEqual(await service.priceRange(), { minPrice: "0.01", maxPrice: "999999999999.99" });
+    assert.deepEqual(await service.priceRange("SALE"), { minPrice: "0.01", maxPrice: "999999999999.99" });
+    assert.deepEqual(await service.priceRange("RENT"), { minPrice: "0.02", maxPrice: "999999999999.98" });
+    await transaction.property.updateMany({ where: { operation: "RENT" }, data: { isPublished: false } });
+    assert.deepEqual(await service.priceRange("RENT"), { minPrice: null, maxPrice: null });
   });
 });

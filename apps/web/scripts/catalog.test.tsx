@@ -10,6 +10,8 @@ import { PropertyCatalogResults } from '../src/components/properties/property-ca
 import { fetchPublicProperties } from '../src/lib/api/properties'
 import type { PropertyListItem } from '../src/lib/property'
 import { buildCatalogSearchUrl, buildPublicPropertiesUrl, parseCatalogSearch, propertySearchSchema } from '../src/lib/property-search'
+import { buildCatalogFiltersUrl, catalogFiltersSchema, getCatalogFilterValues, parseCatalogFilters } from '../src/lib/property-filters'
+import { adjacentPriceSliderIndex, centsAsPrice, formatPriceInput, getPriceSliderValues, maximumPriceSliderIndex, normalizePriceInput, priceInCents, priceToSliderIndex, sliderIndexToPrice } from '../src/lib/property-price-range'
 
 const router: AppRouterInstance = {
   back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {}, bfcacheId: 'catalog-test',
@@ -165,7 +167,7 @@ test('buscar e limpar preservam os demais parâmetros e codificam o texto sem cr
 })
 
 test('o catálogo usa a chave SWR do termo e não reutiliza a listagem geral ou de outra busca', () => {
-  const fallback = { '/api/properties': [property], '/api/properties?search=Curitiba': [{ ...property, title: 'Casa em Curitiba' }] }
+  const fallback = { '/api/properties': [property], '/api/properties?search=Curitiba&operation=SALE': [{ ...property, title: 'Casa em Curitiba' }] }
   const render = (parameters: string) => renderToStaticMarkup(
     <SWRConfig value={{ provider: () => new Map(), revalidateOnMount: false, fallback }}>
       <PropertyCatalog parameters={parameters} />
@@ -182,6 +184,141 @@ test('o catálogo usa a chave SWR do termo e não reutiliza a listagem geral ou 
   assert.match(invalid, /role="alert"/)
   assert.match(invalid, /Informe apenas um termo de busca/)
   assert.doesNotMatch(invalid, /<article|Carregando imóveis/)
+})
+
+test('os filtros normalizam BRL com vírgula, contagens e UF e preservam busca ao aplicar e limpar', () => {
+  const raw = 'operation=SALE&type=HOUSE&type=APARTMENT&minPrice=000250000%2C1&maxPrice=10000000.00&bedrooms=3&bathrooms=4%2B&minUsableArea=85.5&city=+São+Paulo+&state=sp'
+  const result = parseCatalogFilters(raw)
+  assert.deepEqual(result, { success: true, filters: { operation: 'SALE', type: ['APARTMENT', 'HOUSE'], minPrice: '250000.10', maxPrice: '10000000.00', bedrooms: 3, bathrooms: '4+', minUsableArea: '85.50', city: 'São Paulo', state: 'SP' } })
+  const url = new URL(buildCatalogFiltersUrl(getCatalogFilterValues(raw), 'search=jardim&operation=RENT&operation=SALE&sort=recent'), 'http://localhost')
+  assert.equal(url.searchParams.get('search'), 'jardim')
+  assert.equal(url.searchParams.getAll('operation').length, 1)
+  assert.equal(url.searchParams.get('minPrice'), '250000.10')
+  assert.equal(url.searchParams.get('state'), 'SP')
+  assert.deepEqual(url.searchParams.getAll('type'), ['APARTMENT', 'HOUSE'])
+  assert.equal(url.searchParams.get('sort'), 'recent')
+  assert.equal(buildCatalogFiltersUrl(null, url.search.slice(1)), '/properties?search=jardim&sort=recent')
+  assert.equal(buildCatalogFiltersUrl(null, 'operation=RENT'), '/properties')
+  assert.deepEqual(parseCatalogFilters('city=+++&minPrice=&bedrooms='), { success: true, filters: {} })
+})
+
+test('filtros inválidos não disparam listagens e o formulário valida a faixa e limites', () => {
+  for (const query of ['operation=BUY', 'type=FLAT', 'state=XX', 'minPrice=-1', 'maxPrice=1e3', 'minPrice=1.0000', 'minPrice=1.00,00', 'bedrooms=1.5', 'bathrooms=-1', 'bedrooms=2147483648', 'minPrice=1000000000000', 'minUsableArea=10000000000', 'minPrice=100.01&maxPrice=100', `city=${'a'.repeat(201)}`, 'operation=SALE&operation=RENT']) {
+    assert.equal(parseCatalogFilters(query).success, false, query)
+    const markup = renderToStaticMarkup(<SWRConfig value={{ provider: () => new Map(), fallback: { '/api/properties': [property] } }}><PropertyCatalog parameters={query} /></SWRConfig>)
+    assert.match(markup, /role="alert"/)
+    assert.doesNotMatch(markup, /<article|Carregando imóveis/)
+  }
+  assert.ok(catalogFiltersSchema.safeParse(getCatalogFilterValues('minPrice=0&maxPrice=0&bedrooms=4%2B')).success)
+  for (const query of ['bedrooms=0', 'bedrooms=4', 'bedrooms=5', 'bathrooms=0', 'bathrooms=4', 'bathrooms=5', 'bathrooms=2147483647', 'minPrice=10000000.01', 'maxPrice=10000000.01', 'type=HOUSE&type=FLAT', Array(7).fill('type=HOUSE').join('&')]) assert.equal(parseCatalogFilters(query).success, false)
+})
+
+test('cada combinação tem chave SWR própria e a ordem dos parâmetros não muda o cache', () => {
+  const first = parseCatalogFilters('operation=RENT&city=Recife&minPrice=2500&bedrooms=3&type=HOUSE&type=APARTMENT')
+  const second = parseCatalogFilters('bedrooms=3&minPrice=02500.00&city=Recife&operation=RENT&type=APARTMENT&type=HOUSE&type=HOUSE')
+  assert.ok(first.success && second.success)
+  if (!first.success || !second.success) return
+  const key = buildPublicPropertiesUrl('', first.filters)
+  assert.equal(key, buildPublicPropertiesUrl('', second.filters))
+  assert.equal(key, '/api/properties?bedrooms=3&city=Recife&minPrice=2500.00&operation=RENT&type=APARTMENT&type=HOUSE')
+  const render = (parameters: string) => renderToStaticMarkup(<SWRConfig value={{ provider: () => new Map(), revalidateOnMount: false, fallback: { [key]: [property], '/api/properties': [{ ...property, title: 'Catálogo sem filtro' }] } }}><PropertyCatalog parameters={parameters} /></SWRConfig>)
+  assert.match(render('operation=RENT&city=Recife&minPrice=2500&bedrooms=3&type=HOUSE&type=APARTMENT'), /1 imóvel encontrado/)
+  assert.doesNotMatch(render('operation=SALE'), /<article|Catálogo sem filtro/)
+})
+
+test('o formulário GET preenche todos os filtros e preserva a busca ao limpar', async () => {
+  const parameters = { search: 'jardim', operation: 'RENT', type: ['HOUSE', 'APARTMENT'], minPrice: '2500.10', maxPrice: '5000', bedrooms: '3', bathrooms: '2', minUsableArea: '85.50', neighborhood: 'Boa Viagem', city: 'Recife', state: 'PE' }
+  const page = await PropertiesPage({ searchParams: Promise.resolve(parameters) })
+  const markup = renderToStaticMarkup(<AppRouterContext.Provider value={router}><SWRConfig value={{ provider: () => new Map() }}>{page}</SWRConfig></AppRouterContext.Provider>)
+  assert.match(markup, /<form(?=[^>]*aria-labelledby="catalog-filters-title")(?=[^>]*action="\/properties")(?=[^>]*method="get")/)
+  assert.match(markup, /type="hidden" name="search" value="jardim"/)
+  for (const name of Object.keys(parameters).filter((name) => !['search', 'type', 'bedrooms', 'bathrooms'].includes(name))) {
+    assert.ok(markup.includes(`id="filter-${name}"`), name)
+    assert.ok(markup.includes(`for="filter-${name}"`), name)
+  }
+  assert.match(markup, /value="RENT" selected=""/)
+  assert.match(markup, /value="PE" selected=""/)
+  assert.match(markup, /4 ou mais quartos/)
+  assert.match(markup, /Faixa de preço mensal/)
+  assert.match(markup, /aria-expanded="true" aria-controls="catalog-filter-sidebar"/)
+  assert.match(markup, /<aside id="catalog-filter-sidebar" aria-label="Filtros de imóveis"/)
+  assert.equal(markup.match(/type="checkbox"/g)?.length, 6)
+  assert.equal(markup.match(/type="radio"/g)?.length, 10)
+  assert.equal(markup.match(/type="range"/g)?.length, 2)
+  assert.match(markup, /id="filter-type-HOUSE"[^>]*checked=""/)
+  assert.match(markup, /id="filter-type-APARTMENT"[^>]*checked=""/)
+  assert.match(markup, /id="filter-bedrooms-3"[^>]*checked=""/)
+  assert.match(markup, /id="filter-bathrooms-2"[^>]*checked=""/)
+  assert.match(markup, /4 ou mais banheiros/)
+  assert.match(markup, /<input(?=[^>]*id="filter-minPrice-value")(?=[^>]*name="minPrice")(?=[^>]*type="text")(?=[^>]*inputMode="decimal")(?=[^>]*value="2.500,10")/)
+  assert.match(markup, /<input(?=[^>]*id="filter-maxPrice-value")(?=[^>]*name="maxPrice")(?=[^>]*type="text")(?=[^>]*inputMode="decimal")(?=[^>]*value="5.000,00")/)
+  assert.match(markup, /for="filter-minPrice-value"/)
+  assert.match(markup, /for="filter-maxPrice-value"/)
+  const priceForm = markup.match(/<form(?=[^>]*aria-labelledby="catalog-filters-title")[\s\S]*?<\/form>/)![0]
+  assert.equal(priceForm.match(/name="minPrice"/g)?.length, 1)
+  assert.equal(priceForm.match(/name="maxPrice"/g)?.length, 1)
+  assert.doesNotMatch(priceForm, /Passos de|R\$ 50 até|R\$ 100 até|R\$ 500 até/)
+  const fieldsInOrder = ['minUsableArea', 'state', 'city', 'neighborhood'].map((name) => markup.indexOf(`id="filter-${name}"`))
+  assert.deepEqual(fieldsInOrder, [...fieldsInOrder].sort((first, second) => first - second))
+  assert.match(markup, /href="\/properties\?search=jardim"/)
+  assert.match(markup, /Limpar filtros/)
+})
+
+test('a barra usa limites fixos e preserva preços exatos de URLs anteriores dentro da faixa', () => {
+  for (const price of ['0.01', '2500.10', '999999999999.99']) assert.equal(centsAsPrice(priceInCents(price)), price)
+  assert.deepEqual(getPriceSliderValues('0.01', '8000.50'), { minimum: 0.01, maximum: 8000.5 })
+  assert.deepEqual(getPriceSliderValues('', ''), { minimum: 0, maximum: 10_000_000 })
+  assert.equal(sliderIndexToPrice(0), 0)
+  assert.equal(sliderIndexToPrice(maximumPriceSliderIndex), 10_000_000)
+})
+
+test('os preços digitados aceitam BRL, milhar e centavos sem arredondar aos passos da barra', () => {
+  for (const [input, expected] of [
+    ['', ''], ['  ', ''], ['0', '0.00'], ['2500.1', '2500.10'], ['2500,10', '2500.10'], ['1.234', '1234.00'],
+    ['1.234,56', '1234.56'], [' R$ 1.234,56 ', '1234.56'], ['10.000.000,00', '10000000.00'],
+  ]) assert.equal(normalizePriceInput(input), expected, input)
+  for (const input of ['-1', 'R$ -1', 'NaN', '1e3', '1,234', '1.00,00', '1.2345']) assert.equal(normalizePriceInput(input), null, input)
+  assert.equal(formatPriceInput('1234.56'), '1.234,56')
+  assert.equal(formatPriceInput('10000000'), '10.000.000,00')
+  assert.equal(formatPriceInput(''), '')
+  assert.equal(formatPriceInput('inválido'), 'inválido')
+  assert.deepEqual(getPriceSliderValues('R$ 1.234,56', '9.876,54'), { minimum: 1234.56, maximum: 9876.54 })
+  const values = getCatalogFilterValues('search=jardim&minPrice=1.234%2C56&maxPrice=9.876%2C54')
+  const url = new URL(buildCatalogFiltersUrl(values, 'search=jardim'), 'http://localhost')
+  assert.equal(url.searchParams.get('minPrice'), '1234.56')
+  assert.equal(url.searchParams.get('maxPrice'), '9876.54')
+  assert.equal(url.searchParams.get('search'), 'jardim')
+  assert.equal(catalogFiltersSchema.safeParse({ ...values, minPrice: '9.000,00', maxPrice: '1.000,00' }).success, false)
+  assert.equal(catalogFiltersSchema.safeParse({ ...values, maxPrice: '10.000.000,01' }).success, false)
+})
+
+test('todos os passos respeitam os incrementos e as transições de 10 mil, 100 mil e 1 milhão', () => {
+  let previous = 0
+  for (let index = 1; index <= maximumPriceSliderIndex; index++) {
+    const price = sliderIndexToPrice(index)
+    const increment = previous < 10_000 ? 50 : previous < 100_000 ? 100 : previous < 1_000_000 ? 500 : 1_000
+    assert.equal(price - previous, increment, `passo ${index}`)
+    assert.equal(priceToSliderIndex(price), index)
+    previous = price
+  }
+  assert.equal(previous, 10_000_000)
+})
+
+test('as setas avançam e retrocedem um passo válido em cada limite, inclusive com preços antigos', () => {
+  const cases: [number, -1 | 1, number][] = [
+    [0, -1, 0], [0, 1, 50], [9950, 1, 10_000], [10_000, 1, 10_100], [10_000, -1, 9950], [10_100, -1, 10_000],
+    [99_900, 1, 100_000], [100_000, 1, 100_500], [100_000, -1, 99_900], [100_500, -1, 100_000],
+    [999_500, 1, 1_000_000], [1_000_000, 1, 1_001_000], [1_000_000, -1, 999_500], [1_001_000, -1, 1_000_000],
+    [10_000_000, 1, 10_000_000], [10_000_000, -1, 9_999_000], [3220.72, 1, 3250], [3220.72, -1, 3200],
+  ]
+  for (const [price, direction, expected] of cases) assert.equal(sliderIndexToPrice(adjacentPriceSliderIndex(price, direction)), expected)
+})
+
+test('a combinação sem resultados orienta a ajustar os filtros', () => {
+  const markup = renderToStaticMarkup(<PropertyCatalogResults properties={[]} status="ready" onRetry={() => {}} filtered />)
+  assert.match(markup, /Nenhum imóvel encontrado com estes filtros/)
+  assert.match(markup, /Ajuste ou limpe os filtros/)
+  assert.doesNotMatch(markup, /<article/)
 })
 
 test('a busca sem resultados orienta a corrigir ou limpar e escapa o termo pesquisado', () => {
