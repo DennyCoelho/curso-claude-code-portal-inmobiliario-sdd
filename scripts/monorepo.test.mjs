@@ -187,3 +187,48 @@ test("seleção múltipla, quartos exatos e faixa de preço funcionam pelos dois
     }
   }
 });
+
+test("as cinco ordenações funcionam diretamente e pelo proxy, preservando filtros e erros", async () => {
+  const listResponse = await request(apiUrl, "/api/properties");
+  assert.equal(listResponse.status, 200);
+  const properties = await listResponse.json();
+  const decimalCompare = (first, second) => {
+    const left = BigInt(first.replace(".", ""));
+    const right = BigInt(second.replace(".", ""));
+    return left < right ? -1 : left > right ? 1 : 0;
+  };
+  for (const sort of ["recent", "price_asc", "price_desc", "area_asc", "area_desc"]) {
+    for (const operation of ["", "SALE"]) {
+      const expected = properties.filter((property) => !operation || property.operation === operation).toSorted((first, second) => {
+        let difference = 0;
+        if (sort.startsWith("price_")) difference = decimalCompare(first.price, second.price) * (sort === "price_asc" ? 1 : -1);
+        if (sort.startsWith("area_")) {
+          if (first.usableArea === null && second.usableArea !== null) return 1;
+          if (second.usableArea === null && first.usableArea !== null) return -1;
+          if (first.usableArea !== null && second.usableArea !== null) difference = decimalCompare(first.usableArea, second.usableArea) * (sort === "area_asc" ? 1 : -1);
+        }
+        return difference || second.createdAt.localeCompare(first.createdAt) || first.id.localeCompare(second.id);
+      });
+      const query = new URLSearchParams({ sort, ...(operation ? { operation } : {}) });
+      for (const origin of [apiUrl, webUrl]) {
+        const response = await request(origin, `/api/properties?${query}`);
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get("cache-control"), "no-store");
+        assert.deepEqual(await response.json(), expected, `${origin}: ${query}`);
+      }
+    }
+  }
+  for (const query of ["sort=oldest", "sort=recent&sort=price_asc", "sort=&sort="]) {
+    const direct = await request(apiUrl, `/api/properties?${query}`);
+    const proxied = await request(webUrl, `/api/properties?${query}`);
+    assert.equal(direct.status, 400);
+    assert.equal(proxied.status, 400);
+    assert.deepEqual(await proxied.json(), await direct.json());
+  }
+  const page = await request(webUrl, "/properties?search=jardim&type=HOUSE&type=APARTMENT&sort=area_desc");
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.match(html, /aria-label="Ordenar imóveis"/);
+  assert.match(html, /value="area_desc" selected=""/);
+  assert.match(html, /href="\/properties\?search=jardim&amp;sort=area_desc"/);
+});

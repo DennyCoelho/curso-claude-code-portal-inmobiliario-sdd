@@ -352,6 +352,15 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 - Enviar os valores reais dos campos pelo formulário GET e normalizar para strings decimais sem milhar na URL gerada e na API. Usar apenas um campo com cada nome no formulário, sem duplicar os parâmetros. Remover a legenda de incrementos e manter uma orientação curta sobre digitar ou arrastar.
 - Validar formatação, sincronização nas duas direções, precisão, extremos, faixa invertida, URL/histórico, teclado e layout em celular e computador.
 
+### Ordenação e estados — Etapa 12
+
+- Adicionar o tipo público `PublicPropertySort` com `recent`, `price_asc`, `price_desc`, `area_asc` e `area_desc`. Validar `sort` único no catálogo e no Route Handler antes de consultar o serviço; ausência ou vazio usa `recent`. Valores inválidos retornam `400` na API e uma mensagem corrigível no catálogo.
+- Propagar a ordenação pelo serviço até `findPublished`, aplicando `orderBy` no Prisma/PostgreSQL junto da busca e dos filtros. Preço usa o decimal do banco; área usa `usableArea`, com `nulls: last` nos dois sentidos. Desempatar por `createdAt desc` e `id asc`; manter a ordem padrão existente.
+- Criar seletor acessível com formulário GET, React Hook Form e Zod na barra superior do catálogo, com ação explícita de ordenar e preservação de parâmetros repetidos de tipos, busca e filtros. Preencher pela URL e usar chave para recarga/histórico. Buscar, aplicar ou limpar filtros preserva `sort`.
+- Incluir a ordenação na chave SWR canônica; `recent` explícito e implícito compartilham a chave padrão. Não ordenar no navegador nem reutilizar resultados de outra combinação. Permitir corrigir a ordenação sem consultar parâmetros inválidos.
+- Acrescentar skeletons decorativos com a mesma grade dos cards, anúncio de carregamento e animação desativada com movimento reduzido. Preservar os estados específicos de vazio, ausência de correspondências e erro com nova tentativa.
+- Validar as cinco ordens, desempates, nulos, centavos, publicação e filtros em transações revertidas no PostgreSQL; cobrir Route Handler, URLs, cache, formulário e estados. Executar lint, tipos, testes, builds, HTTP/proxy e conferir teclado e responsividade no navegador.
+
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.

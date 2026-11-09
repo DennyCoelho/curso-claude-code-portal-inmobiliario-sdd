@@ -185,12 +185,17 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Escala atualizada para 380 passos nas seis faixas solicitadas. Campos editáveis preservam qualquer preço válido e seus centavos; alças acompanham a posição permitida mais próxima e seus movimentos aplicam os novos incrementos.
   - `npm test` aprovado com lint, tipos dos três workspaces e 55 testes unitários. Todos os passos e as cinco transições foram conferidos nos dois sentidos, incluindo centavos junto aos limites; valores livres nas seis faixas mantêm precisão e URLs normalizadas. `npm run build:web` aprovado após regenerar o cache `.next` e executar fora do isolamento.
 
-- [ ] **Etapa 12 — Ordenação e estados**
+- [x] **Etapa 12 — Ordenação e estados**
   - Mais recentes.
   - Preço em ordem crescente/decrescente.
   - Área em ordem crescente/decrescente.
   - Estados de carregamento, ausência de resultados e erro.
   - Skeletons quando agregarem valor.
+  - Seletor acessível de ordenação com formulário GET e botão Ordenar: `recent`, `price_asc`, `price_desc`, `area_asc` e `area_desc`. Busca, filtros e tipos repetidos são preservados; seleção preenchida pela URL, inclusive recarga e histórico. Parâmetros inválidos ou repetidos impedem a consulta e permitem corrigir a seleção.
+  - Ordenação aplicada no PostgreSQL junto dos filtros e da busca, usando preços decimais e área útil. Áreas úteis nulas ficam ao final nos dois sentidos; empates usam data de criação decrescente e ID crescente. Ausência ou vazio mantém mais recentes. A API valida `sort` antes do serviço e responde `400` quando inválido.
+  - Chave SWR por combinação de busca, filtros e ordenação, com cache padrão compartilhado para `recent` explícito ou implícito. Carregamento com seis skeletons na grade, ocultos da acessibilidade e animados somente sem preferência por movimento reduzido. Ausência de dados iniciais permanece em carregamento até a resposta; catálogo vazio, ausência de correspondências e erro com nova tentativa preservam os estados específicos.
+  - Validação concluída com `npm test` (lint, tipos dos três workspaces e 61 testes unitários), sete testes de integração no PostgreSQL com transações revertidas, 12 testes HTTP/proxy e `npm run build` dos dois aplicativos. Caches `.next` regenerados e builds executados fora do isolamento.
+  - Navegador em produção conferido em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal. As cinco ordens, filtros combinados, tipos múltiplos, teclado, recarga, voltar/avançar, limpar busca/filtros preservando ordenação, ausência de resultados e correção de opção inválida confirmados. Falha temporária da API e recuperação por Tentar novamente preservaram a ordenação; nenhum erro inesperado no console. Especificação, plano e README atualizados; aplicativos em `http://localhost:3000` e `http://localhost:3001` com os builds novos.
 
 - [ ] **Etapa 13 — Detalhes do imóvel**
   - Criar `/properties/{id}`.

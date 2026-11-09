@@ -1,5 +1,6 @@
 import type { PropertyCardData } from "@/lib/property";
 import { PropertyGrid } from "./property-grid";
+import { PropertyGridSkeleton } from "./property-grid-skeleton";
 
 interface PropertyCatalogResultsProps {
   properties: readonly PropertyCardData[];
@@ -15,9 +16,10 @@ export function PropertyCatalogResults({ properties, status, onRetry, search = "
       <h2 id="catalog-results-title" className="sr-only">{search ? "Resultados da busca" : "Imóveis disponíveis"}</h2>
       {search ? <p className="mb-4 text-sm break-words text-slate-600">Resultados para: <strong className="text-slate-900">{search}</strong></p> : null}
       {status === "loading" ? (
-        <p role="status" className="rounded-xl border border-slate-200 bg-white px-5 py-10 text-sm text-slate-600">
-          Carregando imóveis…
-        </p>
+        <div className="space-y-6">
+          <p role="status" className="text-sm text-slate-600">Carregando imóveis…</p>
+          <PropertyGridSkeleton />
+        </div>
       ) : status === "error" ? (
         <div role="alert" className="flex flex-col items-start gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
           <p>Não foi possível carregar os imóveis. Tente novamente em instantes.</p>

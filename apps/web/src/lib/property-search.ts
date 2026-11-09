@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
+import type { PublicPropertyFilters, PublicPropertySort } from "@portal-inmobiliario/contracts/public-property";
 
 export const propertySearchSchema = z.string().trim().max(200, "Use até 200 caracteres na busca.");
 export const catalogSearchSchema = z.object({ search: propertySearchSchema });
@@ -27,7 +27,7 @@ export function buildCatalogSearchUrl(search: string, currentParameters = ""): s
   return query ? `/properties?${query}` : "/properties";
 }
 
-export function buildPublicPropertiesUrl(search: string, filters: PublicPropertyFilters = {}): string {
+export function buildPublicPropertiesUrl(search: string, filters: PublicPropertyFilters = {}, sort: PublicPropertySort = "recent"): string {
   const normalizedSearch = propertySearchSchema.parse(search);
   const query = new URLSearchParams();
   if (normalizedSearch) query.set("search", normalizedSearch);
@@ -37,5 +37,6 @@ export function buildPublicPropertiesUrl(search: string, filters: PublicProperty
       for (const item of Array.isArray(value) ? [...new Set(value)].sort() : [value]) query.append(name, String(item));
     }
   }
+  if (sort !== "recent") query.set("sort", sort);
   return query.size ? `/api/properties?${query}` : "/api/properties";
 }

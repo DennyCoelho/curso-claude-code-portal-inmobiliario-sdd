@@ -8,7 +8,7 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { createDatabaseClient } from "../src/lib/db/client";
 import { createPublicPropertyRepository } from "../src/repositories/public-property-repository";
 import { createPublicPropertyService } from "../src/services/public-property-service";
-import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
+import type { PublicPropertyFilters, PublicPropertySort } from "@portal-inmobiliario/contracts/public-property";
 
 nextEnv.loadEnvConfig(process.cwd());
 const database = createDatabaseClient();
@@ -296,5 +296,35 @@ test("a faixa de preços agrega somente publicados e separa venda de aluguel com
     assert.deepEqual(await service.priceRange("RENT"), { minPrice: "0.02", maxPrice: "999999999999.98" });
     await transaction.property.updateMany({ where: { operation: "RENT" }, data: { isPublished: false } });
     assert.deepEqual(await service.priceRange("RENT"), { minPrice: null, maxPrice: null });
+  });
+});
+
+test("o PostgreSQL ordena por data, preço decimal e área útil, com desempates, nulos ao final e filtros", async () => {
+  await withRollback(async (transaction) => {
+    const { features: seedFeatures, ...propertyData } = seedProperties[0];
+    assert.ok(seedFeatures.length > 0);
+    const marker = `Ordenação-${randomUUID()}`;
+    const ids = Array.from({ length: 5 }, () => randomUUID()).sort();
+    const base = { ...propertyData, title: marker, country: "BR", isPublished: true, operation: "SALE" as const, type: "HOUSE" as const, city: "São Paulo", state: "SP", createdAt: new Date("2026-01-01T12:00:00Z") };
+    const first = await transaction.property.create({ data: { ...base, id: ids[0], price: "100.10", usableArea: "50.10" } });
+    const second = await transaction.property.create({ data: { ...base, id: ids[1], price: "100.11", usableArea: "50.10", operation: "RENT" } });
+    const third = await transaction.property.create({ data: { ...base, id: ids[2], price: "100.10", usableArea: "50.11", createdAt: new Date("2026-02-01T12:00:00Z") } });
+    const fourth = await transaction.property.create({ data: { ...base, id: ids[3], price: "999999999999.99", usableArea: null, totalArea: "999.99", createdAt: new Date("2026-03-01T12:00:00Z") } });
+    const fifth = await transaction.property.create({ data: { ...base, id: ids[4], price: "100.10", usableArea: null, totalArea: "1.00" } });
+    await transaction.property.create({ data: { ...base, id: randomUUID(), price: "0.01", usableArea: "0.01", isPublished: false } });
+    const service = createPublicPropertyService(createPublicPropertyRepository(transaction));
+    const cases: [PublicPropertySort, string[], string[]][] = [
+      ["recent", [fourth.id, third.id, first.id, second.id, fifth.id], [third.id, first.id, fifth.id]],
+      ["price_asc", [third.id, first.id, fifth.id, second.id, fourth.id], [third.id, first.id, fifth.id]],
+      ["price_desc", [fourth.id, second.id, third.id, first.id, fifth.id], [third.id, first.id, fifth.id]],
+      ["area_asc", [first.id, second.id, third.id, fourth.id, fifth.id], [first.id, third.id, fifth.id]],
+      ["area_desc", [third.id, first.id, second.id, fourth.id, fifth.id], [third.id, first.id, fifth.id]],
+    ];
+    for (const [sort, expected, filtered] of cases) {
+      assert.deepEqual((await service.list(marker, {}, sort)).map(({ id }) => id), expected, sort);
+      assert.deepEqual((await service.list(marker, { operation: "SALE", type: ["HOUSE"], maxPrice: "100.10", city: "são paulo" }, sort)).map(({ id }) => id), filtered, `${sort} com filtros`);
+      assert.deepEqual(await service.list(marker, { type: ["LAND"] }, sort), []);
+    }
+    assert.deepEqual(await service.list(marker), await service.list(marker, {}, "recent"));
   });
 });

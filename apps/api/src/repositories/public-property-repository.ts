@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { PublicPropertyFilters } from "@portal-inmobiliario/contracts/public-property";
+import type { PublicPropertyFilters, PublicPropertySort } from "@portal-inmobiliario/contracts/public-property";
 import type { Prisma } from "../generated/prisma/client";
 import { getDatabase } from "../lib/db";
 
@@ -44,16 +44,27 @@ export type PublicPropertyRecord = Prisma.PropertyGetPayload<{
 }>;
 
 export interface PublicPropertyRepository {
-  findPublished(search?: string, filters?: PublicPropertyFilters): Promise<PublicPropertyRecord[]>;
+  findPublished(search?: string, filters?: PublicPropertyFilters, sort?: PublicPropertySort): Promise<PublicPropertyRecord[]>;
   findPublishedById(id: string): Promise<PublicPropertyRecord | null>;
   findPublishedPriceRange(operation?: PublicPropertyFilters["operation"]): Promise<{ minPrice: PublicPropertyRecord["price"] | null; maxPrice: PublicPropertyRecord["price"] | null }>;
+}
+
+function propertyOrderBy(sort: PublicPropertySort): Prisma.PropertyOrderByWithRelationInput[] {
+  const tieBreakers: Prisma.PropertyOrderByWithRelationInput[] = [{ createdAt: "desc" }, { id: "asc" }];
+  switch (sort) {
+    case "price_asc": return [{ price: "asc" }, ...tieBreakers];
+    case "price_desc": return [{ price: "desc" }, ...tieBreakers];
+    case "area_asc": return [{ usableArea: { sort: "asc", nulls: "last" } }, ...tieBreakers];
+    case "area_desc": return [{ usableArea: { sort: "desc", nulls: "last" } }, ...tieBreakers];
+    default: return tieBreakers;
+  }
 }
 
 export function createPublicPropertyRepository(
   database?: Pick<Prisma.TransactionClient, "property">,
 ): PublicPropertyRepository {
   return {
-    async findPublished(search = "", filters = {}) {
+    async findPublished(search = "", filters = {}, sort = "recent") {
       // Escapar os curingas do LIKE para pesquisar o texto literalmente.
       const contains = search.replace(/[\\%_]/g, "\\$&");
       return (database ?? getDatabase()).property.findMany({
@@ -75,7 +86,7 @@ export function createPublicPropertyRepository(
           } : {}),
         },
         select: publicPropertySelect,
-        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+        orderBy: propertyOrderBy(sort),
       });
     },
     async findPublishedPriceRange(operation) {

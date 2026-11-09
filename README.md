@@ -123,7 +123,25 @@ O endpoint independente `GET /api/properties/price-range` continua retornando `{
 
 Preços e área são limites inclusivos. A API e as URLs geradas usam ponto e até duas casas (`minPrice=2500.00`). A API mantém a precisão do domínio, com preços até `999999999999.99` e área até `9999999999.99`; o catálogo oferece a escala de preço de zero a R$ 10 milhões. Valores vazios são ignorados. Enums inválidos, UF inválida, negativos, limites excedidos, parâmetros únicos repetidos e preço mínimo maior que o máximo retornam `400` antes de consultar o banco. `type` é o parâmetro que permite múltiplos valores.
 
-O cache SWR possui uma chave canônica por combinação normalizada, mantendo o compartilhamento com a landing apenas no catálogo sem busca ou filtros. Resultados de outra combinação não são exibidos durante o carregamento. Sem correspondências, a interface orienta a ajustar ou limpar os filtros. `npm test`, `npm run api:test:integration` e `npm run test:smoke` cobrem validação, combinações, precisão decimal, nulos, publicação, URLs e proxy. A ordenação continua na Etapa 12.
+O cache SWR possui uma chave canônica por combinação normalizada, mantendo o compartilhamento com a landing no catálogo sem busca ou filtros e com a ordenação padrão. Resultados de outra combinação não são exibidos durante o carregamento. Sem correspondências, a interface orienta a ajustar ou limpar os filtros. `npm test`, `npm run api:test:integration` e `npm run test:smoke` cobrem validação, combinações, precisão decimal, nulos, publicação, URLs e proxy.
+
+### Ordenação e estados
+
+A Etapa 12 acrescenta o seletor **Ordenar por**, com botão **Ordenar**, acima do catálogo. O formulário GET preserva busca e filtros, incluindo múltiplos tipos, e sua seleção acompanha acesso direto, recarga e histórico. Buscar, aplicar ou limpar filtros também preserva a ordenação.
+
+O parâmetro `sort` é aceito em `/properties` e `GET /api/properties`:
+
+| Valor | Ordenação |
+| --- | --- |
+| `recent` | Mais recentes (padrão) |
+| `price_asc` | Menor preço |
+| `price_desc` | Maior preço |
+| `area_asc` | Menor área útil |
+| `area_desc` | Maior área útil |
+
+A ordenação é executada no PostgreSQL junto dos filtros, usando os valores decimais. Imóveis sem área útil aparecem ao final nas duas ordens de área. Empates usam data de criação decrescente e ID crescente. `sort` ausente ou vazio usa `recent`; valores inválidos ou repetidos retornam `400` na API e permitem corrigir a seleção no catálogo. Cada ordenação tem uma chave SWR própria, e `recent` explícito compartilha o cache padrão.
+
+O carregamento anuncia “Carregando imóveis…” e exibe seis skeletons na grade responsiva, ocultos da árvore de acessibilidade e sem animação quando há preferência por movimento reduzido. Imóveis de outra combinação não aparecem enquanto os novos dados carregam. Catálogo vazio, busca/filtros sem correspondências e erro com **Tentar novamente** mantêm mensagens específicas e preservam a seleção.
 
 ## PostgreSQL e migrações
 
@@ -228,7 +246,7 @@ As imagens contêm `id`, `url`, `position` e `isMain`, em ordem de posição; as
 
 Um UUID malformado retorna `400`. Um UUID válido de imóvel inexistente ou despublicado retorna a mesma resposta `404`, sem revelar a existência de rascunhos. Falhas inesperadas retornam `500` com uma mensagem genérica. Os erros seguem o formato `{ "message": "Imóvel não encontrado.", "status": 404 }`, sem detalhes internos. As respostas usam `Cache-Control: no-store` e as rotas são dinâmicas para refletir mudanças de publicação.
 
-No backend `apps/api`, as rotas em `src/app/api/properties/` chamam o serviço em `src/services/public-property-service.ts`, que serializa os dados. O repositório em `src/repositories/public-property-repository.ts` consulta o Prisma com `isPublished: true` tanto na listagem quanto nos detalhes. A conexão é aberta somente quando uma consulta é executada. A listagem tem uma ordem estável por data de criação e ID; busca, filtros e opções de ordenação serão adicionados nas etapas correspondentes.
+No backend `apps/api`, as rotas em `src/app/api/properties/` chamam o serviço em `src/services/public-property-service.ts`, que serializa os dados. O repositório em `src/repositories/public-property-repository.ts` consulta o Prisma com `isPublished: true` tanto na listagem quanto nos detalhes. A conexão é aberta somente quando uma consulta é executada. A listagem aplica busca, filtros e ordenação no PostgreSQL, sempre com desempates estáveis por data de criação e ID.
 
 Com o banco migrado, o seed executado e o servidor iniciado, consulte no PowerShell:
 

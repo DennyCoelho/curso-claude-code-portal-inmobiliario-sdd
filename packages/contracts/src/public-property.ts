@@ -1,3 +1,5 @@
+export type PublicPropertySort = "recent" | "price_asc" | "price_desc" | "area_asc" | "area_desc";
+
 export interface PublicPropertyFilters {
   operation?: PublicProperty["operation"];
   type?: PublicProperty["type"][];

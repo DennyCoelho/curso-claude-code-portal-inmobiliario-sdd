@@ -313,6 +313,10 @@ Permitir:
 - área da menor para a maior;
 - área da maior para a menor.
 
+A ordenação deve usar o parâmetro `sort` na URL do catálogo e da API REST: `recent` (padrão), `price_asc`, `price_desc`, `area_asc` e `area_desc`. Ordenar por área útil, identificada no seletor; imóveis sem área útil ficam ao final em ambos os sentidos. Empates são resolvidos por data de criação mais recente e ID crescente. A seleção deve preservar a busca e todos os filtros e funcionar ao recarregar ou navegar no histórico. Parâmetros inválidos ou repetidos devem permitir correção no catálogo e retornar `400` na API.
+
+Durante o carregamento, anunciar o estado e exibir skeletons com a estrutura da grade, respeitando a preferência por movimento reduzido. Não apresentar imóveis de outra busca, filtro ou ordenação. Diferenciar catálogo vazio e combinações sem resultados; falhas devem oferecer nova tentativa preservando a seleção.
+
 ---
 
 ## 12. Detalhes do imóvel

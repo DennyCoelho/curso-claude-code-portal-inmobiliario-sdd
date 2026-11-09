@@ -12,6 +12,7 @@ import type { PropertyListItem } from '../src/lib/property'
 import { buildCatalogSearchUrl, buildPublicPropertiesUrl, parseCatalogSearch, propertySearchSchema } from '../src/lib/property-search'
 import { buildCatalogFiltersUrl, catalogFiltersSchema, getCatalogFilterValues, parseCatalogFilters } from '../src/lib/property-filters'
 import { adjacentPriceSliderIndex, centsAsPrice, formatPriceInput, getPriceSliderValues, maximumPriceSliderIndex, normalizePriceInput, priceInCents, priceToSliderIndex, sliderIndexToPrice } from '../src/lib/property-price-range'
+import { buildCatalogSortUrl, parseCatalogSort } from '../src/lib/property-sort'
 
 const router: AppRouterInstance = {
   back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {}, bfcacheId: 'catalog-test',
@@ -103,6 +104,9 @@ test('o carregamento é anunciado e o erro oferece nova tentativa sem mostrar da
   assert.match(loading, /aria-busy="true"/)
   assert.match(loading, /role="status"/)
   assert.match(loading, /Carregando imóveis…/)
+  assert.match(loading, /aria-hidden="true" class="property-grid/)
+  assert.equal(loading.match(/motion-safe:animate-pulse/g)?.length, 6)
+  assert.doesNotMatch(loading, /Casa com jardim/)
   assert.doesNotMatch(loading, /<article|<button/)
 
   const error = renderResults([property], 'error')
@@ -380,4 +384,72 @@ test('a rota preenche o formulário GET pela URL e preserva os parâmetros ao li
   assert.match(markup, /type="hidden" name="operation" value="RENT"/)
   assert.match(markup, /href="\/properties\?operation=RENT"/)
   assert.match(markup, /Limpar busca/)
+})
+
+test('a ordenação aceita cinco opções, normaliza o padrão e rejeita valores inválidos e repetidos', () => {
+  for (const sort of ['recent', 'price_asc', 'price_desc', 'area_asc', 'area_desc']) {
+    assert.deepEqual(parseCatalogSort(`sort=+${sort}+`), { success: true, sort })
+  }
+  for (const query of ['', 'sort=', 'sort=+++']) assert.deepEqual(parseCatalogSort(query), { success: true, sort: 'recent' })
+  for (const query of ['sort=oldest', 'sort=PRICE_ASC', 'sort=recent&sort=recent', 'sort=&sort=']) assert.equal(parseCatalogSort(query).success, false, query)
+})
+
+test('ordenar e voltar ao padrão preservam busca e tipos múltiplos e os filtros preservam a ordenação', () => {
+  const query = 'search=São+Paulo&type=HOUSE&type=APARTMENT&operation=SALE&minPrice=1234.56&sort=inválido&sort=recent'
+  const url = new URL(buildCatalogSortUrl('area_desc', query), 'http://localhost')
+  assert.deepEqual(url.searchParams.getAll('sort'), ['area_desc'])
+  assert.deepEqual(url.searchParams.getAll('type'), ['HOUSE', 'APARTMENT'])
+  assert.equal(url.searchParams.get('search'), 'São Paulo')
+  assert.equal(url.searchParams.get('minPrice'), '1234.56')
+  assert.equal(url.searchParams.get('operation'), 'SALE')
+  const reset = new URL(buildCatalogSortUrl('recent', url.search.slice(1)), 'http://localhost')
+  assert.equal(reset.searchParams.has('sort'), false)
+  assert.deepEqual(reset.searchParams.getAll('type'), ['HOUSE', 'APARTMENT'])
+  assert.equal(buildCatalogSortUrl('recent', 'sort=price_asc'), '/properties')
+  assert.equal(new URL(buildCatalogSearchUrl('jardim', url.search.slice(1)), 'http://localhost').searchParams.get('sort'), 'area_desc')
+  assert.equal(new URL(buildCatalogFiltersUrl(getCatalogFilterValues(url.search.slice(1)), url.search.slice(1)), 'http://localhost').searchParams.get('sort'), 'area_desc')
+  assert.equal(buildCatalogFiltersUrl(null, 'sort=area_desc&operation=SALE'), '/properties?sort=area_desc')
+})
+
+test('cada ordenação tem chave SWR própria e não mostra imóveis de outra ordem ou de uma URL inválida', () => {
+  const fallback = { '/api/properties': [property], '/api/properties?search=jardim&type=HOUSE&sort=price_asc': [{ ...property, title: 'Resultado ordenado' }] }
+  const render = (parameters: string) => renderToStaticMarkup(
+    <SWRConfig value={{ provider: () => new Map(), revalidateOnMount: false, fallback }}>
+      <PropertyCatalog parameters={parameters} />
+    </SWRConfig>,
+  )
+  assert.equal(buildPublicPropertiesUrl('', {}, 'recent'), '/api/properties')
+  assert.match(render('sort=recent'), /Casa com jardim em São Paulo/)
+  for (const sort of ['price_asc', 'price_desc', 'area_asc', 'area_desc'] as const) {
+    assert.equal(buildPublicPropertiesUrl('jardim', { type: ['HOUSE'] }, sort), `/api/properties?search=jardim&type=HOUSE&sort=${sort}`)
+  }
+  assert.match(render('sort=price_asc&type=HOUSE&search=+jardim+'), /Resultado ordenado/)
+  const pending = render('sort=price_desc&type=HOUSE&search=jardim')
+  assert.match(pending, /Carregando imóveis…/)
+  assert.doesNotMatch(pending, /<article|Resultado ordenado|Casa com jardim/)
+  for (const query of ['sort=oldest', 'sort=price_asc&sort=area_desc']) {
+    const invalid = render(query)
+    assert.match(invalid, /role="alert"/)
+    assert.match(invalid, /Escolha uma opção em Ordenar por/)
+    assert.doesNotMatch(invalid, /<article|Carregando imóveis/)
+  }
+})
+
+test('o formulário de ordenação GET reflete a URL e preserva busca, filtros e tipos repetidos', async () => {
+  for (const sort of ['recent', 'price_asc', 'price_desc', 'area_asc', 'area_desc']) {
+    const page = await PropertiesPage({ searchParams: Promise.resolve({ search: 'jardim', type: ['HOUSE', 'APARTMENT'], minPrice: '1234.56', sort }) })
+    const markup = renderToStaticMarkup(<AppRouterContext.Provider value={router}><SWRConfig value={{ provider: () => new Map() }}>{page}</SWRConfig></AppRouterContext.Provider>)
+    const form = markup.match(/<form(?=[^>]*aria-label="Ordenar imóveis")[\s\S]*?<\/form>/)![0]
+    assert.match(form, /action="\/properties" method="get"/)
+    assert.match(form, /for="catalog-sort"/)
+    assert.match(form, new RegExp(`value="${sort}" selected=""`))
+    assert.match(form, /name="search" value="jardim"/)
+    assert.match(form, /name="minPrice" value="1234.56"/)
+    assert.match(form, /name="type" value="HOUSE"/)
+    assert.match(form, /name="type" value="APARTMENT"/)
+    assert.equal(form.match(/name="sort"/g)?.length, 1)
+    assert.match(form, /Menor área útil/)
+    assert.match(form, /Maior área útil/)
+    assert.match(form, /type="submit"/)
+  }
 })
