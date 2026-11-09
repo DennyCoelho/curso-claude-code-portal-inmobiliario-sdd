@@ -31,6 +31,7 @@ export function PropertyCatalog({ parameters = "" }: { parameters?: string }) {
       onRetry={() => void mutate()}
       search={result.search}
       filtered={Object.keys(filters.filters).length > 0}
+      parameters={parameters}
     />
   );
 }

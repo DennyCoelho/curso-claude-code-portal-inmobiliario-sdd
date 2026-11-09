@@ -339,6 +339,8 @@ Exibir:
 - localização;
 - formulário de contato.
 
+Na Etapa 13, disponibilizar `/properties/{id}` com as informações públicas completas, foto principal e endereço brasileiro textual. Os cards devem abrir os detalhes e permitir voltar ao catálogo preservando busca, filtros e ordenação. Dados opcionais ausentes não devem ser inventados; zeros válidos devem permanecer visíveis. Tratar carregamento, imóvel indisponível e falha com nova tentativa. Galeria, mapa e contato serão acrescentados nas respectivas etapas.
+
 ---
 
 ## 13. Google Maps

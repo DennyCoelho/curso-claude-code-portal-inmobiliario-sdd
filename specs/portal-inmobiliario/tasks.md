@@ -197,10 +197,16 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Validação concluída com `npm test` (lint, tipos dos três workspaces e 61 testes unitários), sete testes de integração no PostgreSQL com transações revertidas, 12 testes HTTP/proxy e `npm run build` dos dois aplicativos. Caches `.next` regenerados e builds executados fora do isolamento.
   - Navegador em produção conferido em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal. As cinco ordens, filtros combinados, tipos múltiplos, teclado, recarga, voltar/avançar, limpar busca/filtros preservando ordenação, ausência de resultados e correção de opção inválida confirmados. Falha temporária da API e recuperação por Tentar novamente preservaram a ordenação; nenhum erro inesperado no console. Especificação, plano e README atualizados; aplicativos em `http://localhost:3000` e `http://localhost:3001` com os builds novos.
 
-- [ ] **Etapa 13 — Detalhes do imóvel**
+- [x] **Etapa 13 — Detalhes do imóvel**
   - Criar `/properties/{id}`.
   - Exibir informações completas.
   - Consumir exclusivamente a API REST.
+  - Rota `/properties/[id]` renderizada no servidor, consultando somente `GET /api/properties/{id}` na origem `API_URL`, com validação Zod do contrato completo, UUID validado antes da requisição, timeout de dez segundos e `cache: no-store`. Ausência usa `notFound()`; falhas HTTP, rede ou contrato usam mensagem genérica, sem dados internos.
+  - Detalhes com título, preço BRL, aluguel mensal, operação, tipo, foto principal, descrição, áreas útil e total, quartos, banheiros, vagas, idade, características, endereço com complemento e CEP brasileiro e datas em `pt-BR` no fuso `America/Sao_Paulo`. Campos nulos são omitidos; zeros são preservados. Imagem ausente/indisponível e descrição/características ausentes têm tratamento próprio.
+  - Cards da landing e do catálogo abrem os detalhes por links acessíveis, sem pré-busca das páginas. Parâmetro `from` preserva busca, tipos múltiplos, filtros e ordenação no retorno ao catálogo; o caminho de retorno é sempre local. Galeria, mapa, contato e metadados completos permanecem nas respectivas etapas.
+  - Carregamento com skeletons, página específica de imóvel indisponível com `noindex` e fronteira de erro com `retry()` e navegação ao catálogo. Em respostas já transmitidas por streaming, o framework pode manter HTTP `200` ao exibir ausência; a API preserva seu `404`.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 71 testes unitários, incluindo dez testes novos de detalhes. `npm run build:web` e 14 testes HTTP/proxy aprovados; páginas de venda, aluguel e terreno conferidas com os dados renderizados no HTML. Backend e dados existentes preservados.
+  - Navegador em produção validado em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal. Acesso pelos cards da landing e do catálogo, teclado, recarga, retorno com filtros/ordenação, campos completos, nulos/zero, carregamento e ausência com `noindex` confirmados. Falha temporária da API exibiu a mensagem genérica; após restaurar o backend, Tentar novamente recuperou os detalhes. Apenas o erro esperado da simulação foi registrado pelo React/servidor. Documentação atualizada e aplicativos em `http://localhost:3000` e `http://localhost:3001` com o frontend novo.
 
 - [ ] **Etapa 14 — Galeria**
   - Imagem principal.

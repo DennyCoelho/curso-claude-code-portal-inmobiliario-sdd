@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { randomUUID } from "node:crypto";
 
 const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
 const apiUrl = process.env.API_URL ?? "http://127.0.0.1:3001";
@@ -231,4 +232,41 @@ test("as cinco ordenações funcionam diretamente e pelo proxy, preservando filt
   assert.match(html, /aria-label="Ordenar imóveis"/);
   assert.match(html, /value="area_desc" selected=""/);
   assert.match(html, /href="\/properties\?search=jardim&amp;sort=area_desc"/);
+});
+
+test("os detalhes de venda, aluguel e terreno chegam renderizados ao frontend por REST", async (context) => {
+  const response = await request(apiUrl, "/api/properties");
+  assert.equal(response.status, 200);
+  const properties = await response.json();
+  if (!properties.length) { context.skip("Nenhum imóvel publicado no banco."); return; }
+  const selected = [properties.find(({ operation }) => operation === "SALE"), properties.find(({ operation }) => operation === "RENT"), properties.find(({ type }) => type === "LAND")].filter(Boolean);
+  const escapeHtml = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;");
+  for (const property of selected) {
+    const from = "search=São+Paulo&type=HOUSE&type=APARTMENT&sort=price_asc";
+    const page = await request(webUrl, `/properties/${property.id}?${new URLSearchParams({ from })}`);
+    assert.equal(page.status, 200);
+    const html = (await page.text()).replace(/<!--[\s\S]*?-->/g, "");
+    assert.ok(html.includes(escapeHtml(property.title)));
+    assert.ok(html.includes(escapeHtml(property.description)));
+    assert.match(html, /id="property-title"/);
+    assert.match(html, /Sobre o imóvel/);
+    assert.match(html, /Características/);
+    assert.match(html, /<address/);
+    assert.ok(html.includes(`${property.postalCode.slice(0, 5)}-${property.postalCode.slice(5)}`));
+    assert.ok(html.includes(property.operation === "RENT" ? "Aluguel mensal" : "Valor de venda"));
+    assert.match(html, /href="\/properties\?search=S%C3%A3o\+Paulo&amp;type=HOUSE&amp;type=APARTMENT&amp;sort=price_asc"/);
+    assert.doesNotMatch(html, /DATABASE_URL|publicId|passwordHash|<iframe|<form/);
+  }
+});
+
+test("detalhes inválidos e inexistentes mostram ausência com noindex sem expor erros internos", async () => {
+  for (const id of ["invalido", randomUUID()]) {
+    const response = await request(webUrl, `/properties/${id}`);
+    assert.ok([200, 404].includes(response.status));
+    const html = await response.text();
+    assert.match(html, /Imóvel não encontrado/);
+    assert.match(html, /name="robots" content="noindex"/);
+    assert.match(html, /Ver imóveis disponíveis/);
+    assert.doesNotMatch(html, /DATABASE_URL|passwordHash|postgresql:\/\//);
+  }
 });

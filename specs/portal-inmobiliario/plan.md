@@ -361,6 +361,15 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 - Acrescentar skeletons decorativos com a mesma grade dos cards, anúncio de carregamento e animação desativada com movimento reduzido. Preservar os estados específicos de vazio, ausência de correspondências e erro com nova tentativa.
 - Validar as cinco ordens, desempates, nulos, centavos, publicação e filtros em transações revertidas no PostgreSQL; cobrir Route Handler, URLs, cache, formulário e estados. Executar lint, tipos, testes, builds, HTTP/proxy e conferir teclado e responsividade no navegador.
 
+### Detalhes do imóvel — Etapa 13
+
+- Criar `/properties/[id]` como Server Component, aguardando `params` e consultando somente `GET /api/properties/{id}` na origem `API_URL`. Validar UUID antes da requisição, usar `cache: no-store`, timeout de dez segundos e validação Zod do contrato público completo. Retornar `notFound()` para identificador inválido ou resposta `404`; falhas de rede, HTTP ou contrato usam mensagem genérica e a fronteira de erro da rota.
+- Exibir título, operação, tipo, preço BRL com aluguel mensal, descrição com quebras de linha, áreas útil e total, quartos, banheiros, vagas, idade, características e endereço brasileiro com complemento e CEP. Omitir campos opcionais nulos e preservar zero; mostrar ausência de características e descrição com mensagens claras. Exibir datas de cadastro e atualização em `pt-BR`/`America/Sao_Paulo`.
+- Reutilizar `PropertyImage` para uma foto principal com tamanho adequado à página, priorizando a imagem principal ou a primeira por posição e mantendo o tratamento de ausência/erro. Galeria com miniaturas e navegação, Google Maps, contato e metadados dinâmicos completos seguem as Etapas 14, 15, 16 e 31.
+- Tornar os cards links acessíveis para os detalhes, sem pré-buscar cada página. No catálogo, transportar os parâmetros atuais em `from`; construir o retorno sempre em `/properties`, preservando busca, tipos múltiplos, filtros e ordenação sem permitir URL externa. Cards da landing retornam ao catálogo geral.
+- Adicionar `loading.tsx`, `not-found.tsx` e `error.tsx` específicos, com skeletons decorativos, movimento reduzido, navegação ao catálogo e recuperação por `retry()` conforme a API desta versão do Next.js. `notFound()` inclui `noindex`; respostas já transmitidas por streaming podem manter HTTP `200`, conforme a convenção do framework.
+- Validar cliente REST, contrato completo, ausência/erro, escape de texto, nulos/zero, BRL, CEP, datas, links e retorno ao catálogo. Executar lint, tipos, testes, build do frontend e HTTP/proxy; conferir acesso pelos cards, acesso direto, recarga, teclado, responsividade e recuperação no navegador. Preservar o backend e os dados existentes.
+
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.

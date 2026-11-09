@@ -7,9 +7,11 @@ import { isCloudinaryImageUrl } from "@/lib/property";
 interface PropertyImageProps {
   src?: string;
   title: string;
+  sizes?: string;
+  preload?: boolean;
 }
 
-export function PropertyImage({ src, title }: PropertyImageProps) {
+export function PropertyImage({ src, title, sizes = "(min-width: 1280px) 390px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) calc((100vw - 88px) / 2), calc(100vw - 40px)", preload = false }: PropertyImageProps) {
   const [hasError, setHasError] = useState(false);
 
   if (!src || !isCloudinaryImageUrl(src) || hasError) {
@@ -28,7 +30,8 @@ export function PropertyImage({ src, title }: PropertyImageProps) {
       src={src}
       alt={title}
       fill
-      sizes="(min-width: 1280px) 390px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) calc((100vw - 88px) / 2), calc(100vw - 40px)"
+      sizes={sizes}
+      preload={preload}
       className="object-cover"
       onError={() => setHasError(true)}
     />

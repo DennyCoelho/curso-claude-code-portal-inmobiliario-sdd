@@ -11,6 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "home:test": "tsx --test scripts/home.test.tsx",
     "property:test": "tsx --test scripts/property-card.test.tsx",
+    "property-detail:test": "tsx --test scripts/property-detail.test.tsx",
     "catalog:test": "tsx --test scripts/catalog.test.tsx"
   },
   "dependencies": {

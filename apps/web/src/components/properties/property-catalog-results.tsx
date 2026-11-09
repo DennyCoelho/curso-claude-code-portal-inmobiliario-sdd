@@ -8,9 +8,10 @@ interface PropertyCatalogResultsProps {
   onRetry: () => void;
   search?: string;
   filtered?: boolean;
+  parameters?: string;
 }
 
-export function PropertyCatalogResults({ properties, status, onRetry, search = "", filtered = false }: PropertyCatalogResultsProps) {
+export function PropertyCatalogResults({ properties, status, onRetry, search = "", filtered = false, parameters = "" }: PropertyCatalogResultsProps) {
   return (
     <section aria-labelledby="catalog-results-title" aria-busy={status === "loading"}>
       <h2 id="catalog-results-title" className="sr-only">{search ? "Resultados da busca" : "Imóveis disponíveis"}</h2>
@@ -39,7 +40,7 @@ export function PropertyCatalogResults({ properties, status, onRetry, search = "
               ? properties.length === 1 ? "imóvel encontrado" : "imóveis encontrados"
               : properties.length === 1 ? "imóvel disponível" : "imóveis disponíveis"}
           </p>
-          <PropertyGrid properties={properties} />
+          <PropertyGrid properties={properties} catalogParameters={parameters} />
         </div>
       )}
     </section>

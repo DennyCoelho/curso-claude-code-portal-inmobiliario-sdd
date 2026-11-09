@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 11 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública de imóveis, a landing page, os cards em grade responsiva, o catálogo público, a busca textual e os filtros combinados. Os mapas e o contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 13 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação e a página de detalhes do imóvel. Galeria, mapas e contato serão implementados nas respectivas etapas.
 
 ## Estrutura do monorepo
 
@@ -142,6 +142,16 @@ O parâmetro `sort` é aceito em `/properties` e `GET /api/properties`:
 A ordenação é executada no PostgreSQL junto dos filtros, usando os valores decimais. Imóveis sem área útil aparecem ao final nas duas ordens de área. Empates usam data de criação decrescente e ID crescente. `sort` ausente ou vazio usa `recent`; valores inválidos ou repetidos retornam `400` na API e permitem corrigir a seleção no catálogo. Cada ordenação tem uma chave SWR própria, e `recent` explícito compartilha o cache padrão.
 
 O carregamento anuncia “Carregando imóveis…” e exibe seis skeletons na grade responsiva, ocultos da árvore de acessibilidade e sem animação quando há preferência por movimento reduzido. Imóveis de outra combinação não aparecem enquanto os novos dados carregam. Catálogo vazio, busca/filtros sem correspondências e erro com **Tentar novamente** mantêm mensagens específicas e preservam a seleção.
+
+### Detalhes do imóvel
+
+A Etapa 13 disponibiliza `/properties/{id}`, acessível pelos cards da landing e do catálogo. A página é renderizada no servidor e consulta exclusivamente `GET /api/properties/{id}` na origem definida em `API_URL`, sem acesso ao banco pelo frontend. O cliente valida o contrato completo com Zod, usa timeout de dez segundos e não mantém cache das respostas. UUIDs inválidos não disparam requisições; imóveis ausentes usam a página de indisponibilidade e falhas temporárias oferecem **Tentar novamente**.
+
+Os detalhes exibem título, operação, tipo, preço BRL com `/mês` para aluguel, foto principal, descrição, áreas útil e total, quartos, banheiros, vagas, idade, características, endereço com complemento e CEP brasileiro e datas no fuso `America/Sao_Paulo`. Campos opcionais nulos são omitidos e zeros válidos são preservados. A imagem usa o tratamento de ausência/erro existente e um tamanho adequado à página. Descrição e características ausentes recebem mensagens específicas.
+
+Cards do catálogo transportam os parâmetros em `from`; **Voltar aos imóveis** preserva busca, filtros, tipos múltiplos e ordenação. O retorno é sempre um caminho local de `/properties`. Cards da landing retornam ao catálogo geral. Os links não pré-buscam cada página de detalhes.
+
+A rota inclui carregamento com skeletons acessíveis, página de imóvel não encontrado e fronteira de erro com recuperação por `retry()`. A ausência inclui `noindex`; quando o carregamento já iniciou streaming, o Next.js pode manter HTTP `200` ao exibir a página de ausência. A API continua respondendo `404` para imóveis inexistentes ou despublicados. `npm run property-detail:test` cobre cliente REST, renderização, erros, formatação, segurança de texto e navegação; esses testes integram `npm test`. Galeria, Google Maps, contato e metadados dinâmicos completos seguem suas etapas.
 
 ## PostgreSQL e migrações
 
