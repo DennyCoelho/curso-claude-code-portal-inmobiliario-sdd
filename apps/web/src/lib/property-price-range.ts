@@ -1,5 +1,5 @@
 export const maximumSliderPrice = 10_000_000;
-export const maximumPriceSliderIndex = 11_900;
+export const maximumPriceSliderIndex = 380;
 
 const priceInputFormatter = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -19,10 +19,12 @@ export function formatPriceInput(value: string) {
 }
 
 const priceBands = [
-  { start: 0, end: 10_000, step: 50, startIndex: 0, endIndex: 200 },
-  { start: 10_000, end: 100_000, step: 100, startIndex: 200, endIndex: 1_100 },
-  { start: 100_000, end: 1_000_000, step: 500, startIndex: 1_100, endIndex: 2_900 },
-  { start: 1_000_000, end: maximumSliderPrice, step: 1_000, startIndex: 2_900, endIndex: maximumPriceSliderIndex },
+  { start: 0, end: 5_000, step: 100, startIndex: 0, endIndex: 50 },
+  { start: 5_000, end: 10_000, step: 500, startIndex: 50, endIndex: 60 },
+  { start: 10_000, end: 50_000, step: 1_000, startIndex: 60, endIndex: 100 },
+  { start: 50_000, end: 100_000, step: 5_000, startIndex: 100, endIndex: 110 },
+  { start: 100_000, end: 1_000_000, step: 10_000, startIndex: 110, endIndex: 200 },
+  { start: 1_000_000, end: maximumSliderPrice, step: 50_000, startIndex: 200, endIndex: maximumPriceSliderIndex },
 ] as const;
 
 export function sliderIndexToPrice(index: number) {

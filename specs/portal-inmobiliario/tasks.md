@@ -178,6 +178,13 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Aceita números simples, ponto ou vírgula decimal e milhar brasileiro, inclusive colagem com `R$`. Formatação aplicada ao sair do campo, sem alterar o texto durante a digitação. Valida preço não negativo, teto de R$ 10 milhões, duas casas decimais e mínimo menor ou igual ao máximo. Foco de erro direcionado ao campo editável correspondente. URL e API recebem valores reais normalizados, sem duplicar parâmetros no formulário GET.
   - `npm test` aprovado com lint, tipos e 54 testes unitários; build do frontend e onze testes HTTP aprovados. Navegador conferido em 320, 360, 768, 1024 e 1440 px sem transbordamento: entrada com `R$`, milhar e centavos, atualização das duas alças, formatação, arraste, teclado, faixa invertida, teto excedido, foco de erro, recarga e envio normalizado confirmados. Console sem erros ou avisos. Especificação, plano e README atualizados; aplicativo local reiniciado com o novo build.
 
+- [x] **Ajuste solicitado — Novos incrementos da barra de preço**
+  - R$ 100 até R$ 5 mil; R$ 500 até R$ 10 mil; R$ 1.000 até R$ 50 mil; R$ 5.000 até R$ 100 mil; R$ 10.000 até R$ 1 milhão; R$ 50.000 acima de R$ 1 milhão, até o teto existente de R$ 10 milhões.
+  - Preservar valores livres e centavos nos campos editáveis, sincronizando as alças com a faixa correspondente sem arredondar o valor digitado.
+  - Validar todos os passos, transições nos dois sentidos, digitação fora dos passos, URLs, lint, tipos e build do frontend.
+  - Escala atualizada para 380 passos nas seis faixas solicitadas. Campos editáveis preservam qualquer preço válido e seus centavos; alças acompanham a posição permitida mais próxima e seus movimentos aplicam os novos incrementos.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 55 testes unitários. Todos os passos e as cinco transições foram conferidos nos dois sentidos, incluindo centavos junto aos limites; valores livres nas seis faixas mantêm precisão e URLs normalizadas. `npm run build:web` aprovado após regenerar o cache `.next` e executar fora do isolamento.
+
 - [ ] **Etapa 12 — Ordenação e estados**
   - Mais recentes.
   - Preço em ordem crescente/decrescente.

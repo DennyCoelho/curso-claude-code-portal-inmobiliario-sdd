@@ -292,11 +292,12 @@ test('os preços digitados aceitam BRL, milhar e centavos sem arredondar aos pas
   assert.equal(catalogFiltersSchema.safeParse({ ...values, maxPrice: '10.000.000,01' }).success, false)
 })
 
-test('todos os passos respeitam os incrementos e as transições de 10 mil, 100 mil e 1 milhão', () => {
+test('todos os passos respeitam os seis incrementos e as transições de 5 mil, 10 mil, 50 mil, 100 mil e 1 milhão', () => {
   let previous = 0
   for (let index = 1; index <= maximumPriceSliderIndex; index++) {
     const price = sliderIndexToPrice(index)
-    const increment = previous < 10_000 ? 50 : previous < 100_000 ? 100 : previous < 1_000_000 ? 500 : 1_000
+    const increment = previous < 5_000 ? 100 : previous < 10_000 ? 500 : previous < 50_000 ? 1_000
+      : previous < 100_000 ? 5_000 : previous < 1_000_000 ? 10_000 : 50_000
     assert.equal(price - previous, increment, `passo ${index}`)
     assert.equal(priceToSliderIndex(price), index)
     previous = price
@@ -306,12 +307,46 @@ test('todos os passos respeitam os incrementos e as transições de 10 mil, 100 
 
 test('as setas avançam e retrocedem um passo válido em cada limite, inclusive com preços antigos', () => {
   const cases: [number, -1 | 1, number][] = [
-    [0, -1, 0], [0, 1, 50], [9950, 1, 10_000], [10_000, 1, 10_100], [10_000, -1, 9950], [10_100, -1, 10_000],
-    [99_900, 1, 100_000], [100_000, 1, 100_500], [100_000, -1, 99_900], [100_500, -1, 100_000],
-    [999_500, 1, 1_000_000], [1_000_000, 1, 1_001_000], [1_000_000, -1, 999_500], [1_001_000, -1, 1_000_000],
-    [10_000_000, 1, 10_000_000], [10_000_000, -1, 9_999_000], [3220.72, 1, 3250], [3220.72, -1, 3200],
+    [0, -1, 0], [0, 1, 100],
+    [4_900, 1, 5_000], [5_000, 1, 5_500], [5_000, -1, 4_900], [5_500, -1, 5_000],
+    [9_500, 1, 10_000], [10_000, 1, 11_000], [10_000, -1, 9_500], [11_000, -1, 10_000],
+    [49_000, 1, 50_000], [50_000, 1, 55_000], [50_000, -1, 49_000], [55_000, -1, 50_000],
+    [95_000, 1, 100_000], [100_000, 1, 110_000], [100_000, -1, 95_000], [110_000, -1, 100_000],
+    [990_000, 1, 1_000_000], [1_000_000, 1, 1_050_000], [1_000_000, -1, 990_000], [1_050_000, -1, 1_000_000],
+    [10_000_000, 1, 10_000_000], [10_000_000, -1, 9_950_000], [3220.72, 1, 3300], [3220.72, -1, 3200],
+    [5_000.01, 1, 5_500], [5_000.01, -1, 5_000], [9_999.99, 1, 10_000], [9_999.99, -1, 9_500],
+    [10_000.01, 1, 11_000], [10_000.01, -1, 10_000], [49_999.99, 1, 50_000], [49_999.99, -1, 49_000],
+    [50_000.01, 1, 55_000], [50_000.01, -1, 50_000], [99_999.99, 1, 100_000], [99_999.99, -1, 95_000],
+    [100_000.01, 1, 110_000], [100_000.01, -1, 100_000], [999_999.99, 1, 1_000_000], [999_999.99, -1, 990_000],
+    [1_000_000.01, 1, 1_050_000], [1_000_000.01, -1, 1_000_000],
   ]
   for (const [price, direction, expected] of cases) assert.equal(sliderIndexToPrice(adjacentPriceSliderIndex(price, direction)), expected)
+})
+
+test('valores livres com centavos sincronizam a barra em cada faixa e seguem exatos na URL', () => {
+  const cases: [string, number, number, number][] = [
+    ['1.234,56', 1_200, 1_300, 1_200],
+    ['5.234,56', 5_000, 5_500, 5_000],
+    ['12.345,67', 12_000, 13_000, 12_000],
+    ['56.789,12', 55_000, 60_000, 55_000],
+    ['123.456,78', 120_000, 130_000, 120_000],
+    ['1.234.567,89', 1_200_000, 1_250_000, 1_250_000],
+  ]
+  for (const [input, lower, upper, nearest] of cases) {
+    const price = Number(input.replaceAll('.', '').replace(',', '.'))
+    const { minimum, maximum } = getPriceSliderValues(input, input)
+    assert.deepEqual({ minimum, maximum }, { minimum: price, maximum: price })
+    assert.equal(sliderIndexToPrice(priceToSliderIndex(minimum)), nearest)
+    assert.equal(sliderIndexToPrice(priceToSliderIndex(maximum)), nearest)
+    assert.equal(sliderIndexToPrice(priceToSliderIndex(price, 'floor')), lower)
+    assert.equal(sliderIndexToPrice(priceToSliderIndex(price, 'ceil')), upper)
+    const values = { ...getCatalogFilterValues(''), minPrice: input, maxPrice: input }
+    assert.ok(catalogFiltersSchema.safeParse(values).success, input)
+    const url = new URL(buildCatalogFiltersUrl(values), 'http://localhost')
+    assert.equal(url.searchParams.get('minPrice'), price.toFixed(2))
+    assert.equal(url.searchParams.get('maxPrice'), price.toFixed(2))
+    assert.equal(formatPriceInput(input), input)
+  }
 })
 
 test('a combinação sem resultados orienta a ajustar os filtros', () => {
