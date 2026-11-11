@@ -257,10 +257,21 @@ test("os detalhes de venda, aluguel e terreno chegam renderizados ao frontend po
     }
     assert.match(html, /Características/);
     assert.match(html, /<address/);
+    assert.match(html, /<iframe[^>]*loading="lazy"[^>]*referrerPolicy="no-referrer"/);
+    const mapSource = html.match(/<iframe[^>]*src="([^"]+)"/)?.[1];
+    assert.ok(mapSource);
+    const mapUrl = new URL(mapSource.replaceAll("&amp;", "&"));
+    const mapAddress = `${property.address}, ${property.addressNumber}, ${property.neighborhood}, ${property.city} - ${property.state}, ${property.postalCode.slice(0, 5)}-${property.postalCode.slice(5)}, Brasil`;
+    assert.equal(mapUrl.origin, "https://maps.google.com");
+    assert.equal(mapUrl.searchParams.get("q"), mapAddress);
+    assert.equal(mapUrl.searchParams.get("hl"), "pt-BR");
+    assert.equal(mapUrl.searchParams.get("gl"), "br");
+    assert.equal(mapUrl.searchParams.has("key"), false);
+    assert.match(html, /Abrir no Google Maps/);
     assert.ok(html.includes(`${property.postalCode.slice(0, 5)}-${property.postalCode.slice(5)}`));
     assert.ok(html.includes(property.operation === "RENT" ? "Aluguel mensal" : "Valor de venda"));
     assert.match(html, /href="\/properties\?search=S%C3%A3o\+Paulo&amp;type=HOUSE&amp;type=APARTMENT&amp;sort=price_asc"/);
-    assert.doesNotMatch(html, /DATABASE_URL|publicId|passwordHash|<iframe|<form/);
+    assert.doesNotMatch(html, /DATABASE_URL|publicId|passwordHash|GOOGLE_MAPS_API_KEY|<form/);
   }
 });
 

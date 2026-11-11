@@ -351,6 +351,8 @@ A página de detalhes deve exibir o Google Maps utilizando logradouro, número, 
 
 A configuração deve ser gerenciada por variáveis de ambiente.
 
+Na Etapa 15, preservar o endereço textual e acrescentar um mapa responsivo com localização aproximada, idioma pt-BR, carregamento sob demanda e título acessível. A consulta deve usar o endereço completo com CEP formatado e Brasil, sem exigir o complemento. Oferecer também um link para abrir o mesmo endereço no Google Maps caso a incorporação não carregue. O zoom é configurável pelo ambiente; a incorporação pública não exige uma chave da Maps Embed API nem expõe credenciais privadas.
+
 O administrador não precisa conhecer coordenadas geográficas.
 
 ---

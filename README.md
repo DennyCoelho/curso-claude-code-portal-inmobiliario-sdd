@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 14 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel e a galeria de fotos. Mapas e contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 15 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel, a galeria de fotos e a localização no Google Maps. O contato será implementado na respectiva etapa.
 
 ## Estrutura do monorepo
 
@@ -151,7 +151,7 @@ Os detalhes exibem título, operação, tipo, preço BRL com `/mês` para alugue
 
 Cards do catálogo transportam os parâmetros em `from`; **Voltar aos imóveis** preserva busca, filtros, tipos múltiplos e ordenação. O retorno é sempre um caminho local de `/properties`. Cards da landing retornam ao catálogo geral. Os links não pré-buscam cada página de detalhes.
 
-A rota inclui carregamento com skeletons acessíveis, página de imóvel não encontrado e fronteira de erro com recuperação por `retry()`. A ausência inclui `noindex`; quando o carregamento já iniciou streaming, o Next.js pode manter HTTP `200` ao exibir a página de ausência. A API continua respondendo `404` para imóveis inexistentes ou despublicados. `npm run property-detail:test` cobre cliente REST, renderização, erros, formatação, segurança de texto e navegação; esses testes integram `npm test`. Google Maps, contato e metadados dinâmicos completos seguem suas etapas.
+A rota inclui carregamento com skeletons acessíveis, página de imóvel não encontrado e fronteira de erro com recuperação por `retry()`. A ausência inclui `noindex`; quando o carregamento já iniciou streaming, o Next.js pode manter HTTP `200` ao exibir a página de ausência. A API continua respondendo `404` para imóveis inexistentes ou despublicados. `npm run property-detail:test` cobre cliente REST, renderização, erros, formatação, segurança de texto, navegação, galeria e mapa; esses testes integram `npm test`. Contato e metadados dinâmicos completos seguem suas etapas.
 
 ### Galeria de fotos
 
@@ -162,6 +162,24 @@ As miniaturas ficam em uma grade que se adapta à tela, com indicação da foto 
 Imóveis sem foto mostram **Imagem indisponível**; com uma única foto, exibem somente a foto e o contador. Esses dois casos não têm controles nem miniaturas redundantes. URLs incompatíveis e falhas de carregamento mantêm o espaço reservado sem bloquear a escolha de outra foto. A apresentação usa `next/image`, proporção reservada, texto alternativo, pré-carregamento da foto inicial e miniaturas sob demanda.
 
 `npm run property-detail:test` também executa os testes de galeria e as interações em DOM simulado com jsdom, incluindo seleção, volta circular, teclado, foco, remoção de fotos, troca de imóvel e falhas de imagem. A configuração de teste resolve o default CommonJS de `next/image` e fornece a configuração real de imagens do app, preservando o componente do Next nos testes. O seed existente continua sem fotografias; a administração e o envio de imagens para o Cloudinary seguem a etapa correspondente.
+
+### Google Maps
+
+A Etapa 15 acrescenta o Google Maps à seção **Localização** dos detalhes. O endereço textual, incluindo o complemento quando informado, permanece disponível. O mapa usa logradouro, número, bairro, cidade, UF, CEP formatado e Brasil, sem exigir latitude ou longitude. O complemento não é enviado ao mapa.
+
+`PropertyMap` renderiza um iframe no servidor com título acessível, largura responsiva, altura reservada, carregamento sob demanda e indicação de localização aproximada. A incorporação pública usa `https://maps.google.com/maps?output=embed`, com `hl=pt-BR` e `gl=br`, sem SDK ou chave da Maps Embed API v1. O placeholder privado `GOOGLE_MAPS_API_KEY` do backend não é utilizado nem exposto neste fluxo.
+
+O zoom é configurado em `apps/web/.env.local`, sem prefixo `NEXT_PUBLIC_`:
+
+```dotenv
+GOOGLE_MAPS_ZOOM="15"
+```
+
+São aceitos inteiros de 0 a 21; ausência ou valor inválido utiliza 15. Reinicie o frontend após alterar. As URLs são montadas com origem fixa e codificação dos dados por `URLSearchParams`, preservando acentos, número `s/n` e CEP com zero inicial. A apresentação não confirma a precisão da geocodificação feita pelo Google.
+
+O link **Abrir no Google Maps** permanece disponível fora do iframe e utiliza a [URL pública de pesquisa documentada pelo Google](https://developers.google.com/maps/documentation/urls/get-started), com o mesmo endereço. Assim, o visitante pode consultar a localização quando a incorporação não carregar. O link abre em nova aba, identificado para leitores de tela; a política do iframe não envia dados da página de origem no cabeçalho de referência.
+
+`npm run property-detail:test` cobre a montagem do endereço, codificação, zoom, origens das URLs, ausência de chave, renderização e acessibilidade. `npm run test:smoke` confere o mapa nos detalhes de venda, aluguel e terreno servidos por REST. O banco, os contratos públicos e os cadastros existentes não são alterados.
 
 ## PostgreSQL e migrações
 

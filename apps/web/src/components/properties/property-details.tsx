@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
 import { formatPropertyArea, formatPropertyPrice, propertyTypeLabels } from "@/lib/property";
 import { PropertyGallery } from "./property-gallery";
+import { PropertyMap } from "./property-map";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" });
 
@@ -70,6 +71,7 @@ export function PropertyDetails({ property, catalogHref = "/properties" }: { pro
               <p>CEP {property.postalCode.slice(0, 5)}-{property.postalCode.slice(5)}</p>
               <p>Brasil</p>
             </address>
+            <PropertyMap property={property} zoom={process.env.GOOGLE_MAPS_ZOOM} />
           </section>
           <p className="text-xs leading-6 text-slate-500">
             Cadastrado em <time dateTime={property.createdAt}>{dateFormatter.format(new Date(property.createdAt))}</time>.<br />

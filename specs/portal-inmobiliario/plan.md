@@ -435,6 +435,14 @@ Construir a localização utilizando:
 
 Usar os campos `address`, `addressNumber`, `neighborhood`, `city`, `state` e `postalCode`, acrescentando `Brasil` ao montar a consulta. O complemento é opcional e pode ser omitido do mapa. Configurar a apresentação em português do Brasil quando a integração permitir idioma e país.
 
+### Implementação — Etapa 15
+
+- Integrar `PropertyMap` à seção Localização dos detalhes, preservando o endereço textual completo e a galeria. Usar somente os dados públicos já recebidos por REST; não solicitar coordenadas nem consultar o banco pelo frontend.
+- Construir a consulta com logradouro, número, bairro, cidade, UF, CEP no formato brasileiro e Brasil; omitir o complemento. Codificar os valores com `URL`/`URLSearchParams`, mantendo origens fixas do Google. Não alterar o endereço persistido nem inventar coordenadas.
+- Utilizar a incorporação pública do Google Maps em `https://maps.google.com/maps`, com `output=embed`, `hl=pt-BR`, `gl=br`, consulta textual e zoom. Este fluxo não usa a Maps Embed API v1 nem exige sua chave. A variável de servidor `GOOGLE_MAPS_ZOOM` em `apps/web` configura o zoom de 0 a 21, com padrão 15 para ausência ou valor inválido. O placeholder privado existente de chave no backend não é utilizado nem enviado ao navegador.
+- Renderizar o iframe no servidor, com título acessível, largura responsiva, altura reservada, carregamento sob demanda e política de referência sem envio de dados da página de origem. Identificar a localização como aproximada e manter um link independente para `https://www.google.com/maps/search/?api=1&query=...`, com o mesmo endereço, caso o mapa não carregue. Não inferir sucesso de geocodificação ou carregamento do provedor a partir de eventos do iframe.
+- Cobrir montagem e codificação do endereço, CEP com zero inicial, acentos, número `s/n`, exclusão do complemento, configuração, origens fixas, acessibilidade e integração nos detalhes. Validar lint, tipos, testes, build do frontend e HTTP/proxy, além da resposta do provedor para um endereço público. Conferir visualmente quando houver navegador disponível e registrar limitações. Contato e administração seguem suas próprias etapas.
+
 Não solicitar coordenadas manualmente.
 
 Se posteriormente for necessária uma geocodificação interna, ela deve ser transparente para o ADMIN e não alterar os campos obrigatórios do formulário.

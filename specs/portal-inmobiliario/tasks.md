@@ -220,10 +220,16 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Build de produção do frontend aprovado após regeneração do cache do Turbopack; 14 testes HTTP/proxy aprovados, incluindo a galeria nos detalhes de venda, aluguel e terreno. A automação de navegador foi encerrada por não conseguir confirmar a URL ativa no Windows; a conferência visual em diferentes larguras não foi realizada. Essa limitação não é coberta pelo DOM simulado.
   - Especificação, plano e README atualizados. Backend, banco e seed preservados; os exemplos existentes continuam sem fotografias, com o gerenciamento de imagens reservado à etapa correspondente. Aplicativos em `http://localhost:3000` e `http://localhost:3001`.
 
-- [ ] **Etapa 15 — Google Maps**
+- [x] **Etapa 15 — Google Maps**
   - Construir a localização a partir de logradouro, número, bairro, cidade, UF, CEP e Brasil.
   - Integrar o Google Maps.
   - Não solicitar latitude/longitude manualmente.
+  - `PropertyMap` integrado à seção Localização, preservando o endereço textual, o complemento e a galeria. Consulta montada com logradouro, número, bairro, cidade, UF, CEP formatado e Brasil; complemento omitido do mapa. Endereço recebido pela API REST existente, sem coordenadas manuais ou acesso ao banco pelo frontend.
+  - Incorporação pública do Google Maps por iframe, com consulta codificada, idioma `pt-BR`, parâmetro de país `br`, título acessível, largura responsiva, altura reservada, carregamento sob demanda e política de referência `no-referrer`. Localização identificada como aproximada e link independente para abrir o mesmo endereço em nova aba, com orientação caso o mapa não carregue.
+  - Configuração de servidor `GOOGLE_MAPS_ZOOM` em `apps/web`, aceitando inteiros de 0 a 21 e padrão 15 para ausência ou valor inválido. Fluxo sem SDK, nova dependência ou chave da Maps Embed API v1; placeholder privado existente do backend preservado e não exposto. Exemplos de ambiente, especificação, plano e README atualizados.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 87 testes, incluindo seis novos testes de endereço, URLs, zoom, renderização e acessibilidade do mapa. Testes dos detalhes confirmam a integração e a consulta REST única. Build de produção do frontend e 14 testes HTTP/proxy aprovados, incluindo mapa nos detalhes de venda, aluguel e terreno.
+  - Navegador em produção validado em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal e com iframe de pelo menos 200 px de largura. Mapa real carregado com o endereço de Brasília, controles e textos em português, link externo com foco visível e recarga confirmados; capturas de celular e computador conferidas e console sem erros ou avisos. Zoom temporário de viewport removido ao concluir.
+  - Backend funcional, contratos, banco e cadastros preservados. Aplicativos reiniciados com o frontend novo em `http://localhost:3000` e `http://localhost:3001`.
 
 - [ ] **Etapa 16 — Contato com Web3Forms**
   - Formulário de contato.

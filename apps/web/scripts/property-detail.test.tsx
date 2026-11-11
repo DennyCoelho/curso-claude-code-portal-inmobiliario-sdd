@@ -72,7 +72,9 @@ test("os detalhes exibem informações completas, BRL, CEP com zero inicial e da
   assert.match(markup, /<dl/);
   assert.match(markup, /<address/);
   assert.match(markup, /Imagem indisponível/);
-  assert.doesNotMatch(markup, /\/mês|<form|<iframe|latitude|longitude/);
+  assert.match(markup, /<iframe title="Mapa da localização de Apartamento com varanda na Sé"/);
+  assert.match(markup, /Abrir no Google Maps/);
+  assert.doesNotMatch(markup, /\/mês|<form|latitude|longitude/);
 });
 
 test("aluguel mensal, campos nulos e zeros têm apresentação correta, sem inventar informações", () => {
@@ -119,6 +121,7 @@ test("a rota renderiza os dados REST no servidor e o retorno aos resultados sem 
   const page = await PropertyPage({ params: Promise.resolve({ id: property.id }), searchParams: Promise.resolve({ from: "sort=price_asc&type=HOUSE&type=APARTMENT" }) });
   const markup = renderToStaticMarkup(page);
   assert.ok(markup.includes(property.title));
+  assert.match(markup, /<iframe title="Mapa da localização de Apartamento com varanda na Sé"/);
   assert.match(markup, /href="\/properties\?sort=price_asc&amp;type=HOUSE&amp;type=APARTMENT"/);
   assert.equal(fetchMock.mock.callCount(), 1);
   assert.ok(String(fetchMock.mock.calls[0].arguments[0]).endsWith(`/api/properties/${property.id}`));
