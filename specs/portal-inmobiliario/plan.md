@@ -370,6 +370,14 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 - Adicionar `loading.tsx`, `not-found.tsx` e `error.tsx` específicos, com skeletons decorativos, movimento reduzido, navegação ao catálogo e recuperação por `retry()` conforme a API desta versão do Next.js. `notFound()` inclui `noindex`; respostas já transmitidas por streaming podem manter HTTP `200`, conforme a convenção do framework.
 - Validar cliente REST, contrato completo, ausência/erro, escape de texto, nulos/zero, BRL, CEP, datas, links e retorno ao catálogo. Executar lint, tipos, testes, build do frontend e HTTP/proxy; conferir acesso pelos cards, acesso direto, recarga, teclado, responsividade e recuperação no navegador. Preservar o backend e os dados existentes.
 
+### Galeria — Etapa 14
+
+- Substituir a foto isolada dos detalhes por `PropertyGallery`, recebendo somente título e imagens do contrato REST já carregado no servidor. Manter a imagem principal primeiro e as demais por posição, sem modificar os dados recebidos; sem principal, começar pela menor posição.
+- Exibir a foto selecionada em proporção reservada, miniaturas em grade responsiva, contador e botões anterior/próxima com navegação circular. Oferecer setas esquerda/direita e Home/End quando o foco estiver na galeria, sem rotação automática. Identificar a miniatura selecionada, fornecer rótulos e textos alternativos em pt-BR, anunciar a posição e preservar o foco nos controles.
+- Reutilizar `PropertyImage` e `next/image`, com `sizes` próprios para foto e miniaturas; pré-carregar somente a foto inicial e carregar as demais sob demanda. Reservar a apresentação compacta das miniaturas para seus espaços menores. Preservar o tratamento de URL incompatível e falha de carregamento, sem bloquear a navegação.
+- Não exibir controles nem miniaturas sem fotos ou com uma única foto. Reiniciar a seleção ao mudar de imóvel e usar a primeira foto disponível quando a seleção deixar de existir. Preservar detalhes, retorno ao catálogo, backend e banco.
+- Cobrir ordenação imutável, imagem inicial, estados de zero/uma/várias fotos e acessibilidade com testes; conferir seleção, navegação circular, teclado, foco e falhas com DOM simulado e dados isolados do banco. Conferir a responsividade no navegador quando a automação estiver disponível e registrar eventuais limitações de validação visual. Executar lint, tipos, testes, build do frontend e HTTP/proxy. Mapa, contato e gerenciamento de imagens continuam nas etapas seguintes.
+
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.

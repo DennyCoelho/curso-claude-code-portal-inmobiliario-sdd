@@ -341,6 +341,8 @@ Exibir:
 
 Na Etapa 13, disponibilizar `/properties/{id}` com as informações públicas completas, foto principal e endereço brasileiro textual. Os cards devem abrir os detalhes e permitir voltar ao catálogo preservando busca, filtros e ordenação. Dados opcionais ausentes não devem ser inventados; zeros válidos devem permanecer visíveis. Tratar carregamento, imóvel indisponível e falha com nova tentativa. Galeria, mapa e contato serão acrescentados nas respectivas etapas.
 
+Na Etapa 14, a galeria deve apresentar a imagem principal primeiro, miniaturas selecionáveis, contador e navegação circular por botões e teclado, sem reprodução automática. As demais fotos seguem a posição cadastrada. Adaptar a foto e as miniaturas ao celular, tablet e computador, com textos alternativos, foco visível e anúncio da posição selecionada. Imóveis sem foto ou com uma única foto não exibem controles desnecessários; falhas de imagem mantêm o tratamento de indisponibilidade e permitem continuar navegando.
+
 ---
 
 ## 13. Google Maps

@@ -23,10 +23,14 @@ export function formatPropertyArea(area: string) {
   return `${areaFormatter.format(Number(area))} m²`;
 }
 
-export function selectPropertyImage(images: PropertyCardData["images"]) {
+export function sortPropertyImages(images: PropertyCardData["images"]) {
   return images.toSorted((first, second) =>
     Number(second.isMain) - Number(first.isMain) || first.position - second.position,
-  )[0];
+  );
+}
+
+export function selectPropertyImage(images: PropertyCardData["images"]) {
+  return sortPropertyImages(images)[0];
 }
 
 export function isCloudinaryImageUrl(value: string) {

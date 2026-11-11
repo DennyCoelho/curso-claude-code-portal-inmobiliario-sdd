@@ -11,7 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "home:test": "tsx --test scripts/home.test.tsx",
     "property:test": "tsx --test scripts/property-card.test.tsx",
-    "property-detail:test": "tsx --test scripts/property-detail.test.tsx",
+    "property-detail:test": "tsx --tsconfig ./scripts/tsconfig.test.json --test scripts/property-detail.test.tsx scripts/property-gallery.test.tsx scripts/property-gallery-interaction.test.tsx",
     "catalog:test": "tsx --test scripts/catalog.test.tsx"
   },
   "dependencies": {
@@ -26,11 +26,13 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5.4.0"

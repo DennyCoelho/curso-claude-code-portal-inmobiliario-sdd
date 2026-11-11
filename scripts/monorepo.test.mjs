@@ -250,6 +250,11 @@ test("os detalhes de venda, aluguel e terreno chegam renderizados ao frontend po
     assert.ok(html.includes(escapeHtml(property.description)));
     assert.match(html, /id="property-title"/);
     assert.match(html, /Sobre o imóvel/);
+    assert.match(html, /aria-label="Galeria de fotos"/);
+    if (!property.images.length) {
+      assert.match(html, /Imagem indisponível/);
+      assert.doesNotMatch(html, /aria-label="Foto anterior"|aria-label="Próxima foto"/);
+    }
     assert.match(html, /Características/);
     assert.match(html, /<address/);
     assert.ok(html.includes(`${property.postalCode.slice(0, 5)}-${property.postalCode.slice(5)}`));

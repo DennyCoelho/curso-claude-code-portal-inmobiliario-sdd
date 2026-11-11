@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 13 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação e a página de detalhes do imóvel. Galeria, mapas e contato serão implementados nas respectivas etapas.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 14 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel e a galeria de fotos. Mapas e contato serão implementados nas respectivas etapas.
 
 ## Estrutura do monorepo
 
@@ -151,7 +151,17 @@ Os detalhes exibem título, operação, tipo, preço BRL com `/mês` para alugue
 
 Cards do catálogo transportam os parâmetros em `from`; **Voltar aos imóveis** preserva busca, filtros, tipos múltiplos e ordenação. O retorno é sempre um caminho local de `/properties`. Cards da landing retornam ao catálogo geral. Os links não pré-buscam cada página de detalhes.
 
-A rota inclui carregamento com skeletons acessíveis, página de imóvel não encontrado e fronteira de erro com recuperação por `retry()`. A ausência inclui `noindex`; quando o carregamento já iniciou streaming, o Next.js pode manter HTTP `200` ao exibir a página de ausência. A API continua respondendo `404` para imóveis inexistentes ou despublicados. `npm run property-detail:test` cobre cliente REST, renderização, erros, formatação, segurança de texto e navegação; esses testes integram `npm test`. Galeria, Google Maps, contato e metadados dinâmicos completos seguem suas etapas.
+A rota inclui carregamento com skeletons acessíveis, página de imóvel não encontrado e fronteira de erro com recuperação por `retry()`. A ausência inclui `noindex`; quando o carregamento já iniciou streaming, o Next.js pode manter HTTP `200` ao exibir a página de ausência. A API continua respondendo `404` para imóveis inexistentes ou despublicados. `npm run property-detail:test` cobre cliente REST, renderização, erros, formatação, segurança de texto e navegação; esses testes integram `npm test`. Google Maps, contato e metadados dinâmicos completos seguem suas etapas.
+
+### Galeria de fotos
+
+A Etapa 14 substitui a foto isolada por `PropertyGallery`, usando o título e as imagens já recebidos pela API REST. A principal aparece primeiro; as demais seguem a posição cadastrada. Sem principal, a foto de menor posição abre a galeria. A coleção recebida não é alterada e nenhuma requisição adicional de imóveis é feita ao navegar pelas fotos.
+
+As miniaturas ficam em uma grade que se adapta à tela, com indicação da foto selecionada. **Foto anterior** e **Próxima foto** permitem navegação circular; com o foco na galeria, as setas esquerda/direita também navegam, **Home** abre a primeira e **End** a última. O contador é anunciado por leitores de tela e os controles preservam o foco. Não há reprodução automática.
+
+Imóveis sem foto mostram **Imagem indisponível**; com uma única foto, exibem somente a foto e o contador. Esses dois casos não têm controles nem miniaturas redundantes. URLs incompatíveis e falhas de carregamento mantêm o espaço reservado sem bloquear a escolha de outra foto. A apresentação usa `next/image`, proporção reservada, texto alternativo, pré-carregamento da foto inicial e miniaturas sob demanda.
+
+`npm run property-detail:test` também executa os testes de galeria e as interações em DOM simulado com jsdom, incluindo seleção, volta circular, teclado, foco, remoção de fotos, troca de imóvel e falhas de imagem. A configuração de teste resolve o default CommonJS de `next/image` e fornece a configuração real de imagens do app, preservando o componente do Next nos testes. O seed existente continua sem fotografias; a administração e o envio de imagens para o Cloudinary seguem a etapa correspondente.
 
 ## PostgreSQL e migrações
 

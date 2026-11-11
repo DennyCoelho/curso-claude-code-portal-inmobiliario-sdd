@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
-import { formatPropertyArea, formatPropertyPrice, propertyTypeLabels, selectPropertyImage } from "@/lib/property";
-import { PropertyImage } from "./property-image";
+import { formatPropertyArea, formatPropertyPrice, propertyTypeLabels } from "@/lib/property";
+import { PropertyGallery } from "./property-gallery";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" });
 
 export function PropertyDetails({ property, catalogHref = "/properties" }: { property: PublicProperty; catalogHref?: string }) {
-  const image = selectPropertyImage(property.images);
   const facts = [
     { label: "Área útil", value: property.usableArea === null ? null : formatPropertyArea(property.usableArea) },
     { label: "Área total", value: property.totalArea === null ? null : formatPropertyArea(property.totalArea) },
@@ -38,10 +37,7 @@ export function PropertyDetails({ property, catalogHref = "/properties" }: { pro
       </header>
       <div className="grid min-w-0 items-start gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-8">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-200 bg-emerald-50">
-            <PropertyImage key={image?.url ?? "no-image"} src={image?.url} title={property.title}
-              sizes="(min-width: 1280px) 730px, (min-width: 1024px) 60vw, (min-width: 640px) calc(100vw - 64px), calc(100vw - 40px)" preload />
-          </div>
+          <PropertyGallery key={property.id} title={property.title} images={property.images} />
           <section aria-labelledby="property-description-title" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
             <h2 id="property-description-title" className="text-xl font-semibold text-slate-900">Sobre o imóvel</h2>
             <p className="mt-4 text-base leading-8 whitespace-pre-line text-slate-600 wrap-anywhere">{property.description.trim() || "Descrição não informada."}</p>

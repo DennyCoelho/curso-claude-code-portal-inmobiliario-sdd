@@ -208,11 +208,17 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - `npm test` aprovado com lint, tipos dos três workspaces e 71 testes unitários, incluindo dez testes novos de detalhes. `npm run build:web` e 14 testes HTTP/proxy aprovados; páginas de venda, aluguel e terreno conferidas com os dados renderizados no HTML. Backend e dados existentes preservados.
   - Navegador em produção validado em 320, 360, 768, 1024 e 1440 px, sem transbordamento horizontal. Acesso pelos cards da landing e do catálogo, teclado, recarga, retorno com filtros/ordenação, campos completos, nulos/zero, carregamento e ausência com `noindex` confirmados. Falha temporária da API exibiu a mensagem genérica; após restaurar o backend, Tentar novamente recuperou os detalhes. Apenas o erro esperado da simulação foi registrado pelo React/servidor. Documentação atualizada e aplicativos em `http://localhost:3000` e `http://localhost:3001` com o frontend novo.
 
-- [ ] **Etapa 14 — Galeria**
+- [x] **Etapa 14 — Galeria**
   - Imagem principal.
   - Miniaturas.
   - Navegação.
   - Responsividade.
+  - `PropertyGallery` integrado aos detalhes, recebendo somente título e imagens já carregados por REST. Imagem principal primeiro e demais por posição, sem alterar a coleção; sem principal, começa pela menor posição. Miniaturas em grade responsiva e foto com proporção reservada, `sizes` próprios e `next/image`.
+  - Seleção por miniaturas, contador anunciado, botões anterior/próxima com navegação circular e suporte a setas esquerda/direita e Home/End dentro da galeria. Rótulos em pt-BR, texto alternativo por foto, indicação da seleção e preservação de foco; sem rotação automática. Seleção acompanha o ID da foto e reinicia ao mudar de imóvel.
+  - Ausência de foto, URL incompatível e falha de carregamento preservam o tratamento de imagem indisponível. Miniaturas têm apresentação compacta; uma falha não bloqueia a navegação. Zero ou uma foto não exibem controles ou miniaturas redundantes. Pré-carregamento da foto inicial e miniaturas sob demanda.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 81 testes, incluindo dez novos testes de galeria: seis de ordenação/renderização e quatro de interação em DOM simulado com jsdom. Cobertos seleção, volta circular, teclado, foco, falha de foto/miniatura, remoção de fotos e troca de imóvel, usando o componente real do Next com a configuração de imagens do app.
+  - Build de produção do frontend aprovado após regeneração do cache do Turbopack; 14 testes HTTP/proxy aprovados, incluindo a galeria nos detalhes de venda, aluguel e terreno. A automação de navegador foi encerrada por não conseguir confirmar a URL ativa no Windows; a conferência visual em diferentes larguras não foi realizada. Essa limitação não é coberta pelo DOM simulado.
+  - Especificação, plano e README atualizados. Backend, banco e seed preservados; os exemplos existentes continuam sem fotografias, com o gerenciamento de imagens reservado à etapa correspondente. Aplicativos em `http://localhost:3000` e `http://localhost:3001`.
 
 - [ ] **Etapa 15 — Google Maps**
   - Construir a localização a partir de logradouro, número, bairro, cidade, UF, CEP e Brasil.
