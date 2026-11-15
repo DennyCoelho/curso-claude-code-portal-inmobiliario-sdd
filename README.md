@@ -345,6 +345,29 @@ Para aplicar novamente as senhas da tabela às contas de demonstração existent
 
 Acesse [Entrar](http://localhost:3000/login) para testar. A etapa atual reconhece os perfis no login; as restrições USER/ADMIN serão implementadas na Etapa 18. Favoritos, conta privada e funções administrativas seguem suas próprias etapas.
 
+### Recuperar senha
+
+No login, **Esqueci minha senha** abre `/forgot-password`. A solicitação aceita retorna uma mensagem condicional igual para contas ativas, inativas ou inexistentes. Somente contas ativas recebem o link. O link abre `/reset-password#token=...`, vale por 30 minutos e funciona uma única vez; pedir outro invalida o anterior. A nova senha segue os critérios do cadastro e exige confirmação. Após redefinir, todas as sessões da conta são revogadas e é necessário entrar novamente.
+
+Configure em `apps/api/.env.local` e reinicie o backend:
+
+```dotenv
+WEB_URL="http://localhost:3000"
+RESEND_API_KEY="sua-chave-privada-do-resend"
+AUTH_EMAIL_FROM="acesso@seu-dominio.com.br"
+```
+
+`AUTH_EMAIL_FROM` deve ser um endereço de remetente verificado no [Resend](https://resend.com/docs/api-reference/emails/send-email), sem nome ou colchetes. Em produção, `WEB_URL` deve ser a origem HTTPS pública do frontend, sem caminho/query/fragmento; configure também `AUTH_TRUSTED_ORIGINS`. Desative rastreamento de cliques nesses e-mails para preservar o link com fragmento. Nenhum desses valores usa o prefixo `NEXT_PUBLIC_`. A chave do Web3Forms continua exclusiva do contato e não envia recuperação de senha.
+
+Sem configuração válida, a API retorna `503` e a tela informa indisponibilidade. O aceite `202` confirma a solicitação, não a entrega: o envio ocorre após a resposta para não revelar a existência de uma conta pela latência ou falha do provedor. Falhas geram aviso genérico no backend e invalidam apenas o token correspondente, sem registrar e-mail, token ou credenciais e sem repetição automática. O usuário pode solicitar novamente. Os testes usam envio simulado; entrega real depende da configuração do Resend.
+
+| Requisição | Entrada JSON | Resultado |
+| --- | --- | --- |
+| `POST /api/auth/forgot-password` | `email` | `202`, mensagem condicional uniforme. |
+| `POST /api/auth/reset-password` | `token`, `password`, `confirmPassword` | `200`, senha atualizada e cookie expirado; link inválido/expirado/usado retorna `400`. |
+
+A migração aditiva `20261115020000_criar_recuperacao_senha` cria `PasswordReset`. Somente hashes SHA-256 dos tokens são persistidos; consumo, troca da senha e revogação das sessões são transacionais, com bloqueio por usuário para impedir consumo simultâneo. O fragmento não é enviado no acesso HTTP à página; não há token em respostas REST ou localStorage. As rotas reutilizam limite de JSON, proteção de origem e limite persistente de dez tentativas por identificador/operação a cada quinze minutos.
+
 ### Fluxo e configuração
 
 As páginas `/login` e `/register` usam React Hook Form + Zod com validação acessível, estados de envio e tratamento de falhas. Ao confirmar o acesso, a senha é limpa e o painel apresenta a sessão atual, a opção Sair da conta e o link ao catálogo. O cabeçalho muda Entrar para Minha sessão. Navegação e painel compartilham uma consulta `/me` por SWR, com revalidação ao recuperar o foco; credenciais não são armazenadas em localStorage/sessionStorage. A conta privada e as permissões serão implementadas nas Etapas 18 e 19.

@@ -57,6 +57,19 @@ test("as páginas de autenticação têm títulos em português, noindex e verif
   }
 });
 
+test("páginas de recuperação chegam pelo frontend com noindex e proteção de referência", async () => {
+  for (const [path, title] of [["/forgot-password", "Recuperar senha"], ["/reset-password", "Redefinir senha"]]) {
+    const response = await request(webUrl, path);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
+    assert.match(html, /name="referrer" content="no-referrer"/);
+    if (path === "/forgot-password") assert.match(html, /Enviar link de recuperação/);
+    else assert.match(html, /Verificando o link/);
+  }
+});
+
 test("o encaminhamento preserva o erro REST e o cache de IDs inválidos", async () => {
   for (const origin of [apiUrl, webUrl]) {
     const response = await request(origin, "/api/properties/invalido");

@@ -32,6 +32,20 @@ export const registerSchema = z.strictObject({
 
 export const loginSchema = z.strictObject({ email, password: loginPasswordSchema });
 
+export const forgotPasswordSchema = z.strictObject({ email });
+export const resetTokenSchema = z.string().regex(/^[a-f0-9]{64}$/, "Link inválido. Solicite um novo link de recuperação.");
+export const resetPasswordSchema = z.strictObject({
+  token: resetTokenSchema,
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, "Confirme sua senha."),
+}).refine((input) => input.password === input.confirmPassword, {
+  path: ["confirmPassword"], message: "As senhas devem ser iguais.",
+});
+export const passwordRecoveryResponseSchema = z.strictObject({ message: z.string() });
+export const PASSWORD_RECOVERY_MESSAGE = "Se houver uma conta ativa para este e-mail, você receberá um link para redefinir sua senha. Confira também a pasta de spam.";
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 export const authenticatedUserSchema = z.strictObject({
   id: z.uuid(),
   name: z.string(),

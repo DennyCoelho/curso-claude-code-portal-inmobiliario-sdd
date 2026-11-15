@@ -7,7 +7,7 @@ import { readSessionToken, setSessionCookie } from "./session";
 
 const localOrigins = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001";
 
-function validateOrigin(request: Request) {
+export function validateOrigin(request: Request) {
   const origin = request.headers.get("origin");
   const trustedOrigins = (process.env.AUTH_TRUSTED_ORIGINS ?? localOrigins).split(",").map((value) => value.trim());
   if (request.headers.get("sec-fetch-site") === "cross-site" || (origin !== null && !trustedOrigins.includes(origin))) {
@@ -15,7 +15,7 @@ function validateOrigin(request: Request) {
   }
 }
 
-async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Request): Promise<unknown> {
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     throw new AuthError(415, "Envie os dados no formato JSON.");
   }

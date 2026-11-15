@@ -420,6 +420,16 @@ Requisitos:
 - endpoints ADMIN exigem o perfil ADMIN;
 - endpoints privados USER exigem autenticação.
 
+### Recuperação de senha — solicitação do usuário
+
+- Acrescentar contratos Zod estritos e `POST /api/auth/forgot-password` / `POST /api/auth/reset-password`, reutilizando validação de origem, limite de JSON e limitação persistente de tentativas. Respostas sem cache; a solicitação aceita retorna mensagem condicional uniforme.
+- Persistir `PasswordReset` com hash SHA-256 de token aleatório de 32 bytes, usuário e expiração absoluta de 30 minutos. Criar migração aditiva. Serializar emissão/consumo por bloqueio do usuário; revalidar token, expiração e atividade dentro da transação. Substituir links anteriores ao emitir e consumir todos os links/revogar sessões ao confirmar a nova senha, sem login automático. A criação de sessões no login revalida o hash da senha e a atividade sob o mesmo bloqueio, impedindo que um login iniciado com a senha antiga crie uma sessão após a redefinição.
+- Serviço separado de recuperação, repositório Prisma e adaptador HTTP Resend. Configurar `RESEND_API_KEY`, `AUTH_EMAIL_FROM` e `WEB_URL` somente no backend. Validar URL HTTP local/HTTPS e usar origem configurada, sem confiar em Host/Origin do pedido. Ausência de configuração retorna 503 antes de consultar a conta. Envio após a resposta por `after()` evita que latência/falhas do provedor revelem a existência da conta. Falhas invalidam somente o token correspondente e registram aviso genérico, sem dados pessoais. Não repetir automaticamente envios incertos.
+- Acrescentar link no login e formulários React Hook Form/Zod em `/forgot-password` e `/reset-password`, usando a política e os indicadores existentes. Token no fragmento `#token=...`, lido apenas no cliente; remover do histórico após sucesso. Não indexar páginas; usar `no-referrer`. Links inválidos permitem pedir outro; falhas preservam os dados e sucesso oferece login.
+- Validar contratos, rotas, provedor simulado, expiração, uso único e concorrência no PostgreSQL, revogação das sessões e formulários. Executar lint, tipos, testes e builds; documentar configuração pendente de envio real.
+
+Referências: [Resend](https://resend.com/docs/api-reference/emails/send-email) e [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
+
 ## 11. Cloudinary
 
 Fluxo:

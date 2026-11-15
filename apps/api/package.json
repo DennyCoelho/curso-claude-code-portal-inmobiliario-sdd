@@ -14,9 +14,9 @@
     "db:check": "tsx scripts/check-database.ts",
     "db:test": "tsx --test scripts/domain-model.test.ts scripts/seed.integration.test.ts",
     "seed:test": "tsx --test scripts/seed.test.ts",
-    "api:test": "node --conditions=react-server --import tsx --test scripts/public-property.test.ts scripts/property-contact.test.ts scripts/auth.test.ts scripts/seed-users.test.ts",
-    "api:test:integration": "node --conditions=react-server --import tsx --test scripts/public-property.integration.test.ts scripts/auth.integration.test.ts scripts/seed-users.integration.test.ts",
-    "auth:test:http": "node --conditions=react-server --import tsx --test scripts/auth.http.test.ts",
+    "api:test": "node --conditions=react-server --import tsx --test scripts/public-property.test.ts scripts/property-contact.test.ts scripts/auth.test.ts scripts/password-reset.test.ts scripts/seed-users.test.ts",
+    "api:test:integration": "node --conditions=react-server --import tsx --test scripts/public-property.integration.test.ts scripts/auth.integration.test.ts scripts/password-reset.integration.test.ts scripts/seed-users.integration.test.ts",
+    "auth:test:http": "node --conditions=react-server --import tsx --test scripts/auth.http.test.ts scripts/password-reset.http.test.ts",
     "db:seed": "prisma db seed",
     "db:seed:users": "node --conditions=react-server --import tsx prisma/seed-users.ts",
     "db:generate": "prisma generate",
@@ -33,7 +33,8 @@
     "pg": "^8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@next/env": "^16.4.3",

@@ -48,6 +48,7 @@ export function AuthPanel({ mode }: { mode: "login" | "register" }) {
       ) : (
         <div className="space-y-5">
           <AuthForm key={mode} mode={mode} onSubmitStart={() => setMessage(null)} onAuthenticated={async (authenticated) => { setMessage("Acesso confirmado com sucesso."); await mutate(authenticated, { revalidate: false }); }} />
+          {mode === "login" ? <Link href="/forgot-password" className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-800 underline underline-offset-4">Esqueci minha senha</Link> : null}
           <p className="text-sm text-slate-700">{mode === "login" ? "Ainda não tem conta? " : "Já tem uma conta? "}
             <Link href={mode === "login" ? "/register" : "/login"} className="font-semibold text-emerald-800 underline underline-offset-4">{mode === "login" ? "Criar conta" : "Entrar"}</Link>
           </p>

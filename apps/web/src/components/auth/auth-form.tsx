@@ -4,39 +4,22 @@ import { useRef, useState } from "react";
 import { useForm, useWatch, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { getPasswordCriteria, loginPasswordSchema, passwordSchema, registerSchema, type AuthenticatedUser } from "@portal-inmobiliario/contracts/auth";
+import { loginPasswordSchema, passwordSchema, registerSchema, type AuthenticatedUser } from "@portal-inmobiliario/contracts/auth";
 import { requestAuth } from "@/lib/api/auth";
 import { ActionButton } from "@/components/ui/loading-feedback";
+import { PasswordCriteria, PasswordMatch } from "./password-feedback";
 
 const inputClass = "min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900";
 type AuthFields = { name: string; email: string; password: string; confirmPassword: string };
 
 function PasswordRequirements({ control }: { control: Control<AuthFields> }) {
   const password = useWatch({ control, name: "password" });
-  const criteria = getPasswordCriteria(password);
-  return (
-    <div id="auth-password-help" className="mt-2 text-xs leading-6">
-      <ul aria-label="Critérios da senha" className="space-y-1">
-        {criteria.map(({ id, label, met }) => (
-          <li key={id} data-criterion={id} data-met={met} className={met ? "text-emerald-800" : "text-slate-600"}>
-            <span aria-hidden="true" className="mr-2">{met ? "✓" : "○"}</span>
-            <span className="sr-only">{met ? "Atendido: " : "Pendente: "}</span>{label}
-          </li>
-        ))}
-      </ul>
-      <p role="status" className="sr-only">{criteria.filter((criterion) => criterion.met).length} de {criteria.length} critérios atendidos.</p>
-    </div>
-  );
+  return <PasswordCriteria password={password} id="auth-password-help" />;
 }
 
 function PasswordConfirmation({ control }: { control: Control<AuthFields> }) {
   const [password, confirmation] = useWatch({ control, name: ["password", "confirmPassword"] });
-  const matches = confirmation.length > 0 && password === confirmation;
-  return (
-    <p id="auth-confirmPassword-help" role="status" className={`mt-2 text-xs leading-6 ${matches ? "text-emerald-800" : "text-slate-600"}`}>
-      {confirmation ? <><span aria-hidden="true">{matches ? "✓ " : "○ "}</span>{matches ? "As senhas são iguais." : "As senhas ainda não são iguais."}</> : null}
-    </p>
-  );
+  return <PasswordMatch password={password} confirmation={confirmation} id="auth-confirmPassword-help" />;
 }
 
 export function AuthForm({ mode, onAuthenticated, onSubmitStart }: { mode: "login" | "register"; onAuthenticated: (user: AuthenticatedUser) => Promise<void>; onSubmitStart?: () => void }) {

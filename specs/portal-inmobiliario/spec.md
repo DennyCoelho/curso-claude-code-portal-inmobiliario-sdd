@@ -416,6 +416,14 @@ Utilizar sessões opacas persistidas no PostgreSQL com validade absoluta de sete
 
 ---
 
+### Recuperação de senha solicitada
+
+Oferecer “Esqueci minha senha” no login, `/forgot-password` e `/reset-password`. Receber o e-mail por REST e responder de forma idêntica para contas ausentes, inativas e ativas. Enviar para a conta ativa um link com token aleatório de uso único, válido por 30 minutos, mantendo somente seu hash no PostgreSQL. Uma nova solicitação substitui o link anterior. Não alterar senha ou sessões antes da confirmação.
+
+Exigir a política de senha do cadastro e confirmação igual, com critérios, mostrar/ocultar, validação acessível, progresso, proteção contra envio duplicado e erros recuperáveis. Recusar links inválidos, expirados e já utilizados, oferecendo nova solicitação. Redefinir a senha, consumir os links e revogar todas as sessões da conta em uma transação; exigir novo login. Contas inativas permanecem inativas.
+
+Integrar e-mails transacionais pelo Resend no backend, com credenciais e URL pública configuradas pelo ambiente. Sem configuração, informar indisponibilidade para todas as solicitações. Não expor tokens em respostas REST, logs ou armazenamento local; usar fragmento no link para evitar sua transmissão nos acessos HTTP à página. Testes do envio usam provedor simulado, sem disparar e-mails reais.
+
 ## 16. Favoritos ou imóveis de interesse
 
 USER pode:

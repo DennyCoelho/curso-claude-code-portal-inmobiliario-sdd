@@ -39,6 +39,17 @@ model User {
   favorites    Favorite[]
   inquiries    Inquiry[]
   sessions     Session[]
+  passwordResets PasswordReset[]
+}
+
+model PasswordReset {
+  tokenHash String   @id @db.VarChar(64)
+  userId    String   @unique @db.Uuid
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }
 
 model Session {

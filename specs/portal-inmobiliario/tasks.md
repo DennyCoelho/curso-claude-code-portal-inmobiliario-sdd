@@ -276,6 +276,19 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Busca da landing/catálogo, filtros e ordenação acompanham transições do Next.js com indicadores e bloqueio dos respectivos controles. Acrescentado fallback geral de navegação e progresso ao recuperar erro dos detalhes. Retry aguarda a Promise da consulta e libera nova tentativa após falha, sem rejeições não tratadas. Contratos e backend funcional preservados; contato continua com testes simulados, sem disparar e-mails de validação.
   - `npm test` aprovado com lint, tipos e 142 testes unitários, incluindo seis testes novos de requisições/transições controladas e três novos testes de autenticação pendente. Build final do frontend, lint final e 17 testes HTTP aprovados. Navegador confirmou spinner real do login, campos bloqueados durante a requisição, sucesso/erro após resposta, saída, busca e recuperação do catálogo pelo botão de nova tentativa. API local que havia parado de responder foi reiniciada, com recuperação e nova suíte HTTP aprovadas. Landing e catálogo conferidos em 320 px sem transbordamento. Dados preservados: 16 imóveis, 16 características e três contas de demonstração; sessão criada na validação encerrada, demais sessões preservadas.
 
+- [x] **Ajuste solicitado — Recuperação de senha**
+  - Contratos REST, migração, tokens de uso único e redefinição transacional com revogação das sessões.
+  - E-mail transacional Resend configurável, proteção de origem e limite de tentativas.
+  - Link no login, solicitação por e-mail e formulário de nova senha acessível.
+  - Testes de segurança, integração PostgreSQL, interface, lint, tipos e builds.
+  - Documentar configuração e limites da validação do envio real.
+  - Implementados `/forgot-password`, `/reset-password` e os dois POSTs REST, com link no login, formulários acessíveis, critérios compartilhados, mostrar/ocultar, progresso, prevenção de duplicação e tratamento de links inválidos/expirados/usados.
+  - Migração aditiva `20261115020000_criar_recuperacao_senha` aplicada ao PostgreSQL. Tokens de 32 bytes, somente hash persistido, validade de 30 minutos, substituição do link anterior e consumo transacional com revogação de todas as sessões. Bloqueio por usuário impede dois consumos; login revalida a senha antes de criar sessão para não reabrir acesso com a senha antiga após redefinição.
+  - Adaptador Resend no backend, envio após a resposta sem revelar existência da conta ou expor dados em logs, configuração validada e falhas sem repetição automática. `RESEND_API_KEY`, `AUTH_EMAIL_FROM` e `WEB_URL` documentadas; envio real depende desses valores e de remetente verificado. Testes usam provedor simulado e não enviaram e-mails reais.
+  - `npm test` aprovado com lint, tipos e 159 testes unitários; 16 testes de integração PostgreSQL e quatro testes HTTP de autenticação/recuperação aprovados diretamente e pelo proxy. Também aprovados 17 testes HTTP gerais e um teste adicional das páginas de recuperação, além dos builds dos dois aplicativos, validação Prisma e status sem migrações pendentes.
+  - Cache `.next` do frontend regenerado para corrigir falha do Turbopack no Windows. Servidores antigos de desenvolvimento reiniciados com os builds atualizados após o Prisma anterior permanecer em memória; validação HTTP final aprovada. Aplicativos disponíveis nas portas 3000/3001. Contagem final: cinco usuários, 16 imóveis, 16 características, zero links de recuperação e nenhuma conta temporária dos testes.
+  - Conferência visual não concluída: navegador integrado não anexou a aba e a automação do Chrome foi interrompida por não conseguir confirmar a URL com segurança. Interações dos formulários verificadas em jsdom e páginas/metadados verificados por HTTP; responsividade visual não foi verificada nesta alteração.
+
 - [ ] **Etapa 18 — Autorização USER e ADMIN**
   - Criar perfis de acesso.
   - Proteger APIs.
