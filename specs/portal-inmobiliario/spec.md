@@ -361,6 +361,8 @@ O administrador não precisa conhecer coordenadas geográficas.
 
 Integrar o Web3Forms.
 
+Na Etapa 16, disponibilizar o formulário nos detalhes do imóvel e preparar o contato por REST no backend, que valida os dados, confirma que o imóvel está publicado e inclui seu ID e título canônicos. O telefone é obrigatório e exige celular com DDD brasileiro válido e onze dígitos nacionais, normalizado com `+55`. O navegador envia o payload preparado diretamente ao Web3Forms, seguindo o fluxo gratuito oficial. A access key do Web3Forms é uma configuração pública do formulário, entregue somente na preparação; segredos das demais integrações permanecem no backend. Preparação não é confirmação de envio: exibir sucesso somente após a confirmação do Web3Forms. Ausência de configuração e falhas devem preservar os campos e ser informadas sem simular sucesso. Persistência e vínculo com usuário serão implementados na Etapa 21.
+
 Campos visíveis:
 
 - nome;
@@ -368,7 +370,7 @@ Campos visíveis:
 - telefone com DDD;
 - mensagem.
 
-O telefone deve aceitar a formatação brasileira com DDD e o prefixo internacional `+55`. Normalizar o número para armazenamento no formato internacional e validar no backend.
+O contato deve exigir um celular brasileiro com DDD válido e onze dígitos nacionais, incluindo o 9 inicial do celular. Aceitar o prefixo internacional `+55` e normalizar no backend para o formato internacional. Aplicar a máscara `(xx) xxxxx-xxxx` durante a digitação/colagem, impedir dígitos excedentes e rejeitar o envio de números incompletos. Campos obrigatórios devem exibir asterisco; usar os placeholders `João de Souza`, `seuemail@exemplo.com`, `(99) 99999-9999` e `Escreva sua mensagem aqui` nos respectivos campos.
 
 Adicionar automaticamente:
 

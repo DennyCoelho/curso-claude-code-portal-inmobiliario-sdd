@@ -4,10 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./public-property": "./src/public-property.ts"
+    "./public-property": "./src/public-property.ts",
+    "./property-contact": "./src/property-contact.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

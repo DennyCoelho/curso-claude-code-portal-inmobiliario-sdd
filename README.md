@@ -13,7 +13,7 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 - Contato: telefone com DDD e prefixo internacional `+55`.
 - Mapas e dados de demonstração: endereços e localidades do Brasil.
 
-Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 15 estão implementadas, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel, a galeria de fotos e a localização no Google Maps. O contato será implementado na respectiva etapa.
+Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 16 possuem implementação, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel, a galeria de fotos, a localização no Google Maps e o formulário de contato. O envio real de contato depende da configuração do Web3Forms descrita abaixo.
 
 ## Estrutura do monorepo
 
@@ -180,6 +180,28 @@ São aceitos inteiros de 0 a 21; ausência ou valor inválido utiliza 15. Reinic
 O link **Abrir no Google Maps** permanece disponível fora do iframe e utiliza a [URL pública de pesquisa documentada pelo Google](https://developers.google.com/maps/documentation/urls/get-started), com o mesmo endereço. Assim, o visitante pode consultar a localização quando a incorporação não carregar. O link abre em nova aba, identificado para leitores de tela; a política do iframe não envia dados da página de origem no cabeçalho de referência.
 
 `npm run property-detail:test` cobre a montagem do endereço, codificação, zoom, origens das URLs, ausência de chave, renderização e acessibilidade. `npm run test:smoke` confere o mapa nos detalhes de venda, aluguel e terreno servidos por REST. O banco, os contratos públicos e os cadastros existentes não são alterados.
+
+### Contato com Web3Forms
+
+A Etapa 16 acrescenta **Tenho interesse** aos detalhes de cada imóvel, com nome, e-mail, telefone com DDD e mensagem. Os campos têm rótulos, validação por React Hook Form e Zod, foco no primeiro erro e mensagens acessíveis. Durante o envio os campos ficam desabilitados; o sucesso limpa o formulário, e falhas preservam os dados. Não há repetição automática do envio.
+
+O navegador envia JSON para `POST /api/contact` pelo proxy REST. O backend valida o mesmo contrato público, limita o corpo a 20 KB e consulta o imóvel publicado para obter seu ID e título canônicos. Rejeita campos extras, contatos inválidos, DDD inexistente e o campo antispam preenchido. Nome aceita 2–100 caracteres; e-mail, até 254; mensagem, 10–3000. O contato exige celular com DDD válido e onze dígitos nacionais. A máscara `(xx) xxxxx-xxxx` acompanha a digitação, limita os dígitos excedentes e aceita colagem com `+55`; o backend valida o celular completo e normaliza para o formato internacional. Os campos obrigatórios têm asterisco e placeholders de exemplo. Nenhum contato ou chave é registrado em logs.
+
+Configure somente em `apps/api/.env.local` e reinicie o backend:
+
+```dotenv
+WEB3FORMS_ACCESS_KEY=""
+```
+
+Preencha com uma access key real do formulário. **O fluxo funciona com o plano gratuito:** o backend devolve os dados preparados e o navegador envia diretamente ao Web3Forms, conforme a [orientação oficial](https://docs.web3forms.com/getting-started/troubleshooting). O provedor permite que essa access key seja pública. A variável fica centralizada no backend e é entregue na resposta de preparação, sem expor senhas do banco, segredos de autenticação ou credenciais do Cloudinary. O arquivo de exemplo continua sem valores reais.
+
+Sem chave válida, o endpoint responde `503`, e o formulário informa indisponibilidade. Imóvel ausente ou despublicado retorna `404`; JSON/dados inválidos, `400`; formato de conteúdo incorreto, `415`; corpo acima do limite, `413`. Falhas internas da preparação retornam `500` com mensagem genérica. A resposta `200` da preparação contém `provider` e `payload`, sem indicar envio concluído.
+
+O cliente valida o contrato de preparação e confirma que o ID corresponde ao imóvel solicitado. Em seguida, faz POST JSON diretamente a `https://api.web3forms.com/submit`, com os dados canônicos, telefone normalizado, access key pública e antispam. Ambas as requisições têm timeout de quinze segundos. Somente a resposta HTTP de sucesso **e** `success: true` do Web3Forms confirmam o envio; falhas de rede, rejeição ou resposta inválida mantêm os campos e mostram erro, sem repetição automática.
+
+Não faça proxy do envio ao Web3Forms: chamadas pelo servidor exigem plano pago e IP liberado pelo provedor e podem receber um bloqueio `403` do Cloudflare. O fluxo gratuito utiliza o navegador e sua validação HTTPS normal, sem falsificar cabeçalhos ou desativar a verificação de certificados.
+
+Nesta etapa, o contato é enviado por e-mail: a persistência no PostgreSQL e a associação ao usuário pertencem à Etapa 21. `npm run api:test` cobre contrato, telefone, preparação e Route Handler; `npm run property-detail:test` inclui a sequência REST → Web3Forms e interações do formulário em DOM simulado. Os testes usam respostas simuladas e não enviam e-mails reais. Depois de configurar o provedor, confira manualmente o recebimento de uma solicitação pelo formulário.
 
 ## PostgreSQL e migrações
 

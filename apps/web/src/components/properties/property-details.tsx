@@ -3,6 +3,7 @@ import type { PublicProperty } from "@portal-inmobiliario/contracts/public-prope
 import { formatPropertyArea, formatPropertyPrice, propertyTypeLabels } from "@/lib/property";
 import { PropertyGallery } from "./property-gallery";
 import { PropertyMap } from "./property-map";
+import { PropertyContactForm } from "./property-contact-form";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" });
 
@@ -53,6 +54,7 @@ export function PropertyDetails({ property, catalogHref = "/properties" }: { pro
           </section>
         </div>
         <div className="min-w-0 space-y-6">
+          <PropertyContactForm key={property.id} propertyId={property.id} propertyTitle={property.title} />
           {facts.length ? (
             <section aria-labelledby="property-facts-title" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
               <h2 id="property-facts-title" className="text-xl font-semibold text-slate-900">Informações do imóvel</h2>

@@ -74,7 +74,10 @@ test("os detalhes exibem informações completas, BRL, CEP com zero inicial e da
   assert.match(markup, /Imagem indisponível/);
   assert.match(markup, /<iframe title="Mapa da localização de Apartamento com varanda na Sé"/);
   assert.match(markup, /Abrir no Google Maps/);
-  assert.doesNotMatch(markup, /\/mês|<form|latitude|longitude/);
+  assert.match(markup, /Tenho interesse/);
+  assert.match(markup, /Enviar solicitação/);
+  assert.match(markup, /<form/);
+  assert.doesNotMatch(markup, /\/mês|latitude|longitude/);
 });
 
 test("aluguel mensal, campos nulos e zeros têm apresentação correta, sem inventar informações", () => {

@@ -24,7 +24,7 @@ PostgreSQL
 
 O navegador mantém as chamadas relativas a `/api/**`. O frontend encaminha essas requisições ao backend por `rewrites`, com destino configurado pela variável de servidor `API_URL`. Caminhos, parâmetros de consulta e códigos HTTP devem ser preservados. `API_URL` deve ser definida antes do build do frontend, pois os rewrites integram a compilação. O backend também pode ser executado e publicado de forma independente.
 
-`packages/contracts` expõe apenas tipos públicos, sem importar Prisma ou código dos aplicativos. Os aplicativos dependem desse pacote; não importam código um do outro. Prisma, serviços, repositórios, migrações, seed e seus testes pertencem exclusivamente a `apps/api`.
+`packages/contracts` expõe tipos e validações públicas, sem importar Prisma ou código dos aplicativos. Os aplicativos dependem desse pacote; não importam código um do outro. Prisma, serviços, repositórios, migrações, seed e seus testes pertencem exclusivamente a `apps/api`.
 
 Integrações externas:
 
@@ -448,6 +448,18 @@ Não solicitar coordenadas manualmente.
 Se posteriormente for necessária uma geocodificação interna, ela deve ser transparente para o ADMIN e não alterar os campos obrigatórios do formulário.
 
 ## 13. Web3Forms
+
+### Contato — Etapa 16
+
+- Acrescentar aos detalhes um formulário React Hook Form + Zod com nome (2–100 caracteres), e-mail (até 254), celular brasileiro obrigatório e mensagem (10–3000). Exigir DDD válido e nove dígitos de celular, iniciando por 9, totalizando onze dígitos nacionais; aceitar `+55` e normalizar para o formato internacional. Compartilhar a validação pública entre frontend e backend no pacote de contratos.
+- Exibir asterisco nos quatro rótulos obrigatórios e placeholders `João de Souza`, `seuemail@exemplo.com`, `(99) 99999-9999` e `Escreva sua mensagem aqui`. Aplicar a máscara de celular durante a digitação/colagem, remover caracteres não numéricos e limitar a onze dígitos nacionais, sem completar números ausentes. Preservar a posição lógica do cursor para edição e aceitar colagem com `+55`. Bloquear envio incompleto no cliente e no backend.
+- Preparar o contato por `POST /api/contact`, via proxy REST existente. Validar JSON, limites e campos no backend; receber somente ID do imóvel e contato, consultar o imóvel publicado e obter seu título canônico no servidor. Nunca confiar em título, destinatário ou chave enviados pelo visitante.
+- Utilizar o fluxo gratuito oficial do Web3Forms: o serviço prepara e devolve um payload público validado, com ID/título canônicos e `WEB3FORMS_ACCESS_KEY`, configurada em `apps/api/.env.local`. Essa access key é pública por definição do provedor, podendo ser entregue ao navegador; nenhuma credencial privada de banco, autenticação ou Cloudinary integra a resposta. Chave ausente ou inválida retorna `503`.
+- O navegador valida a resposta de preparação e o ID do imóvel e então faz POST JSON diretamente a `https://api.web3forms.com/submit`, com timeout de quinze segundos e confirmação por HTTP de sucesso e `success: true`. Preparar o contato no backend não significa enviar a mensagem. Não realizar o envio pelo servidor nem falsificar cabeçalhos de origem para contornar as restrições do provedor. Não registrar contatos, chave ou corpos de resposta externos.
+- Estados acessíveis de envio, sucesso e erro, mensagens de validação vinculadas aos campos, prevenção de envio simultâneo e preservação dos dados em falhas. Incluir ID/título do imóvel no envio e um campo invisível antispam. Não repetir automaticamente solicitações com resultado incerto.
+- Nesta etapa, o envio é exclusivamente de contato por e-mail. Persistência em `Inquiry` e associação com usuário permanecem na Etapa 21. Cobrir validação, normalização, imóvel indisponível, configuração ausente, erros do provedor e interações do formulário com testes; executar lint, tipos, builds e HTTP/proxy. Testes automatizados usam respostas simuladas, sem enviar e-mails reais.
+
+### Fluxo completo — Etapa 21
 
 Fluxo:
 

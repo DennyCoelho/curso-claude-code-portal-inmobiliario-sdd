@@ -271,7 +271,11 @@ test("os detalhes de venda, aluguel e terreno chegam renderizados ao frontend po
     assert.ok(html.includes(`${property.postalCode.slice(0, 5)}-${property.postalCode.slice(5)}`));
     assert.ok(html.includes(property.operation === "RENT" ? "Aluguel mensal" : "Valor de venda"));
     assert.match(html, /href="\/properties\?search=S%C3%A3o\+Paulo&amp;type=HOUSE&amp;type=APARTMENT&amp;sort=price_asc"/);
-    assert.doesNotMatch(html, /DATABASE_URL|publicId|passwordHash|GOOGLE_MAPS_API_KEY|<form/);
+    assert.match(html, /Tenho interesse/);
+    assert.match(html, /Enviar solicitação/);
+    for (const placeholder of ["João de Souza", "seuemail@exemplo.com", "(99) 99999-9999", "Escreva sua mensagem aqui"]) assert.ok(html.includes(`placeholder="${placeholder}"`));
+    for (const name of ["name", "email", "phone", "message"]) assert.match(html, new RegExp(`name="${name}"`));
+    assert.doesNotMatch(html, /DATABASE_URL|publicId|passwordHash|GOOGLE_MAPS_API_KEY|WEB3FORMS_ACCESS_KEY/);
   }
 });
 
@@ -284,5 +288,48 @@ test("detalhes inválidos e inexistentes mostram ausência com noindex sem expor
     assert.match(html, /name="robots" content="noindex"/);
     assert.match(html, /Ver imóveis disponíveis/);
     assert.doesNotMatch(html, /DATABASE_URL|passwordHash|postgresql:\/\//);
+  }
+});
+
+test("o contato valida JSON e telefone também pelo proxy sem enviar mensagens externas", async () => {
+  for (const origin of [apiUrl, webUrl]) {
+    for (const [body, expected] of [
+      [{}, 400],
+      [{ propertyId: "a2050000-0000-4000-8000-000000000001", name: "Maria Silva", email: "maria@example.com", phone: "123", message: "Gostaria de agendar uma visita." }, 400],
+      [{ propertyId: "a2050000-0000-4000-8000-000000000001", name: "Maria Silva", email: "maria@example.com", phone: "(11) 2345-6789", message: "Gostaria de agendar uma visita." }, 400],
+      [{ propertyId: "a2050000-0000-4000-8000-000000000001", name: "Maria Silva", email: "maria@example.com", phone: "(11) 91234-567", message: "Gostaria de agendar uma visita." }, 400],
+      [{ propertyId: "a2050000-0000-4000-8000-000000000001", name: "Maria Silva", email: "maria@example.com", phone: "(11) 91234-56789", message: "Gostaria de agendar uma visita." }, 400],
+      [{ message: "a".repeat(20_001) }, 413],
+    ]) {
+      const response = await request(origin, "/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      assert.equal(response.status, expected);
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal((await response.json()).status, expected);
+    }
+    const response = await request(origin, "/api/contact", { method: "POST", headers: { "Content-Type": "text/plain" }, body: "inválido" });
+    assert.equal(response.status, 415);
+  }
+});
+
+test("o contato prepara dados canônicos pelo proxy sem enviar e-mail no backend", async () => {
+  const propertiesResponse = await request(apiUrl, "/api/properties");
+  assert.equal(propertiesResponse.status, 200);
+  const properties = await propertiesResponse.json();
+  assert.ok(properties.length > 0);
+  const property = properties[0];
+  const contact = { propertyId: property.id, name: "Teste local", email: "teste@example.com", phone: "(11) 91234-5678", message: "Verificação local da preparação, sem envio externo." };
+  for (const origin of [apiUrl, webUrl]) {
+    const response = await request(origin, "/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(contact) });
+    assert.equal(response.status, 200, "Configure WEB3FORMS_ACCESS_KEY para verificar a preparação.");
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    const preparation = await response.json();
+    assert.equal(preparation.provider, "web3forms");
+    assert.equal("success" in preparation, false);
+    assert.equal(preparation.payload.property_id, property.id);
+    assert.equal(preparation.payload.property_title, property.title);
+    assert.equal(preparation.payload.phone, "+5511912345678");
+    assert.equal(preparation.payload.botcheck, false);
+    assert.ok(typeof preparation.payload.access_key === "string" && /^[0-9a-f-]{36}$/i.test(preparation.payload.access_key));
+    assert.deepEqual(Object.keys(preparation.payload).sort(), ["access_key", "name", "email", "phone", "message", "property_id", "property_title", "subject", "from_name", "botcheck"].sort());
   }
 });
