@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { publicNavigation } from "@/lib/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { SiteBrand } from "./site-brand";
 
 export function SiteHeader() {
+  const { data: user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -61,7 +63,7 @@ export function SiteHeader() {
                   data-account={href === "/login"}
                   className="flex min-h-11 items-center rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950 data-[account=true]:bg-emerald-800 data-[account=true]:text-white data-[account=true]:hover:bg-emerald-900 md:data-[account=true]:ml-3"
                 >
-                  {label}
+                  {href === "/login" && user ? "Minha sessão" : label}
                 </Link>
               </li>
             ))}

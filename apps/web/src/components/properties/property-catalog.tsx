@@ -10,7 +10,7 @@ export function PropertyCatalog({ parameters = "" }: { parameters?: string }) {
   const result = parseCatalogSearch(parameters);
   const filters = parseCatalogFilters(parameters);
   const sort = parseCatalogSort(parameters);
-  const { data, error, isLoading, mutate } = usePublicProperties(
+  const { data, error, isLoading, isValidating, mutate } = usePublicProperties(
     result.success && filters.success && sort.success ? buildPublicPropertiesUrl(result.search, filters.filters, sort.sort) : null,
   );
 
@@ -28,7 +28,8 @@ export function PropertyCatalog({ parameters = "" }: { parameters?: string }) {
     <PropertyCatalogResults
       properties={data ?? []}
       status={isLoading || (data === undefined && !error) ? "loading" : error ? "error" : "ready"}
-      onRetry={() => void mutate()}
+      onRetry={() => mutate()}
+      isRefreshing={isValidating && !isLoading}
       search={result.search}
       filtered={Object.keys(filters.filters).length > 0}
       parameters={parameters}

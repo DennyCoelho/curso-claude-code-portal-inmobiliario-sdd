@@ -197,6 +197,11 @@ test("envio pendente desabilita campos, evita duplicação e limpa dados somente
   await submit();
   assert.equal(container.querySelector("form")?.getAttribute("aria-busy"), "true");
   assert.equal(container.querySelector("fieldset")?.disabled, true);
+  const button = container.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  assert.equal(button.disabled, true);
+  assert.equal(button.getAttribute("aria-busy"), "true");
+  assert.match(button.textContent!, /Enviando/);
+  assert.ok(button.querySelector('svg[aria-hidden="true"]'));
   assert.match(container.querySelector('[role="status"]')?.textContent ?? "", /Enviando/);
   await submit();
   assert.equal(fetchMock.mock.callCount(), 2);

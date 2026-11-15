@@ -46,6 +46,17 @@ test("o frontend serve o catálogo público com navegação e carregamento acess
   assert.doesNotMatch(html, /catálogo.*disponível em breve/);
 });
 
+test("as páginas de autenticação têm títulos em português, noindex e verificação de sessão", async () => {
+  for (const [path, title] of [["/login", "Entrar"], ["/register", "Criar conta"]]) {
+    const response = await request(webUrl, path);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
+    assert.match(html, /Verificando sua sessão/);
+  }
+});
+
 test("o encaminhamento preserva o erro REST e o cache de IDs inválidos", async () => {
   for (const origin of [apiUrl, webUrl]) {
     const response = await request(origin, "/api/properties/invalido");

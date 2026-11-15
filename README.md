@@ -50,7 +50,7 @@ Na migração para o monorepo, o ambiente privado existente foi transferido de `
 
 A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
 
-O destino `/properties` exibe o catálogo público; `/login` continua como página provisória de navegação. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. A autenticação segue a Etapa 17.
+O destino `/properties` exibe o catálogo público; `/login` oferece entrada e controle da sessão, e `/register` permite criar uma conta. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. A Etapa 17 disponibiliza a autenticação por REST; autorização e área privada seguem as Etapas 18 e 19.
 
 Cada app Next.js carrega seu próprio `.env.local`. O frontend recebe somente `API_URL`, com padrão local `http://127.0.0.1:3001`; o backend recebe `DATABASE_URL` e as credenciais privadas descritas em `apps/api/.env.example`.
 
@@ -327,6 +327,62 @@ npm run api:test:integration
 
 Com os dois apps em execução, rode `npm run test:smoke` em outro terminal. O teste HTTP verifica a landing, a saúde do backend, o encaminhamento REST, listagem, detalhes e códigos `400` e `405`. A listagem exige PostgreSQL configurado e migrado. As URLs dos testes podem ser substituídas por `WEB_URL` e `API_URL` no ambiente do terminal.
 
+## Autenticação REST — Etapa 17
+
+### Contas locais para teste
+
+Execute `npm run db:seed:users` na raiz para criar estas contas fictícias no PostgreSQL:
+
+| Perfil/estado | E-mail | Senha inicial | Teste atual |
+| --- | --- | --- | --- |
+| USER ativo | `usuario@exemplo.test` | `Usuario2026!` | Login, sessão, recarga e logout de usuário comum. |
+| ADMIN ativo | `admin@exemplo.test` | `Admin2026!` | Login com perfil ADMIN retornado pelo backend. |
+| USER inativo | `inativo@exemplo.test` | `Inativo2026!` | Login deve ser recusado com o erro genérico de credenciais. |
+
+São credenciais públicas de demonstração para ambiente local. O comando recusa `NODE_ENV=production`, cria em uma transação e armazena somente os hashes scrypt. Reexecutar preserva nome, e-mail, senha, perfil e estado das contas existentes; conflito de e-mail com outra conta cancela a criação sem alterá-la. Esse seed é independente do seed de imóveis e não cria sessões.
+
+Para aplicar novamente as senhas da tabela às contas de demonstração existentes, execute `npm run db:seed:users -- --reset-passwords`. A opção exige ID/e-mail esperados, modifica somente as senhas dessas três contas e revoga suas sessões; nomes, perfis, atividade e demais usuários são preservados. A atualização para as senhas acima foi solicitada junto à nova política de cadastro.
+
+Acesse [Entrar](http://localhost:3000/login) para testar. A etapa atual reconhece os perfis no login; as restrições USER/ADMIN serão implementadas na Etapa 18. Favoritos, conta privada e funções administrativas seguem suas próprias etapas.
+
+### Fluxo e configuração
+
+As páginas `/login` e `/register` usam React Hook Form + Zod com validação acessível, estados de envio e tratamento de falhas. Ao confirmar o acesso, a senha é limpa e o painel apresenta a sessão atual, a opção Sair da conta e o link ao catálogo. O cabeçalho muda Entrar para Minha sessão. Navegação e painel compartilham uma consulta `/me` por SWR, com revalidação ao recuperar o foco; credenciais não são armazenadas em localStorage/sessionStorage. A conta privada e as permissões serão implementadas nas Etapas 18 e 19.
+
+No cadastro, os quatro critérios de senha acompanham a digitação: 8–15 caracteres, pelo menos uma maiúscula, um número e um caractere especial. O último item mostra “Pelo menos um caractere especial, ex.: @, !, #”; são aceitos pontuação e símbolos Unicode, enquanto espaços não contam como especiais. Cada item usa texto e ícone, com cor de confirmação quando atendido; critérios pendentes começam neutros. Minúsculas não são obrigatórias e sequências são aceitas. O campo Confirmar senha informa a igualdade e acompanha mudanças nos dois campos. Colagens não são truncadas para quinze caracteres: a interface informa o excesso e impede o cadastro. Erros obrigatórios aparecem ao tentar enviar, com foco no primeiro campo inválido. Ambas as senhas são limpas após sucesso.
+
+Senha do login, senha do cadastro e confirmação possuem botões de olho para mostrar/ocultar o conteúdo, independentes entre si. Os campos começam ocultos, mantêm o valor ao alternar e têm controles acessíveis pelo teclado, com rótulo e indicação do estado. Os botões não enviam o formulário, ficam desabilitados durante a requisição e os campos voltam a ficar ocultos após autenticação confirmada.
+
+Os endpoints estão disponíveis diretamente no backend e pelo proxy `/api/**` do frontend:
+
+| Requisição | Entrada JSON | Sucesso |
+| --- | --- | --- |
+| `POST /api/auth/register` | `name`, `email`, `password`, `confirmPassword` | `201`, `{ user: { id, name, email, role } }` e cookie de sessão. |
+| `POST /api/auth/login` | `email`, `password` | `200`, mesmo contrato e novo cookie. |
+| `POST /api/auth/logout` | Sem corpo | `204`, revoga a sessão apresentada e expira o cookie. |
+| `GET /api/auth/me` | Cookie de sessão | `200` com o usuário atual; `401` se ausente, inválida, expirada ou conta inativa. |
+
+O nome aceita 2–100 caracteres; o e-mail é normalizado para minúsculas e limitado a 254. No cadastro, a senha exige 8–15 caracteres Unicode, uma maiúscula (incluindo acentuadas), um número de 0 a 9 e um caractere especial; `confirmPassword` deve ser igual. A política e a igualdade são validadas também no backend, sem remover espaços, e a confirmação nunca é armazenada. O login recebe somente e-mail/senha, sem confirmação ou exigência de composição, aceitando senhas não vazias de até 128 caracteres para manter contas antigas acessíveis. Campos extras, inclusive `role` e `isActive`, são rejeitados. Cadastro cria exclusivamente uma conta USER ativa e inicia a sessão. E-mail já cadastrado retorna `409`; login de conta ausente, inativa ou com senha incorreta retorna o mesmo `401`. Dados inválidos retornam `400`, JSON acima de 8 KB reais `413`, formato incompatível `415` e origem não permitida `403`. Falhas internas não expõem detalhes. Todas as respostas têm `Cache-Control: no-store`.
+
+Senhas usam `scrypt` assíncrono (`N=131072`, `r=8`, `p=1`), salt aleatório de 16 bytes e comparação em tempo constante, conforme os [parâmetros da OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#scrypt). O servidor admite até dois cálculos simultâneos por instância; saturação retorna `503`. Cada operação/e-mail tem limite compartilhado de dez tentativas por quinze minutos no PostgreSQL, incluindo tentativas bem-sucedidas; excesso retorna `429` com `Retry-After: 900`. Antes de exposição pública, configurar também os limites de tráfego por IP na infraestrutura conforme a capacidade da implantação.
+
+A migração `20261115010000_criar_sessoes_autenticacao` acrescenta `Session` e `AuthRateLimit` sem modificar os anúncios. As sessões duram sete dias, com token aleatório de 32 bytes e somente seu hash SHA-256 persistido. O cookie é HttpOnly, SameSite=Lax, Path=/ e sem Domain; em produção usa `Secure` e o nome `__Host-portal_session`, exigindo HTTPS no navegador. Em desenvolvimento usa `portal_session`. Login/cadastro rotacionam a sessão apresentada; logout revoga no banco. `/me` consulta o perfil e a atividade atuais. Não há token em JSON ou localStorage, nem necessidade de `AUTH_SECRET`.
+
+Configure `AUTH_TRUSTED_ORIGINS` em `apps/api/.env.local` com as origens exatas, separadas por vírgula, por exemplo `https://seu-portal.com.br,https://api.seu-portal.com.br`. Sem configuração, somente as origens locais nas portas 3000/3001 são aceitas. POSTs com Origin precisam pertencer à lista; `Sec-Fetch-Site: cross-site` é recusado. Clientes REST sem Origin são aceitos. Não habilitar CORS com credenciais para origens arbitrárias; o navegador deve usar o proxy do frontend.
+
+Depois de `npm run db:migrate`, é possível exercitar o fluxo no PowerShell:
+
+```powershell
+$cadastro = @{ name = 'João de Souza'; email = 'joao@exemplo.com'; password = 'Exemplo2026!'; confirmPassword = 'Exemplo2026!' } | ConvertTo-Json
+Invoke-RestMethod http://localhost:3000/api/auth/register -Method Post -ContentType 'application/json' -Body $cadastro -SessionVariable sessao
+Invoke-RestMethod http://localhost:3000/api/auth/me -WebSession $sessao
+Invoke-RestMethod http://localhost:3000/api/auth/logout -Method Post -WebSession $sessao
+```
+
+`npm run api:test` inclui os testes unitários da autenticação; `npm run auth:test:web` valida os formulários, sessão compartilhada e logout em DOM simulado; `npm run api:test:integration` valida o PostgreSQL. Os testes transacionais revertem seus registros; o teste de concorrência remove sua chave exclusiva ao terminar. Com os dois apps iniciados, `npm run auth:test:http` valida cadastro, login, sessão, inatividade, duplicação, origem e logout direto e pelo proxy. Esse comando cria contas com e-mails aleatórios e as remove em `finally`, junto às sessões e aos contadores de teste. URLs podem ser substituídas por `AUTH_TEST_API_URL` e `WEB_URL`.
+
+Sessões vencidas são removidas quando apresentadas a `/me`; excluir a conta remove suas sessões em cascata. Na manutenção do banco, remover periodicamente sessões com `expiresAt <= now()` e contadores com `windowStart <= now() - interval '15 minutes'` para limitar o crescimento das tabelas. A ausência dessa limpeza não torna uma sessão expirada válida.
+
 ## pgAdmin no Docker
 
 O arquivo `compose.pgadmin.yaml` inicia a imagem oficial do [pgAdmin](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html), com `restart: always` (equivalente a `docker run --restart always`) e um volume persistente para contas, servidores e preferências.
@@ -358,6 +414,16 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 
 ## Comandos
 
+### Feedback de requisições
+
+As operações apresentam carregamento com texto contextual e indicador visual: Entrando, Criando conta, Enviando, Saindo e Tentando novamente. Botões e campos correspondentes ficam desabilitados enquanto a operação está pendente, e as ações de envio/saída/nova tentativa impedem execução simultânea. Sucesso é informado somente após a confirmação real; falhas preservam os dados e liberam nova tentativa.
+
+Busca da landing, busca no catálogo, filtros e ordenação acompanham a transição de navegação com seus próprios estados. Navegações têm um fallback geral, e os detalhes mantêm seus skeletons específicos. Consultas iniciais de sessão/imóveis e recarregamentos mostram progresso; revalidações com dados disponíveis preservam o conteúdo e apresentam uma indicação discreta. As animações respeitam a preferência por movimento reduzido. Não há atrasos artificiais nem um bloqueio global para consultas em segundo plano.
+
+`npm run feedback:test` verifica Promises pendentes, recuperação de falha, prevenção de cliques duplicados e transições de busca/filtros/ordenação. Os testes de autenticação e contato também cobrem envio em andamento e confirmação somente após a resposta.
+
+### Lista de comandos
+
 | Comando             | Finalidade                                             |
 | ------------------- | ------------------------------------------------------ |
 | `npm run dev`       | Iniciar frontend e backend em desenvolvimento.        |
@@ -377,8 +443,12 @@ O acesso HTTP fica restrito a esta máquina (`127.0.0.1:5050`). O volume preserv
 | `npm run seed:test` | Validar os exemplos do seed sem conexão com o banco. |
 | `npm run api:test` | Testar os serviços e as rotas públicas sem banco. |
 | `npm run api:test:integration` | Testar as consultas públicas no PostgreSQL migrado. |
+| `npm run auth:test:http` | Validar autenticação real no backend e pelo proxy, removendo as contas de teste. |
+| `npm run auth:test:web` | Testar formulários de autenticação, sessão compartilhada e logout em DOM simulado. |
+| `npm run feedback:test` | Validar feedback de requisições pendentes, novas tentativas e navegações. |
 | `npm run home:test` | Testar a landing page, a busca e o consumo REST sem banco. |
 | `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
+| `npm run db:seed:users` | Criar contas fictícias USER/ADMIN e usuário inativo para testes locais. |
 | `npm run db:generate` | Gerar o Prisma Client a partir do esquema. |
 | `npm run db:migrate` | Aplicar as migrações pendentes ao PostgreSQL. |
 | `npm run db:migrate:dev` | Criar e aplicar uma migração em desenvolvimento. |

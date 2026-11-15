@@ -382,6 +382,34 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 
 Utilizar um mecanismo seguro compatível com a API REST.
 
+### Cadastro e login via REST — Etapa 17
+
+#### Feedback de requisições solicitado
+
+- Usar indicador visual reutilizável de carregamento com texto específico, anúncio acessível e animação somente sem preferência por movimento reduzido. Login, cadastro, logout e contato devem mostrar o estado no botão, desabilitar ações repetidas e confirmar sucesso somente após a resposta.
+- Novas tentativas de sessão, landing e catálogo devem aguardar a Promise real, desabilitar o botão e mostrar progresso; falhas devem liberar nova tentativa e continuar visíveis. Revalidações de sessão/imóveis com dados carregados usam indicação discreta e preservam o conteúdo. Reutilizar os skeletons existentes.
+- Busca inicial, busca no catálogo, filtros, ordenação e recuperação de erro dos detalhes devem acompanhar transições do Next.js com `useTransition`, texto/indicador no botão e estado ocupado. Acrescentar fallback geral de navegação; manter o fallback específico dos detalhes. Não adicionar esperas artificiais nem bloquear toda a interface durante atualizações em segundo plano.
+- Cobrir requisições pendentes com respostas controladas, prevenção de duplicação, sucesso e falha; conferir lint, tipos, testes, build e comportamento em produção.
+
+- Implementar os quatro endpoints de autenticação com contratos Zod estritos, e-mail normalizado para minúsculas e nome de 2–100 caracteres. Conforme ajuste solicitado, novas senhas devem ter 8–15 caracteres, ao menos uma letra maiúscula (incluindo acentuadas), um número de 0 a 9 e um caractere especial (pontuação ou símbolo Unicode). Espaços não atendem ao critério de especial; sequências não são bloqueadas e Unicode é preservado. Cadastro exige `confirmPassword` igual a `password`, validado também no backend e nunca persistido. Cria somente `USER` ativo e autentica a nova conta; login retorna o mesmo erro para conta ausente, inativa ou senha incorreta.
+- Separar a política de criação da validação de login: login recebe senha não vazia de até 128 caracteres para manter compatibilidade com contas existentes, sem impor composição nem confirmação. No cadastro, exibir os quatro critérios com estado neutro/atendido e texto/ícone durante a digitação; no especial usar “Pelo menos um caractere especial, ex.: @, !, #”, mais confirmação de igualdade após começar a repetir a senha. Derivar os indicadores dos campos com React Hook Form, sem efeitos ou cópias de estado; anunciar a confirmação sem depender apenas de cor. Erros de envio continuam associados aos campos, com foco no primeiro erro.
+- Usar `scrypt` assíncrono nativo do Node.js (`N=131072`, `r=8`, `p=1`), salt aleatório de 16 bytes e comparação em tempo constante. Limitar o trabalho criptográfico simultâneo e as tentativas por operação/e-mail no PostgreSQL. Não registrar senhas, cookies ou hashes.
+- Persistir sessões opacas no PostgreSQL com hash SHA-256 de um token aleatório de 32 bytes, validade absoluta de sete dias e exclusão em cascata com o usuário. Entregar o token somente em cookie HttpOnly, SameSite=Lax, Path=/, sem Domain e Secure em produção, com prefixo `__Host-` em produção. Não utilizar localStorage nem exigir `AUTH_SECRET` para sessões opacas.
+- Consultar validade e usuário ativo no servidor em cada `/me`. Logout revoga a sessão no banco e expira o cookie, inclusive quando já ausente. Autenticação bem-sucedida gera um novo token e revoga a sessão anterior apresentada.
+- Responder sem cache e validar origem dos POSTs quando enviada; recusar `Sec-Fetch-Site: cross-site`. Configurar as origens exatas do frontend/backend em `AUTH_TRUSTED_ORIGINS`; sem configuração, permitir apenas os endereços locais de desenvolvimento. Requisições de clientes REST sem Origin continuam aceitas. Limitar o JSON a 8 KB reais e rejeitar campos arbitrários, inclusive perfil/isActive.
+- Substituir a página provisória `/login`, criar `/register` e oferecer formulários React Hook Form/Zod com rótulos, foco em erros, envio pendente e recuperação sem repetição automática. Compartilhar `/me` por SWR entre navegação e formulários; apresentar a sessão atual e logout, sem persistir credenciais no navegador. Após autenticação, limpar a senha e permitir continuar ao catálogo. Permissões e área privada continuam nas Etapas 18 e 19.
+- Oferecer botão de mostrar/ocultar na senha do login e, com controles independentes, na senha e confirmação do cadastro. Começar com os campos ocultos; alternar somente o tipo do input, preservando valor e validação. Usar botão `type="button"`, ícone de olho, rótulo acessível em pt-BR, `aria-controls`, `aria-pressed` e área de pelo menos 44 px. Bloquear durante o envio e retornar ao estado oculto após sucesso.
+- Validar contratos, hashing, expiração, revogação, inatividade, limites, erros e cookies com testes unitários, PostgreSQL transacional, interação dos formulários e HTTP direto/proxy.
+
+Referência de parâmetros: [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#scrypt).
+
+### Contas de demonstração solicitadas para testes
+
+- Oferecer `npm run db:seed:users`, separado do seed de imóveis, para criar três contas locais: USER ativo, ADMIN ativo e USER inativo. Usar nomes brasileiros, e-mails fictícios em `exemplo.test`, IDs fixos e senhas públicas de demonstração documentadas, protegidas no banco pelo mesmo `scrypt` do login.
+- Recusar produção antes de abrir conexão, criar em uma transação e preservar contas, senhas, perfis e estados já existentes em reexecuções. Conflitos de e-mail com contas de outros IDs devem cancelar a transação, sem atualizar a conta conflitante. Não criar sessões pelo seed.
+- Aceitar a opção explícita `--reset-passwords` para atualizar somente as senhas das três contas de demonstração com ID/e-mail esperados e revogar suas sessões. Preservar nomes, perfis, atividade e demais usuários. Atualizar as credenciais de demonstração para cumprir a política nova e executar essa atualização solicitada uma vez no banco local.
+- Validar o contrato das contas, a recusa em produção, idempotência/preservação no PostgreSQL e login real dos perfis ativos, com recusa do inativo. Essa preparação não implementa permissões, favoritos ou administração das etapas futuras.
+
 Requisitos:
 
 - hashing de senhas;

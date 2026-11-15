@@ -3,23 +3,24 @@
 import { usePublicProperties } from "@/hooks/use-public-properties";
 import { selectHomeProperties } from "@/lib/home";
 import { HomePropertySection } from "./home-property-section";
+import { LoadingStatus } from "@/components/ui/loading-feedback";
+import { RetryButton } from "@/components/ui/retry-button";
 
 export function HomePropertyCollections() {
-  const { data, error, isLoading, mutate } = usePublicProperties();
+  const { data, error, isLoading, isValidating, mutate } = usePublicProperties();
   const groups = selectHomeProperties(data ?? []);
   const status = isLoading ? "loading" : error ? "error" : "ready";
 
   return (
-    <div className="space-y-14" aria-busy={isLoading}>
+    <div className="space-y-14" aria-busy={isLoading || isValidating}>
       {isLoading && <p role="status" className="sr-only">Carregando as seleções de imóveis.</p>}
       {error && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
           <p>Não foi possível carregar os imóveis. Tente novamente em instantes.</p>
-          <button type="button" onClick={() => void mutate()} className="min-h-11 shrink-0 rounded-lg border border-amber-300 px-4 font-semibold hover:bg-amber-100">
-            Tentar novamente
-          </button>
+          <RetryButton onRetry={() => mutate()} className="min-h-11 shrink-0 rounded-lg border border-amber-300 px-4 font-semibold hover:bg-amber-100" />
         </div>
       )}
+      {isValidating && !isLoading && !error ? <LoadingStatus className="text-slate-600">Atualizando imóveis…</LoadingStatus> : null}
       <HomePropertySection
         id="featured-properties"
         eyebrow="Uma seleção para começar"

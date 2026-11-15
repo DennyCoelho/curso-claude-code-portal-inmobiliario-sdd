@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HomeProperty } from "@/lib/home";
 import { PropertyGrid } from "@/components/properties/property-grid";
+import { LoadingSpinner } from "@/components/ui/loading-feedback";
 
 interface HomePropertySectionProps {
   id: string;
@@ -28,7 +29,7 @@ export function HomePropertySection({
         </div>
       ) : (
         <p className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-7 text-sm leading-6 text-slate-600">
-          {status === "loading" ? "Carregando imóveis…" : status === "error"
+          {status === "loading" ? <span className="inline-flex items-center gap-2"><LoadingSpinner />Carregando imóveis…</span> : status === "error"
             ? "Esta seleção está indisponível no momento." : emptyMessage}
         </p>
       )}

@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePendingNavigation } from "@/hooks/use-pending-navigation";
+import { ActionButton } from "@/components/ui/loading-feedback";
 import { useForm } from "react-hook-form";
 import { propertyTypeLabels } from "@/lib/property";
 import { brazilianStates, buildCatalogFiltersUrl, catalogFilterNames, catalogFiltersSchema, getCatalogFilterValues, type CatalogFilterValues } from "@/lib/property-filters";
@@ -16,7 +17,7 @@ const inputFields = [
 const fieldClassName = "mt-2 min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base font-normal text-slate-900";
 
 export function PropertyCatalogFilters({ parameters }: { parameters: string }) {
-  const router = useRouter();
+  const { isNavigating, navigate } = usePendingNavigation();
   const query = new URLSearchParams(parameters);
   const values = getCatalogFilterValues(parameters);
   const { register, handleSubmit, control, formState: { errors } } = useForm<CatalogFilterValues>({
@@ -29,8 +30,11 @@ export function PropertyCatalogFilters({ parameters }: { parameters: string }) {
 
   return (
     <form action="/properties" method="get" aria-labelledby="catalog-filters-title"
-      onSubmit={handleSubmit((values) => router.push(buildCatalogFiltersUrl(values, parameters), { scroll: false }))}
+      onSubmit={handleSubmit((values) => navigate(buildCatalogFiltersUrl(values, parameters), { scroll: false }))}
+      aria-busy={isNavigating}
       className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5">
+      <fieldset disabled={isNavigating} className="min-w-0 space-y-5">
+      <legend className="sr-only">Filtros de imóveis</legend>
       {Array.from(query).filter(([name]) => !catalogFilterNames.includes(name as keyof CatalogFilterValues)).map(([name, value], index) => (
         <input key={`${name}-${index}`} type="hidden" name={name} value={value} />
       ))}
@@ -103,11 +107,12 @@ export function PropertyCatalogFilters({ parameters }: { parameters: string }) {
         ))}
       </div>
       <div className="flex flex-col gap-2 border-t border-slate-200 pt-5">
-        <button type="submit" className="min-h-12 rounded-lg bg-emerald-800 px-4 font-semibold text-white hover:bg-emerald-900">Aplicar filtros</button>
+        <ActionButton type="submit" pending={isNavigating} pendingLabel="Aplicando filtros…" className="min-h-12 rounded-lg bg-emerald-800 px-4 font-semibold text-white hover:bg-emerald-900">Aplicar filtros</ActionButton>
         {catalogFilterNames.some((name) => query.has(name)) ? (
           <Link href={buildCatalogFiltersUrl(null, parameters)} scroll={false} className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">Limpar filtros</Link>
         ) : null}
       </div>
+      </fieldset>
     </form>
   );
 }

@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePendingNavigation } from "@/hooks/use-pending-navigation";
+import { ActionButton } from "@/components/ui/loading-feedback";
 import { useForm } from "react-hook-form";
 import {
   buildCatalogSearchUrl,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/property-search";
 
 export function PropertyCatalogSearch({ parameters }: { parameters: string }) {
-  const router = useRouter();
+  const { isNavigating, navigate } = usePendingNavigation();
   const currentParameters = new URLSearchParams(parameters);
   const search = currentParameters.get("search") ?? "";
   const { register, handleSubmit, formState: { errors } } = useForm<CatalogSearchValues>({
@@ -25,7 +26,8 @@ export function PropertyCatalogSearch({ parameters }: { parameters: string }) {
       aria-label="Buscar no catálogo"
       action="/properties"
       method="get"
-      onSubmit={handleSubmit(({ search }) => router.push(buildCatalogSearchUrl(search, parameters), { scroll: false }))}
+      onSubmit={handleSubmit(({ search }) => navigate(buildCatalogSearchUrl(search, parameters), { scroll: false }))}
+      aria-busy={isNavigating}
       className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
     >
       {Array.from(currentParameters).filter(([name]) => name !== "search").map(([name, value], index) => (
@@ -34,7 +36,8 @@ export function PropertyCatalogSearch({ parameters }: { parameters: string }) {
       <label htmlFor="catalog-search" className="mb-2 block text-sm font-semibold text-slate-900">
         O que você procura?
       </label>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <fieldset disabled={isNavigating} className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+        <legend className="sr-only">Busca no catálogo</legend>
         <input
           {...register("search")}
           id="catalog-search"
@@ -46,15 +49,15 @@ export function PropertyCatalogSearch({ parameters }: { parameters: string }) {
           aria-describedby={errors.search ? "catalog-search-help catalog-search-error" : "catalog-search-help"}
           className="min-h-12 w-full min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-base text-slate-900 placeholder:text-slate-500"
         />
-        <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-emerald-800 px-6 font-semibold text-white hover:bg-emerald-900">
+        <ActionButton type="submit" pending={isNavigating} pendingLabel="Buscando…" className="min-h-12 shrink-0 rounded-lg bg-emerald-800 px-6 font-semibold text-white hover:bg-emerald-900">
           Buscar imóveis
-        </button>
+        </ActionButton>
         {currentParameters.has("search") ? (
           <Link href={buildCatalogSearchUrl("", parameters)} scroll={false} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-lg px-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">
             Limpar busca
           </Link>
         ) : null}
-      </div>
+      </fieldset>
       <p id="catalog-search-help" className="mt-3 text-sm leading-6 text-slate-600">
         Pesquise por título, bairro, cidade, UF ou palavras da descrição.
       </p>

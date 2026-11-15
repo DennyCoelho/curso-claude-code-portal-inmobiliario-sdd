@@ -393,6 +393,8 @@ Visitantes não autenticados também podem realizar consultas.
 
 ## 15. Autenticação
 
+Para testes locais, disponibilizar contas fictícias com perfis USER e ADMIN ativos e uma conta USER inativa. O seed dessas contas deve ser explícito, recusado em produção e preservar edições em reexecuções. As permissões e funcionalidades de cada perfil seguem as etapas correspondentes.
+
 Oferecer suporte a:
 
 - cadastro;
@@ -403,6 +405,14 @@ Oferecer suporte a:
 As senhas devem ser armazenadas utilizando hashing seguro.
 
 Não armazenar informações sensíveis de autenticação em `localStorage`.
+
+Na Etapa 17, disponibilizar os quatro recursos REST de autenticação. Cadastro exige nome de 2–100 caracteres, e-mail válido e senha de 8–15 caracteres, com ao menos uma letra maiúscula, um número e um caractere especial (pontuação ou símbolo Unicode, como @, ! e #). Espaços não contam como especiais; não bloquear sequências nem exigir minúscula. Contar os caracteres Unicode sem alterar a senha. Exigir também confirmação igual em `confirmPassword`, validada no frontend e no backend sem persistência. Normalizar o e-mail para minúsculas e preservar a senha integralmente. A conta nasce ativa com perfil USER; o visitante não pode escolher perfil nem status. Cadastro bem-sucedido também inicia a sessão. Login recebe somente e-mail/senha, aceita senhas existentes de até 128 caracteres e deve recusar contas inativas e responder de forma idêntica para e-mail ausente, conta inativa ou senha incorreta.
+
+No cadastro, acompanhar comprimento, maiúscula, número e especial durante a digitação com texto e ícone de critério atendido. O requisito de especial deve apresentar exemplos: “Pelo menos um caractere especial, ex.: @, !, #”. Mostrar a confirmação de igualdade quando o campo de repetição começar a ser preenchido, atualizando também ao editar a primeira senha. Critérios pendentes começam neutros; erros e foco aparecem ao tentar enviar. Atualizar as senhas das três contas de demonstração para o mesmo padrão, preservando seus perfis e estados.
+
+Disponibilizar botão de mostrar/ocultar senha nos três campos: senha do login, senha do cadastro e confirmação do cadastro. Os controles são independentes, começam com as senhas ocultas, preservam o texto digitado e funcionam por teclado, com rótulos acessíveis e indicação do estado. Não enviar o formulário ao alternar a visibilidade. Durante envio, desabilitar os controles; após sucesso, limpar e ocultar os campos.
+
+Utilizar sessões opacas persistidas no PostgreSQL com validade absoluta de sete dias, token aleatório entregue somente por cookie HttpOnly e hash do token no banco. Autenticação bem-sucedida troca a sessão apresentada; logout revoga a sessão no servidor e expira o cookie. O endpoint do usuário atual retorna somente ID, nome, e-mail e perfil, verificando a conta ativa e a validade a cada consulta. Senhas, hashes e tokens não integram respostas JSON nem logs. Limitar tentativas de cadastro/login e proteger os POSTs contra origens não permitidas. Oferecer os formulários públicos em `/login` e `/register`, com validação acessível, estados pendente/erro, controle da sessão e logout. Após acesso confirmado, limpar a senha e oferecer navegação ao catálogo. Autorização e área privada seguem as Etapas 18 e 19.
 
 ---
 
@@ -552,6 +562,10 @@ Verificar especialmente:
 ---
 
 ## 24. Acessibilidade
+
+Toda requisição deve oferecer feedback enquanto estiver em andamento: texto contextual e indicador visual acessível nos envios e novas tentativas, com prevenção de cliques duplicados. Busca, filtros, ordenação e navegação devem apresentar progresso durante a transição e o carregamento dos dados. Preservar conteúdo utilizável em atualizações em segundo plano e informar o resultado real da operação. Indicadores animados devem respeitar movimento reduzido.
+
+Nos formulários de contato, cadastro e entrada, não exibir a mensagem “Campos com * são obrigatórios.”. Informar os campos obrigatórios não preenchidos quando o usuário tentar enviar o formulário, mantendo os erros associados aos campos e o foco no primeiro erro.
 
 Aplicar, no mínimo:
 

@@ -143,7 +143,8 @@ test("a rota sinaliza notFound para inválidos e ausentes e propaga falhas à fr
 test("carregamento, ausência e erro têm estados acessíveis e navegação ou nova tentativa", () => {
   const loading = renderToStaticMarkup(<PropertyLoading />);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /role="status"[^>]*>Carregando imóvel…/);
+  assert.match(loading, /role="status"/);
+  assert.match(loading, /Carregando imóvel…/);
   assert.match(loading, /aria-hidden="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   const missing = renderToStaticMarkup(<PropertyNotFound />);

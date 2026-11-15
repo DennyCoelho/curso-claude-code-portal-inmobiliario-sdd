@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./public-property": "./src/public-property.ts",
-    "./property-contact": "./src/property-contact.ts"
+    "./property-contact": "./src/property-contact.ts",
+    "./auth": "./src/auth.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

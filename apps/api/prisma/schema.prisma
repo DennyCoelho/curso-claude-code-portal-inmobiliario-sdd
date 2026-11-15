@@ -38,6 +38,26 @@ model User {
   updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz(3)
   favorites    Favorite[]
   inquiries    Inquiry[]
+  sessions     Session[]
+}
+
+model Session {
+  tokenHash String   @id @db.VarChar(64)
+  userId    String   @db.Uuid
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuthRateLimit {
+  key         String   @id @db.VarChar(64)
+  attempts    Int
+  windowStart DateTime @db.Timestamptz(3)
+
+  @@index([windowStart])
 }
 
 model Property {

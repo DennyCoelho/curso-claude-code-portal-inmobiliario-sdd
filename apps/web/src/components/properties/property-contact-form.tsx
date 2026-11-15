@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { contactFieldsSchema, type ContactFields } from "@portal-inmobiliario/contracts/property-contact";
 import { submitPropertyContact } from "@/lib/api/contact";
 import { formatContactMobile } from "@/lib/contact-phone";
+import { ActionButton } from "@/components/ui/loading-feedback";
 
 const fields = [
   { name: "name", label: "Nome", type: "text", autoComplete: "name", maxLength: 100, placeholder: "João de Souza" },
@@ -45,7 +46,7 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
     <section aria-labelledby="property-contact-title" className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
       <h2 id="property-contact-title" className="text-xl font-semibold text-slate-900">Tenho interesse</h2>
       <p id="property-contact-description" className="mt-3 text-sm leading-6 text-slate-600 wrap-anywhere">
-        Solicite mais informações sobre {propertyTitle}. Campos com * são obrigatórios.
+        Solicite mais informações sobre {propertyTitle}.
       </p>
       <form method="post" action="/api/contact" noValidate onSubmit={(event) => {
         event.preventDefault();
@@ -86,9 +87,7 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
           </div>
           <input {...register("botcheck")} type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           <p className="text-xs leading-6 text-slate-500">Ao enviar, seus dados serão usados para responder à solicitação e processados pelo Web3Forms.</p>
-          <button type="submit" disabled={isSending} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900 disabled:cursor-wait">
-            {isSending ? "Enviando…" : "Enviar solicitação"}
-          </button>
+          <ActionButton type="submit" pending={isSending} pendingLabel="Enviando…" className="min-h-11 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900">Enviar solicitação</ActionButton>
         </fieldset>
         <p role="status" aria-live="polite" className="text-sm text-slate-600">{isSending ? "Enviando sua solicitação…" : result?.success ? result.message : ""}</p>
         {result && !result.success ? <p role="alert" className="text-sm leading-6 text-red-700">{result.message} Seus dados foram mantidos.</p> : null}

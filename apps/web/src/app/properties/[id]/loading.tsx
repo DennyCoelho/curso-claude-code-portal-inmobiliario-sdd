@@ -1,7 +1,9 @@
+import { LoadingStatus } from "@/components/ui/loading-feedback";
+
 export default function PropertyLoading() {
   return (
     <section aria-label="Detalhes do imóvel" aria-busy="true" className="space-y-8">
-      <p role="status" className="text-sm text-slate-600">Carregando imóvel…</p>
+      <LoadingStatus className="text-slate-600">Carregando imóvel…</LoadingStatus>
       <div aria-hidden="true" className="space-y-8 motion-safe:animate-pulse">
         <div className="h-10 w-3/4 rounded-lg bg-slate-200" />
         <div className="h-5 w-1/2 rounded bg-slate-200" />

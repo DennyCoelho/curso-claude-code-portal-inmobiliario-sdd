@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { usePendingNavigation } from "@/hooks/use-pending-navigation";
+import { ActionButton } from "@/components/ui/loading-feedback";
 import { useForm } from "react-hook-form";
 import {
   buildHomeSearchUrl,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/home-search";
 
 export function HomeSearch() {
-  const router = useRouter();
+  const { isNavigating, navigate } = usePendingNavigation();
   const { register, handleSubmit, formState: { errors } } = useForm<HomeSearchValues>({
     resolver: zodResolver(homeSearchSchema),
     defaultValues: { search: "", operation: "" },
@@ -22,10 +23,12 @@ export function HomeSearch() {
       aria-label="Buscar imóveis"
       action="/properties"
       method="get"
-      onSubmit={handleSubmit((values) => router.push(buildHomeSearchUrl(values)))}
+      onSubmit={handleSubmit((values) => navigate(buildHomeSearchUrl(values)))}
+      aria-busy={isNavigating}
       className="relative z-10 rounded-2xl border border-emerald-900/10 bg-white p-3 shadow-[0_8px_30px_-16px_#064e3b33] sm:p-4"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+      <fieldset disabled={isNavigating} className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end">
+        <legend className="sr-only">Busca de imóveis</legend>
         <div className="flex-1 px-2 py-1">
           <label htmlFor="home-search" className="mb-2 block text-sm font-semibold text-slate-900">
             Onde você quer viver?
@@ -55,8 +58,9 @@ export function HomeSearch() {
             <option value="RENT">Alugar</option>
           </select>
         </div>
-        <button
+        <ActionButton
           type="submit"
+          pending={isNavigating} pendingLabel="Buscando…"
           className="inline-flex min-h-13 items-center justify-center gap-3 rounded-xl bg-emerald-800 px-7 py-3 font-semibold text-white transition-colors hover:bg-emerald-900 lg:mb-1"
         >
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -64,8 +68,8 @@ export function HomeSearch() {
             <path d="m16 16 4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
           Buscar imóveis
-        </button>
-      </div>
+        </ActionButton>
+      </fieldset>
       {errors.search && (
         <p id="home-search-error" role="alert" className="mt-2 px-2 text-sm text-red-700">
           {errors.search.message}
