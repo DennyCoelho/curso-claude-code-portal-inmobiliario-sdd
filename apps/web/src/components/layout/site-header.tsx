@@ -36,7 +36,7 @@ export function SiteHeader() {
           aria-controls="primary-navigation"
           aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 md:hidden"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 lg:hidden"
         >
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path
@@ -52,21 +52,23 @@ export function SiteHeader() {
           id="primary-navigation"
           aria-label="Navegação principal"
           data-open={isMenuOpen}
-          className="mt-4 hidden w-full border-t border-slate-200 pt-4 data-[open=true]:block md:mt-0 md:block md:w-auto md:border-0 md:pt-0"
+          className="mt-4 hidden w-full border-t border-slate-200 pt-4 data-[open=true]:block lg:mt-0 lg:block lg:w-auto lg:border-0 lg:pt-0"
         >
-          <ul className="flex flex-col gap-1 md:flex-row md:items-center">
+          <ul className="flex flex-col gap-1 lg:flex-row lg:items-center">
             {publicNavigation.map(({ label, href }) => (
               <li key={href}>
                 <Link
-                  href={href}
+                  href={href === "/login" && user ? "/account" : href}
+                  prefetch={href === "/login" ? false : undefined}
                   onNavigate={closeMenu}
                   data-account={href === "/login"}
-                  className="flex min-h-11 items-center rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950 data-[account=true]:bg-emerald-800 data-[account=true]:text-white data-[account=true]:hover:bg-emerald-900 md:data-[account=true]:ml-3"
+                  className="flex min-h-11 items-center rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950 data-[account=true]:bg-emerald-800 data-[account=true]:text-white data-[account=true]:hover:bg-emerald-900 lg:data-[account=true]:ml-3"
                 >
-                  {href === "/login" && user ? "Minha sessão" : label}
+                  {href === "/login" && user ? "Minha conta" : label}
                 </Link>
               </li>
             ))}
+            {user?.role === "ADMIN" ? <li><Link href="/admin" prefetch={false} onNavigate={closeMenu} className="flex min-h-11 items-center rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950">Administração</Link></li> : null}
           </ul>
         </nav>
       </div>

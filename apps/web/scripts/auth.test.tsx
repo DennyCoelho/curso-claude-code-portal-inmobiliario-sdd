@@ -351,7 +351,7 @@ test("navegação e painel compartilham /me e logout atualiza a sessão sem guar
   await act(async () => root.render(<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 5000 }}><SiteHeader /><AuthPanel mode="login" /></SWRConfig>));
   assert.deepEqual(urls, ["/api/auth/me"]);
   assert.match(container.textContent!, /Você está conectado/);
-  assert.equal(container.querySelector('a[href="/login"]')!.textContent, "Minha sessão");
+  assert.equal(container.querySelector('a[href="/account"]')!.textContent, "Minha conta");
   const button = Array.from(container.querySelectorAll("button")).find((element) => element.textContent === "Sair da conta")!;
   await act(async () => button.click());
   assert.deepEqual(urls, ["/api/auth/me", "/api/auth/logout"]);
@@ -359,6 +359,27 @@ test("navegação e painel compartilham /me e logout atualiza a sessão sem guar
   assert.equal(container.querySelector('a[href="/login"]')!.textContent, "Entrar");
   assert.equal(dom.window.localStorage.length, 0);
   assert.equal(dom.window.sessionStorage.length, 0);
+});
+
+test("USER não recebe links administrativos, inclusive quando o retorno solicitado é /admin", async () => {
+  mock.method(globalThis, "fetch", async () => Response.json({ user }));
+  await act(async () => root.render(<SWRConfig value={{ provider: () => new Map() }}><SiteHeader /><AuthPanel mode="login" destination="/admin" /></SWRConfig>));
+  assert.equal(container.querySelector('a[href="/admin"]'), null);
+  assert.match(container.textContent!, /Sua conta não tem permissão administrativa/);
+  assert.ok(container.querySelector('a[href="/account"]'));
+});
+
+test("ADMIN recebe links de conta/administração e o menu móvel mantém teclado/Escape", async () => {
+  mock.method(globalThis, "fetch", async () => Response.json({ user: { ...user, role: "ADMIN" } }));
+  await act(async () => root.render(<SWRConfig value={{ provider: () => new Map() }}><SiteHeader /><AuthPanel mode="login" destination="/admin" /></SWRConfig>));
+  assert.equal(container.querySelectorAll('a[href="/admin"]').length, 2);
+  assert.match(container.textContent!, /Continuar para administração/);
+  const menu = container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]')!;
+  await act(() => menu.click());
+  assert.equal(menu.getAttribute("aria-expanded"), "true");
+  await act(() => menu.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+  assert.equal(menu.getAttribute("aria-expanded"), "false");
+  assert.equal(document.activeElement, menu);
 });
 
 test("falha na verificação da sessão oferece nova tentativa e falha no logout mantém a sessão visível", async () => {

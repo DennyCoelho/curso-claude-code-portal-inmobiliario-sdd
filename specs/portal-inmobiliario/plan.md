@@ -212,6 +212,7 @@ POST /api/inquiries
 Administração:
 
 ```text
+GET    /api/admin/session
 GET    /api/admin/properties
 POST   /api/admin/properties
 GET    /api/admin/properties/{id}
@@ -381,6 +382,15 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 ## 10. Autenticação e autorização
 
 Utilizar um mecanismo seguro compatível com a API REST.
+
+### Autorização USER e ADMIN — Etapa 18
+
+- Centralizar a hierarquia dos perfis no contrato compartilhado: USER e ADMIN acessam recursos autenticados; somente ADMIN acessa recursos administrativos. Não aceitar perfil ou identidade fornecidos pelo cliente como autorização.
+- Criar serviço e guard reutilizáveis no backend, verificando a sessão opaca, expiração, atividade e perfil atual no PostgreSQL a cada solicitação. Retornar `401` para sessão inválida e `403` para permissão insuficiente. Integrar `/api/auth/me` ao serviço e acrescentar `GET /api/admin/session` como primeira API administrativa protegida, sem implementar o CRUD futuro.
+- Respostas privadas, inclusive erros, usam `Cache-Control: no-store` e `Vary: Cookie`; limpar cookie inválido e manter a sessão válida em recusas de perfil. O guard protege a origem dos métodos de escrita antes de executar o recurso.
+- Preparar apenas as entradas protegidas `/account` e `/admin`, sem informações da conta, favoritos ou indicadores das Etapas 19–22. Cada página verifica autorização no servidor por REST, encaminhando somente cookies de sessão à origem fixa `API_URL`, sem cache e sem depender do estado SWR, do menu ou de layout. Visitantes seguem ao login; USER recebe mensagem de acesso restrito ao tentar administração. Falhas da API bloqueiam a renderização privada e permitem nova tentativa.
+- Oferecer links conforme o perfil e retorno do login limitado a `/account` ou `/admin`, impedindo redirecionamentos externos. Manter saída da sessão acessível. Páginas privadas não são indexadas, e links privados não fazem prefetch.
+- Validar hierarquia, falsificação de identidade, sessões inválidas/inativas/revogadas, alterações de perfil, erros e origem com testes unitários, PostgreSQL e HTTP direto/proxy. Executar lint, tipos e builds dos dois apps; preservar os registros existentes.
 
 ### Cadastro e login via REST — Etapa 17
 

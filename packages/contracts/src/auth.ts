@@ -46,11 +46,20 @@ export const PASSWORD_RECOVERY_MESSAGE = "Se houver uma conta ativa para este e-
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+export const userRoleSchema = z.enum(["USER", "ADMIN"]);
+export type UserRole = z.infer<typeof userRoleSchema>;
+
+export function hasAccessRole(role: UserRole, requiredRole: UserRole): boolean {
+  return requiredRole === "USER"
+    ? role === "USER" || role === "ADMIN"
+    : requiredRole === "ADMIN" && role === "ADMIN";
+}
+
 export const authenticatedUserSchema = z.strictObject({
   id: z.uuid(),
   name: z.string(),
   email: z.email(),
-  role: z.enum(["USER", "ADMIN"]),
+  role: userRoleSchema,
 });
 
 export const authResponseSchema = z.strictObject({ user: authenticatedUserSchema });

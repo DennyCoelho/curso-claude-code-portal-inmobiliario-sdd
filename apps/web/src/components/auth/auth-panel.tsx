@@ -7,8 +7,9 @@ import { requestAuth } from "@/lib/api/auth";
 import { AuthForm } from "./auth-form";
 import { ActionButton, LoadingStatus } from "@/components/ui/loading-feedback";
 import { RetryButton } from "@/components/ui/retry-button";
+import type { PrivateDestination } from "@/lib/auth-navigation";
 
-export function AuthPanel({ mode }: { mode: "login" | "register" }) {
+export function AuthPanel({ mode, destination = "/account" }: { mode: "login" | "register"; destination?: PrivateDestination }) {
   const { data: user, error, isLoading, isValidating, mutate } = useAuth();
   const [isLeaving, setIsLeaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,6 +43,11 @@ export function AuthPanel({ mode }: { mode: "login" | "register" }) {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Você está conectado</h2>
           <p className="wrap-anywhere text-slate-700">Olá, {user.name}. Sua sessão está ativa para {user.email}.</p>
+          {destination === "/admin" && user.role !== "ADMIN" ? <p className="text-slate-700">Sua conta não tem permissão administrativa.</p> : null}
+          <div className="flex flex-wrap gap-3">
+            <Link href="/account" prefetch={false} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900">Minha conta</Link>
+            {user.role === "ADMIN" ? <Link href="/admin" prefetch={false} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50">{destination === "/admin" ? "Continuar para administração" : "Administração"}</Link> : null}
+          </div>
           <Link href="/properties" className="inline-flex min-h-11 items-center rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900">Explorar imóveis</Link>
           <div><ActionButton type="button" pending={isLeaving} pendingLabel="Saindo…" onClick={() => { void logout(); }} className="min-h-11 rounded-lg border border-slate-300 px-4 font-semibold text-slate-700 hover:bg-slate-50">Sair da conta</ActionButton></div>
         </div>

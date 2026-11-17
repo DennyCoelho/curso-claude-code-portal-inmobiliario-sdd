@@ -15,6 +15,8 @@ A interface, os textos de acessibilidade, os metadados e a documentação utiliz
 
 Esses padrões estão definidos em `spec.md`, `plan.md` e `tasks.md`. As Etapas 1 a 16 possuem implementação, incluindo a conexão com PostgreSQL, o fluxo de migrações, os modelos de domínio, o seed de imóveis brasileiros, a API REST pública, a landing page, os cards em grade responsiva, o catálogo, a busca, os filtros, a ordenação, a página de detalhes do imóvel, a galeria de fotos, a localização no Google Maps e o formulário de contato. O envio real de contato depende da configuração do Web3Forms descrita abaixo.
 
+As Etapas 17 e 18 acrescentam cadastro, login, logout, sessões persistidas e autorização USER/ADMIN, com entradas privadas protegidas no servidor. A recuperação de senha solicitada também está implementada; o envio real depende da configuração do Resend.
+
 ## Estrutura do monorepo
 
 O repositório utiliza npm workspaces, com instalação e `package-lock.json` únicos na raiz:
@@ -50,7 +52,7 @@ Na migração para o monorepo, o ambiente privado existente foi transferido de `
 
 A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
 
-O destino `/properties` exibe o catálogo público; `/login` oferece entrada e controle da sessão, e `/register` permite criar uma conta. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. A Etapa 17 disponibiliza a autenticação por REST; autorização e área privada seguem as Etapas 18 e 19.
+O destino `/properties` exibe o catálogo público; `/login` oferece entrada e controle da sessão, e `/register` permite criar uma conta. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. As Etapas 17 e 18 disponibilizam autenticação REST e autorização USER/ADMIN; as informações da conta seguem na Etapa 19.
 
 Cada app Next.js carrega seu próprio `.env.local`. O frontend recebe somente `API_URL`, com padrão local `http://127.0.0.1:3001`; o backend recebe `DATABASE_URL` e as credenciais privadas descritas em `apps/api/.env.example`.
 
@@ -343,7 +345,7 @@ São credenciais públicas de demonstração para ambiente local. O comando recu
 
 Para aplicar novamente as senhas da tabela às contas de demonstração existentes, execute `npm run db:seed:users -- --reset-passwords`. A opção exige ID/e-mail esperados, modifica somente as senhas dessas três contas e revoga suas sessões; nomes, perfis, atividade e demais usuários são preservados. A atualização para as senhas acima foi solicitada junto à nova política de cadastro.
 
-Acesse [Entrar](http://localhost:3000/login) para testar. A etapa atual reconhece os perfis no login; as restrições USER/ADMIN serão implementadas na Etapa 18. Favoritos, conta privada e funções administrativas seguem suas próprias etapas.
+Acesse [Entrar](http://localhost:3000/login) para testar. USER e ADMIN acessam a entrada privada de `/account`; somente ADMIN acessa `/admin`. A conta inativa permanece bloqueada. Informações da conta, favoritos e funções administrativas seguem suas próprias etapas.
 
 ### Recuperar senha
 
@@ -370,7 +372,24 @@ A migração aditiva `20261115020000_criar_recuperacao_senha` cria `PasswordRese
 
 ### Fluxo e configuração
 
-As páginas `/login` e `/register` usam React Hook Form + Zod com validação acessível, estados de envio e tratamento de falhas. Ao confirmar o acesso, a senha é limpa e o painel apresenta a sessão atual, a opção Sair da conta e o link ao catálogo. O cabeçalho muda Entrar para Minha sessão. Navegação e painel compartilham uma consulta `/me` por SWR, com revalidação ao recuperar o foco; credenciais não são armazenadas em localStorage/sessionStorage. A conta privada e as permissões serão implementadas nas Etapas 18 e 19.
+As páginas `/login` e `/register` usam React Hook Form + Zod com validação acessível, estados de envio e tratamento de falhas. Ao confirmar o acesso, a senha é limpa e o painel apresenta a sessão atual, a opção Sair da conta e links à conta e ao catálogo. ADMIN também recebe o link Administração. O cabeçalho muda Entrar para Minha conta. Navegação e painel compartilham uma consulta `/me` por SWR, com revalidação ao recuperar o foco; credenciais não são armazenadas em localStorage/sessionStorage.
+
+### Autorização USER e ADMIN — Etapa 18
+
+| Recurso | Visitante/sessão inválida | USER ativo | ADMIN ativo |
+| --- | --- | --- | --- |
+| `GET /api/auth/me` | `401` | `200` | `200` |
+| `GET /api/admin/session` | `401` | `403` | `200` |
+| `/account` | Redireciona ao login | Acesso permitido | Acesso permitido |
+| `/admin` | Redireciona ao login | Redireciona a `/access-denied` | Acesso permitido |
+
+As páginas são entradas mínimas para validar a proteção, sem antecipar informações da conta, favoritos ou indicadores das próximas etapas. O login preserva a intenção de acesso por `next=/account` ou `next=/admin`, oferecendo o link apropriado após entrar. Outros destinos e parâmetros repetidos usam `/account`, sem redirecionamentos externos. USER que pediu administração recebe orientação sobre a restrição. A saída permanece em Gerenciar sessão → Sair da conta.
+
+O serviço `authorizationService.requireUser(token, requiredRole)` consulta a sessão e o perfil atual via `authService.me`; ADMIN herda os acessos USER. Toda nova API privada deve usar `withAuthorization(request, "USER" | "ADMIN", callback)` e realizar acesso aos dados somente dentro do callback autorizado. O guard impede execução sem permissão, protege a origem nas escritas e força `Cache-Control: no-store`/`Vary: Cookie` em sucesso e erro. `401` expira o cookie; `403` preserva a sessão válida. Perfil/identidade em cabeçalhos, parâmetros ou corpo não concedem acesso.
+
+Cada nova página privada deve chamar `requirePageUser("USER" | "ADMIN")` antes de renderizar conteúdo ou carregar dados privados. A verificação ocorre no servidor por REST em `API_URL`, com timeout, sem cache e sem seguir redirecionamentos; somente cookies de sessão são encaminhados. Nenhum acesso direto ao banco existe no frontend. Layout, menu e cache SWR não são controles de autorização. Erros de rede/contrato bloqueiam a área e oferecem nova tentativa. Links privados têm prefetch desativado e páginas usam `noindex, nofollow`. O redirecionamento pode ocorrer por metatag após o início do streaming do Next.js, sem renderizar o conteúdo protegido.
+
+`npm run api:test` cobre hierarquia, falsificação de identidade, guards e erros; `npm run auth:test:web` cobre navegação por perfil, formulários e cliente REST da proteção. `npm run api:test:integration` verifica mudanças de perfil, inatividade, expiração e revogação no PostgreSQL com rollback. Com os dois apps iniciados, `npm run auth:test:http` também testa as permissões diretamente e pelo proxy, páginas privadas, retorno ao login e alterações durante a sessão. Contas descartáveis são removidas em `finally`, sem editar as contas existentes. A Etapa 18 reutiliza os perfis e as tabelas existentes, sem migrações.
 
 No cadastro, os quatro critérios de senha acompanham a digitação: 8–15 caracteres, pelo menos uma maiúscula, um número e um caractere especial. O último item mostra “Pelo menos um caractere especial, ex.: @, !, #”; são aceitos pontuação e símbolos Unicode, enquanto espaços não contam como especiais. Cada item usa texto e ícone, com cor de confirmação quando atendido; critérios pendentes começam neutros. Minúsculas não são obrigatórias e sequências são aceitas. O campo Confirmar senha informa a igualdade e acompanha mudanças nos dois campos. Colagens não são truncadas para quinze caracteres: a interface informa o excesso e impede o cadastro. Erros obrigatórios aparecem ao tentar enviar, com foco no primeiro campo inválido. Ambas as senhas são limpas após sucesso.
 

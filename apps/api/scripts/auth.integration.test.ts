@@ -4,9 +4,10 @@ import { after, test } from "node:test";
 import nextEnv from "@next/env";
 import type { Prisma } from "../src/generated/prisma/client";
 import { createDatabaseClient } from "../src/lib/db/client";
-import { hashToken } from "../src/lib/auth/session";
+import { hashToken, newSession } from "../src/lib/auth/session";
 import { createAuthRepository } from "../src/repositories/auth-repository";
 import { createAuthService } from "../src/services/auth-service";
+import { createAuthorizationService } from "../src/services/authorization-service";
 
 nextEnv.loadEnvConfig(process.cwd());
 const database = createDatabaseClient();
@@ -84,4 +85,35 @@ test("limite no PostgreSQL soma tentativas concorrentes e reabre após quinze mi
   } finally {
     await database.authRateLimit.deleteMany({ where: { key } });
   }
+});
+
+test("autorização no PostgreSQL revalida perfil, inatividade, expiração, revogação e exclusão na mesma sessão", async () => {
+  await withRollback(async (transaction) => {
+    const authentication = createAuthService(createAuthRepository(transaction));
+    const authorization = createAuthorizationService(authentication);
+    const session = newSession(new Date());
+    const user = await transaction.user.create({ data: {
+      name: "Autorização Teste", email: `authorization-${randomUUID()}@example.com`, passwordHash: "hash-exclusivo-do-teste",
+      sessions: { create: { tokenHash: session.tokenHash, expiresAt: session.expiresAt } },
+    } });
+    assert.equal((await authorization.requireUser(session.token)).id, user.id);
+    await assert.rejects(authorization.requireUser(session.token, "ADMIN"), { status: 403 });
+    assert.equal(await transaction.session.count({ where: { userId: user.id } }), 1);
+    await transaction.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
+    assert.equal((await authorization.requireUser(session.token, "ADMIN")).role, "ADMIN");
+    assert.equal((await authorization.requireUser(session.token, "USER")).role, "ADMIN");
+    await transaction.user.update({ where: { id: user.id }, data: { role: "USER" } });
+    await assert.rejects(authorization.requireUser(session.token, "ADMIN"), { status: 403 });
+    await transaction.user.update({ where: { id: user.id }, data: { isActive: false } });
+    await assert.rejects(authorization.requireUser(session.token), { status: 401 });
+    assert.equal(await transaction.session.count({ where: { userId: user.id } }), 0);
+    await transaction.user.update({ where: { id: user.id }, data: { isActive: true, role: "ADMIN" } });
+    for (const state of ["expired", "revoked", "deleted"] as const) {
+      const next = newSession(new Date());
+      await transaction.session.create({ data: { userId: user.id, tokenHash: next.tokenHash, expiresAt: state === "expired" ? new Date(0) : next.expiresAt } });
+      if (state === "revoked") await authentication.logout(next.token);
+      if (state === "deleted") await transaction.user.delete({ where: { id: user.id } });
+      await assert.rejects(authorization.requireUser(next.token, "ADMIN"), { status: 401 });
+    }
+  });
 });

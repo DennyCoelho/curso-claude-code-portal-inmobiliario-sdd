@@ -424,6 +424,12 @@ Exigir a política de senha do cadastro e confirmação igual, com critérios, m
 
 Integrar e-mails transacionais pelo Resend no backend, com credenciais e URL pública configuradas pelo ambiente. Sem configuração, informar indisponibilidade para todas as solicitações. Não expor tokens em respostas REST, logs ou armazenamento local; usar fragmento no link para evitar sua transmissão nos acessos HTTP à página. Testes do envio usam provedor simulado, sem disparar e-mails reais.
 
+### Autorização — Etapa 18
+
+USER e ADMIN podem acessar recursos autenticados; somente ADMIN pode acessar recursos administrativos. A API deve verificar a sessão, expiração, atividade e perfil atual no PostgreSQL em cada acesso, retornando `401` sem autenticação válida e `403` sem permissão. Cadastro, cookies adicionais, cabeçalhos ou parâmetros fornecidos pelo cliente não podem atribuir permissões. Rebaixamento, inativação e revogação devem valer nos acessos seguintes sem exigir novo login.
+
+Preparar entradas mínimas em `/account` e `/admin`, protegidas no servidor por consultas REST sem cache. Visitantes devem seguir ao login com retorno limitado aos caminhos privados conhecidos; USER que tentar administração deve receber uma mensagem de acesso restrito. Falhas de verificação bloqueiam o conteúdo e permitem tentar novamente. Menu e links refletem o perfil, mas não substituem a autorização. Páginas privadas não devem ser indexadas nem expor tokens. As informações da conta e o painel com indicadores continuam nas Etapas 19 e 22.
+
 ## 16. Favoritos ou imóveis de interesse
 
 USER pode:

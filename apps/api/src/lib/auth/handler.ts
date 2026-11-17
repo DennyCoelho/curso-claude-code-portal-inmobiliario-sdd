@@ -2,6 +2,7 @@ import "server-only";
 import { loginSchema, registerSchema } from "@portal-inmobiliario/contracts/auth";
 import { errorResponse, jsonResponse } from "@/lib/api/response";
 import { authService } from "@/services/auth-service";
+import { authorizationService } from "@/services/authorization-service";
 import { AuthError } from "./error";
 import { readSessionToken, setSessionCookie } from "./session";
 
@@ -49,7 +50,7 @@ export async function handleAuth(action: "register" | "login" | "logout" | "me",
     const previousToken = readSessionToken(request);
     if (action !== "me") validateOrigin(request);
     if (action === "me") {
-      response = jsonResponse({ user: await authService.me(previousToken) });
+      response = jsonResponse({ user: await authorizationService.requireUser(previousToken) });
     } else if (action === "logout") {
       await authService.logout(previousToken);
       response = setSessionCookie(new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } }), null);

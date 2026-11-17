@@ -289,14 +289,20 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
   - Cache `.next` do frontend regenerado para corrigir falha do Turbopack no Windows. Servidores antigos de desenvolvimento reiniciados com os builds atualizados após o Prisma anterior permanecer em memória; validação HTTP final aprovada. Aplicativos disponíveis nas portas 3000/3001. Contagem final: cinco usuários, 16 imóveis, 16 características, zero links de recuperação e nenhuma conta temporária dos testes.
   - Conferência visual não concluída: navegador integrado não anexou a aba e a automação do Chrome foi interrompida por não conseguir confirmar a URL com segurança. Interações dos formulários verificadas em jsdom e páginas/metadados verificados por HTTP; responsividade visual não foi verificada nesta alteração.
 
-- [ ] **Etapa 18 — Autorização USER e ADMIN**
+- [x] **Etapa 18 — Autorização USER e ADMIN**
   - Criar perfis de acesso.
   - Proteger APIs.
   - Proteger páginas.
   - Aplicar permissões no backend.
+  - Hierarquia USER/ADMIN centralizada no contrato compartilhado: ADMIN herda o acesso USER, e somente ADMIN atende aos recursos administrativos. Perfis existentes reaproveitados, sem migração nem alteração de contas. Perfil/identidade em cabeçalhos, parâmetros e corpo não concedem acesso.
+  - Serviço `authorizationService.requireUser` reutiliza a consulta de sessão atual no PostgreSQL, verificando expiração, atividade e perfil a cada acesso. Integrado a `/api/auth/me`; primeiro recurso administrativo `GET /api/admin/session` protegido por `withAuthorization`, com callback executado somente após a permissão. Guard de escritas verifica origem, respostas privadas e erros não têm cache e variam por cookie; `401` expira o cookie, enquanto `403` preserva a sessão válida.
+  - Entradas mínimas `/account` e `/admin` verificadas individualmente no servidor por REST em `API_URL`, encaminhando apenas cookies de sessão, sem cache nem redirecionamentos externos. Visitantes seguem ao login com retorno limitado aos dois caminhos conhecidos; USER recebe acesso restrito ao tentar administração. Falhas de rede/contrato bloqueiam o conteúdo e permitem nova tentativa. Layout e SWR não substituem a proteção; páginas privadas usam noindex e links sem prefetch.
+  - Navegação apresenta Minha conta para os dois perfis e Administração somente para ADMIN, mantendo Gerenciar sessão e logout. Menu adaptado para acomodar o link administrativo; informações da conta, favoritos e indicadores continuam nas Etapas 19–22.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 172 testes unitários. `npm run test:integration` aprovado com 30 testes no PostgreSQL, incluindo promoção/rebaixamento na mesma sessão, inatividade, expiração, revogação e exclusão com rollback. Builds de produção dos dois aplicativos aprovados, assim como 18 testes HTTP gerais e cinco fluxos HTTP de autenticação/autorização/recuperação, diretamente e pelo proxy.
+  - Navegador integrado confirmou redirecionamento do visitante, entrada USER, acesso à conta, recusa da administração, entrada ADMIN, acesso administrativo e bloqueio após logout. Menu móvel, Escape e foco conferidos; larguras de 320, 768, 1024 e 1440 px sem transbordamento horizontal, console sem erros/avisos. Capturas de celular e computador salvas; sessões de validação encerradas e contas descartáveis removidas. Documentação atualizada, com os aplicativos de produção disponíveis nas portas 3000/3001.
 
 - [ ] **Etapa 19 — Conta do usuário**
-  - Criar `/account`.
+  - Completar `/account`, cuja entrada protegida foi preparada na Etapa 18.
   - Exibir informações básicas.
   - Preparar seções de imóveis de interesse e imóveis sobre os quais foram enviadas consultas.
 
@@ -317,7 +323,7 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
 ## Fase 4 — Administração
 
 - [ ] **Etapa 22 — Painel ADMIN**
-  - Criar `/admin`.
+  - Completar `/admin`, cuja entrada protegida foi preparada na Etapa 18.
   - Exibir indicadores.
   - Restringir o acesso a ADMIN.
 

@@ -13,7 +13,7 @@
     "property:test": "tsx --test scripts/property-card.test.tsx",
     "property-detail:test": "tsx --tsconfig ./scripts/tsconfig.test.json --test scripts/property-detail.test.tsx scripts/property-gallery.test.tsx scripts/property-gallery-interaction.test.tsx scripts/property-map.test.tsx scripts/property-contact.test.tsx",
     "catalog:test": "tsx --test scripts/catalog.test.tsx",
-    "auth:test": "tsx --test scripts/auth.test.tsx",
+    "auth:test": "tsx --test scripts/auth.test.tsx && node --conditions=react-server --import tsx --test scripts/authorization.test.ts",
     "feedback:test": "tsx --test scripts/request-feedback.test.tsx"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-hook-form": "^7.91.0",
+    "server-only": "^0.0.1",
     "swr": "^2.5.1",
     "zod": "^4.6.7"
   },
