@@ -116,7 +116,9 @@ test("os cards abrem os detalhes e o retorno conserva busca, tipos múltiplos e 
   const card = renderToStaticMarkup(<PropertyCard property={property} catalogParameters={parameters} />);
   assert.ok(card.includes(href.replaceAll("&", "&amp;")));
   assert.match(card, /aria-label="Ver detalhes de Apartamento com varanda na Sé"/);
-  assert.equal(card.match(/<a /g)?.length, 1);
+  assert.equal(card.match(/<a /g)?.length, 2);
+  assert.match(card, /aria-label="Entrar para salvar Apartamento com varanda na Sé"/);
+  assert.doesNotMatch(card, /<a [^>]*>[\s\S]*<a [^>]*>[\s\S]*<\/a>[\s\S]*<\/a>/);
 });
 
 test("a rota renderiza os dados REST no servidor e o retorno aos resultados sem consultar a listagem", async () => {

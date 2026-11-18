@@ -203,6 +203,22 @@ POST   /api/favorites/{propertyId}
 DELETE /api/favorites/{propertyId}
 ```
 
+### Favoritos — Etapa 20
+
+#### Ajuste solicitado — Paginação e filtro compacto
+
+- `GET /api/favorites` passa a retornar `{ items, total, page, pageSize, totalPages }`, com nove imóveis por página. Busca por título/descrição/bairro/cidade/UF, operação, tipo e ordenação (salvamento recente/antigo e preço crescente/decrescente) são combinados no PostgreSQL antes de contar e paginar. Validar parâmetros, recusar repetições e manter desempate por ID. Página além do fim retorna a última disponível; coleção vazia usa página 1 e zero páginas.
+- Contagem e seleção usam a mesma transação com leitura repetível. `GET /api/favorites/ids` oferece somente IDs publicados da conta para sincronizar os botões da landing/catálogo/detalhes sem carregar todos os imóveis. Ambas as consultas preservam o guard e o isolamento por sessão.
+- Usar `favoritesPage`, `favoritesSearch`, `favoritesOperation`, `favoritesType` e `favoritesSort` na URL de `/account`, com âncora da seção. Aplicar/limpar filtros volta à página 1; páginas preservam filtros, recarga e histórico. Formulário compacto responsivo, React Hook Form/Zod, navegação acessível e indicadores reais de progresso. Exibir intervalo/total e diferenciar conta vazia de filtro sem resultados.
+- Separar cache SWR dos IDs e das páginas por usuário/consulta. Após escrita confirmada, atualizar IDs e revalidar somente as páginas da mesma conta, preenchendo os nove resultados e corrigindo a última página após remoção. Falhas de revalidação não devem fingir que a escrita confirmada falhou. Manter dados de outra consulta ocultos, foco após remoção e proteção contra respostas tardias.
+- Cobrir páginas 9/9/restante, busca literal, filtros, ordenação, parâmetros inválidos, isolamento, remoção na última página, URL/histórico, carregamento/falhas e status de favoritos fora da página atual. Validar lint, tipos, testes, PostgreSQL, builds, HTTP direto/proxy e navegador.
+
+- Proteger os três recursos com o guard USER existente (também permite ADMIN), origem nas escritas, sessão atual no PostgreSQL, `no-store` e `Vary: Cookie`. Derivar a identidade exclusivamente da sessão; validar e normalizar o UUID do imóvel.
+- Listar somente imóveis publicados salvos pela conta atual, com o contrato público existente e ordem por salvamento mais recente/ID. Adicionar somente publicados, retornando `200` também para repetição; imóvel inexistente ou despublicado retorna o mesmo `404`. Inserção atômica com a chave única existente impede duplicações concorrentes. Remoção por usuário/imóvel é idempotente (`204`), inclusive após despublicação. Não requer migração.
+- Integrar botão acessível independente do link nos cards da landing/catálogo e nos detalhes. Visitantes recebem link para entrar; sessões e favoritos em carregamento/falha impedem indicar um estado incorreto. Compartilhar consulta SWR por identidade e bloqueio de operações por imóvel; confirmar alteração somente após resposta real, preservar estado em falhas e oferecer nova tentativa.
+- Substituir a preparação de Imóveis de interesse em `/account` pela grade real, com carregamento, vazio, erro e remoção. Manter Consultas enviadas para a Etapa 21. Isolar cache por usuário e ocultar dados ao perder a sessão, sem persistir favoritos ou credenciais no armazenamento local.
+- Validar serviços/rotas, isolamento de contas, publicação, repetição/concorrência no PostgreSQL, sessão/origem por HTTP direto e proxy, interações pendentes/erros na interface, lint, tipos, builds e responsividade quando o navegador estiver disponível.
+
 Consultas:
 
 ```text

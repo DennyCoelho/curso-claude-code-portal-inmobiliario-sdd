@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { FavoritesProvider } from "@/components/favorites/favorites-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,15 +19,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Pular para o conteúdo
         </a>
-        <SiteHeader />
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="mx-auto w-full max-w-7xl flex-1 px-5 py-12 sm:px-8 sm:py-16"
-        >
-          {children}
-        </main>
-        <SiteFooter />
+        <FavoritesProvider>
+          <SiteHeader />
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-7xl flex-1 px-5 py-12 sm:px-8 sm:py-16"
+          >
+            {children}
+          </main>
+          <SiteFooter />
+        </FavoritesProvider>
       </body>
     </html>
   );

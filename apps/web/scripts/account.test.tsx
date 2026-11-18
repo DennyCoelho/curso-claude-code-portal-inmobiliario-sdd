@@ -36,9 +36,12 @@ test("USER e ADMIN têm catálogo e sessão, com atalho administrativo somente p
   }
 });
 
-test("seções futuras informam disponibilidade sem simular listas, contagens ou ações", () => {
+test("favoritos têm seção integrada e consultas continuam preparadas sem dados fictícios", () => {
   const document = renderAccount();
-  for (const [id, title] of [["account-favorites-title", "Imóveis de interesse"], ["account-inquiries-title", "Consultas enviadas"]]) {
+  const favorites = document.querySelector('section[aria-labelledby="account-favorites-title"]')!;
+  assert.equal(favorites.querySelector("h2")?.textContent, "Imóveis de interesse");
+  assert.doesNotMatch(favorites.textContent!, /Em breve/);
+  for (const [id, title] of [["account-inquiries-title", "Consultas enviadas"]]) {
     const section = document.querySelector(`section[aria-labelledby="${id}"]`)!;
     assert.equal(section.querySelector("h2")?.textContent, title);
     assert.match(section.textContent!, /Em breve/);

@@ -8,6 +8,7 @@ import {
   type PropertyCardData,
 } from "@/lib/property";
 import { PropertyImage } from "./property-image";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
 
 interface PropertyCardProps {
   property: PropertyCardData;
@@ -61,6 +62,7 @@ export function PropertyCard({ property, catalogParameters = "" }: PropertyCardP
           ) : null}
         </div>
       </Link>
+      <div className="px-5 pb-5"><FavoriteButton property={property} /></div>
     </article>
   );
 }

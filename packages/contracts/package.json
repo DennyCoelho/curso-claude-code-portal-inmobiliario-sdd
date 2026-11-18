@@ -7,7 +7,8 @@
     "./public-property": "./src/public-property.ts",
     "./property-contact": "./src/property-contact.ts",
     "./auth": "./src/auth.ts",
-    "./account": "./src/account.ts"
+    "./account": "./src/account.ts",
+    "./favorites": "./src/favorites.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

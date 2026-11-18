@@ -5,7 +5,7 @@ import type { Prisma } from "../generated/prisma/client";
 import { getDatabase } from "../lib/db";
 
 // Selecionar somente dados públicos, sem favoritos, consultas ou IDs do Cloudinary.
-const publicPropertySelect = {
+export const publicPropertySelect = {
   id: true,
   title: true,
   description: true,

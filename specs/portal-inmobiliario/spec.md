@@ -440,6 +440,12 @@ USER pode:
 
 Não permitir duplicações para o mesmo usuário e imóvel.
 
+Na seção de favoritos, mostrar nove resultados por página e paginação para os demais. Oferecer filtro compacto por texto, compra/aluguel e tipo, além de ordenação por salvamento recente/antigo e preço. Aplicar filtros somente aos favoritos publicados da conta atual, antes de paginar; informar intervalo e total encontrados. Aplicar ou limpar filtros retorna à primeira página, e navegar preserva a seleção na URL, na recarga e no histórico. Remover deve preencher novamente a página e retornar à última página disponível quando necessário. Diferenciar nenhum favorito disponível de nenhum resultado para o filtro.
+
+Na Etapa 20, disponibilizar as ações nos cards e nos detalhes e a listagem em Minha conta → Imóveis de interesse, para USER e ADMIN. Visitantes recebem acesso ao login. Exibir somente imóveis publicados da sessão atual, por salvamento mais recente, sem revelar dados de outras contas. Adicionar repetidamente mantém um único vínculo e sua data; remover repetidamente é permitido, inclusive depois de despublicar o imóvel. Imóveis inexistentes ou despublicados não podem ser adicionados.
+
+Mostrar carregamento, salvamento/remoção em andamento, confirmação real, vazio e falha com nova tentativa. Impedir ações simultâneas no mesmo imóvel e manter os favoritos em falhas de escrita. Os botões devem funcionar por teclado, ter estado acessível e ficar fora dos links dos cards. Uma remoção na conta deve preservar um ponto de foco utilizável. Logout, expiração e troca de conta ocultam os dados anteriores, inclusive quando uma requisição antiga ainda está pendente. Não persistir favoritos ou credenciais no armazenamento local do navegador.
+
 ---
 
 ## 17. Conta do usuário

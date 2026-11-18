@@ -52,7 +52,7 @@ Na migração para o monorepo, o ambiente privado existente foi transferido de `
 
 A Etapa 2 inclui o layout compartilhado, o cabeçalho, o rodapé e a navegação responsiva. Em dispositivos móveis, o botão de menu exibe os links e permite fechar o menu com a tecla Escape. Também há um link para pular para o conteúdo usando o teclado.
 
-O destino `/properties` exibe o catálogo público; `/login` oferece entrada e controle da sessão, e `/register` permite criar uma conta. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. As Etapas 17 e 18 disponibilizam autenticação REST e autorização USER/ADMIN; as informações da conta seguem na Etapa 19.
+O destino `/properties` exibe o catálogo público; `/login` oferece entrada e controle da sessão, e `/register` permite criar uma conta. Comprar e Alugar direcionam para `/properties?operation=SALE` e `/properties?operation=RENT`, aplicando a operação ao catálogo. O parâmetro `search` pesquisa o catálogo e pode ser combinado com os filtros da Etapa 11. As Etapas 17 a 20 disponibilizam autenticação REST, autorização USER/ADMIN, informações da conta e favoritos.
 
 Cada app Next.js carrega seu próprio `.env.local`. O frontend recebe somente `API_URL`, com padrão local `http://127.0.0.1:3001`; o backend recebe `DATABASE_URL` e as credenciais privadas descritas em `apps/api/.env.example`.
 
@@ -395,7 +395,21 @@ Cada nova página privada deve chamar `requirePageUser("USER" | "ADMIN")` antes 
 
 `/account` apresenta nome, e-mail e perfil de acesso (Usuário ou Administrador) da sessão atual. Os dados são renderizados no servidor a partir da mesma consulta REST sem cache que autoriza a página, sem nova API ou alteração no banco. A página mantém `noindex, nofollow`, redirecionamento ao login e tratamento de falhas de acesso.
 
-As seções Imóveis de interesse e Consultas enviadas estão preparadas e identificadas como “Em breve”. Listagens, favoritos e histórico de consultas serão integrados nas Etapas 20 e 21. A navegação permite explorar imóveis e gerenciar a sessão; ADMIN também recebe o atalho Administração. O layout adapta os dados e as seções ao celular, tablet e computador, com quebra de nomes e e-mails longos.
+Imóveis de interesse apresenta os favoritos da Etapa 20. Consultas enviadas permanece identificada como “Em breve” até a Etapa 21. A navegação permite explorar imóveis e gerenciar a sessão; ADMIN também recebe o atalho Administração. O layout adapta os dados e as seções ao celular, tablet e computador, com quebra de nomes e e-mails longos.
+
+### Favoritos — Etapa 20
+
+USER e ADMIN podem salvar e remover imóveis nos cards da landing, no catálogo e nos detalhes. Os botões são independentes dos links dos cards, informam progresso e confirmam somente a resposta real. Visitantes recebem um link para entrar. Minha conta → Imóveis de interesse mostra a grade de salvos, com contagem, carregamento, vazio, erro e nova tentativa. Imóveis despublicados deixam de aparecer; seu vínculo ainda pode ser removido pela API.
+
+`GET /api/favorites` retorna `{ items, total, page, pageSize, totalPages }`, com até **nove imóveis por página**, somente publicados e pertencentes à conta atual. Aceita `page`, `search` (até 200 caracteres), `operation=SALE|RENT`, `type` e `sort=saved_desc|saved_asc|price_asc|price_desc`. O padrão é salvamento recente, com desempate por ID. Filtros e ordenação são aplicados no PostgreSQL antes de contar e paginar; contagem e página compartilham a mesma transação. Página além do fim retorna a última disponível; coleção vazia retorna página 1 e zero páginas. Parâmetros inválidos ou repetidos retornam `400`.
+
+Minha conta oferece busca por texto, operação, tipo e ordenação, intervalo/total e paginação acessível. A URL usa `favoritesPage`, `favoritesSearch`, `favoritesOperation`, `favoritesType` e `favoritesSort`, preservados na recarga e no histórico. Aplicar/limpar filtros volta à primeira página. Remover preenche novamente a página e ajusta a URL se a última deixar de existir; ausência de resultados do filtro tem mensagem própria.
+
+`GET /api/favorites/ids` fornece somente os IDs publicados salvos, para os botões da landing/catálogo/detalhes indicarem o estado correto mesmo fora da página de favoritos atual. A grade carrega apenas a página solicitada. `POST /api/favorites/{propertyId}` retorna `200` ao salvar ou repetir; `DELETE /api/favorites/{propertyId}` retorna `204` mesmo após remoção anterior. UUID inválido retorna `400`, imóvel inexistente/despublicado na inclusão retorna `404` e sessão inválida retorna `401`. Todos os endpoints exigem sessão USER/ADMIN atual; escritas verificam origem. A identidade vem da sessão, e as respostas usam `no-store` e `Vary: Cookie`.
+
+A chave única existente no PostgreSQL impede duplicações, inclusive em inclusão concorrente; nenhuma migração é necessária. SWR separa os IDs das páginas, com chaves por conta/consulta, e os botões compartilham o bloqueio por imóvel. Após uma escrita confirmada, somente as páginas da mesma conta são revalidadas; falha de recarga oferece nova tentativa sem informar falsamente que a escrita falhou. Logout, expiração e troca de conta ocultam os favoritos anteriores; uma resposta pendente atualiza somente a conta que iniciou a operação. Nenhum favorito ou token é persistido no armazenamento do navegador.
+
+`npm run favorites:test` cobre cliente e interações da interface. `npm run api:test` inclui serviços e rotas; `npm run api:test:integration` inclui isolamento, publicação, idempotência e concorrência no PostgreSQL. Os arquivos dessa suíte executam em sequência para evitar timeouts de conexão local; os cenários de concorrência continuam simultâneos dentro dos testes. Com os apps iniciados, `npm run favorites:test:http` valida a API direta e pelo proxy, removendo suas contas descartáveis.
 
 `npm run auth:test:web` inclui os testes da conta em `apps/web/scripts/account.test.tsx`: dados e semântica, navegação por perfil, disponibilidade das seções futuras e escape de texto. `npm run auth:test:http` confere os dados reais de USER/ADMIN, isolamento entre sessões, recarga, ausência de cache e bloqueio de sessões inativas/expiradas, removendo as contas descartáveis ao terminar.
 
@@ -519,6 +533,8 @@ Busca da landing, busca no catálogo, filtros e ordenação acompanham a transi�
 | `npm run auth:test:http` | Validar autenticação real no backend e pelo proxy, removendo as contas de teste. |
 | `npm run auth:test:web` | Testar formulários de autenticação, sessão compartilhada e logout em DOM simulado. |
 | `npm run feedback:test` | Validar feedback de requisições pendentes, novas tentativas e navegações. |
+| `npm run favorites:test` | Testar favoritos, requisições pendentes e isolamento da interface. |
+| `npm run favorites:test:http` | Validar favoritos por HTTP direto/proxy com contas descartáveis. |
 | `npm run home:test` | Testar a landing page, a busca e o consumo REST sem banco. |
 | `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
 | `npm run db:seed:users` | Criar contas fictícias USER/ADMIN e usuário inativo para testes locais. |

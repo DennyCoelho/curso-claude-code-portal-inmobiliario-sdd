@@ -5,7 +5,9 @@ import { requirePageUser } from "@/lib/auth/page-access";
 
 export const metadata: Metadata = { title: "Minha conta" };
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: PageProps<"/account">) {
   const user = await requirePageUser();
-  return <AccountOverview user={user}><AccountSettings user={user} /></AccountOverview>;
+  const parameters = new URLSearchParams();
+  for (const [name, value] of Object.entries(await searchParams)) for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) parameters.append(name, item);
+  return <AccountOverview user={user} favoriteParameters={parameters.toString()}><AccountSettings user={user} /></AccountOverview>;
 }

@@ -7,7 +7,7 @@ import {
 } from "../repositories/public-property-repository";
 import type { PublicProperty, PublicPropertyFilters, PublicPropertyPriceRange, PublicPropertySort } from "@portal-inmobiliario/contracts/public-property";
 
-function serializePublicProperty(property: PublicPropertyRecord): PublicProperty {
+export function serializePublicProperty(property: PublicPropertyRecord): PublicProperty {
   return {
     ...property,
     price: property.price.toFixed(2),

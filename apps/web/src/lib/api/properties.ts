@@ -3,7 +3,7 @@ import type { PropertyListItem } from "../property";
 import type { PublicProperty } from "@portal-inmobiliario/contracts/public-property";
 
 // Validar os campos públicos usados pela landing e pelo catálogo.
-const propertyListItemSchema = z.object({
+export const propertyListItemSchema = z.object({
   id: z.uuid(),
   title: z.string().min(1),
   operation: z.enum(["SALE", "RENT"]),
