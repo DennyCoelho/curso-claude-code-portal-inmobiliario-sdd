@@ -13,7 +13,7 @@
     "property:test": "tsx --test scripts/property-card.test.tsx",
     "property-detail:test": "tsx --tsconfig ./scripts/tsconfig.test.json --test scripts/property-detail.test.tsx scripts/property-gallery.test.tsx scripts/property-gallery-interaction.test.tsx scripts/property-map.test.tsx scripts/property-contact.test.tsx",
     "catalog:test": "tsx --test scripts/catalog.test.tsx",
-    "auth:test": "tsx --test scripts/auth.test.tsx && node --conditions=react-server --import tsx --test scripts/authorization.test.ts",
+    "auth:test": "tsx --test scripts/auth.test.tsx scripts/account.test.tsx scripts/account-forms.test.tsx && node --conditions=react-server --import tsx --test scripts/authorization.test.ts",
     "feedback:test": "tsx --test scripts/request-feedback.test.tsx"
   },
   "dependencies": {

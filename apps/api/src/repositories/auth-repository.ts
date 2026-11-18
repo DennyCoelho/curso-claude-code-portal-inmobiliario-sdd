@@ -26,13 +26,14 @@ export function createAuthRepository(database?: AuthDatabase) {
     async findByEmail(email: string) {
       return db().user.findUnique({ where: { email }, select: { ...publicUserSelect, passwordHash: true, isActive: true } });
     },
-    async createSession(userId: string, session: SessionData, expectedPasswordHash: string) {
+    async createSession(userId: string, session: SessionData, expectedPasswordHash: string, expectedEmail?: string) {
       // Revalidar sob o bloqueio usado pela recuperação: um login iniciado com a
       // senha antiga não pode criar uma sessão após a redefinição.
       const created = await db().$queryRaw<{ tokenHash: string }[]>`
         INSERT INTO "Session" ("tokenHash", "userId", "expiresAt")
         SELECT ${session.tokenHash}, "id", ${session.expiresAt} FROM "User"
         WHERE "id" = ${userId}::uuid AND "isActive" = true AND "passwordHash" = ${expectedPasswordHash}
+        AND (${expectedEmail ?? null}::text IS NULL OR "email" = ${expectedEmail ?? null}::text)
         FOR UPDATE
         RETURNING "tokenHash"`;
       if (created.length !== 1) throw new AuthError(401, "E-mail ou senha inválidos.");

@@ -383,6 +383,22 @@ A filtragem e a ordenação devem ser executadas principalmente no PostgreSQL, s
 
 Utilizar um mecanismo seguro compatível com a API REST.
 
+### Conta do usuário — Etapa 19
+
+- Completar `/account` como Server Component, preservando `requirePageUser()` antes da renderização. Reutilizar nome, e-mail e perfil do contrato de `GET /api/auth/me`, sem outra consulta, novo endpoint ou acesso ao banco pelo frontend.
+- Apresentar informações da conta com lista de descrição semântica, perfil em pt-BR e quebra de nomes/e-mails longos. USER e ADMIN acessam a mesma área; somente ADMIN recebe o atalho administrativo. Manter acesso ao catálogo e ao gerenciamento da sessão.
+- Preparar seções de imóveis de interesse e consultas enviadas, identificadas como “Em breve”, sem contagens fictícias ou ações indisponíveis. As listagens e integrações REST ficam nas Etapas 20 e 21.
+- Preservar noindex, verificação sem cache, redirecionamento ao login e recuperação de falhas da Etapa 18. Validar dados, escape de texto, seções e links por perfil com testes de renderização; atualizar o teste HTTP da página para conferir a identidade da sessão, isolamento entre usuários, recarga e bloqueio após invalidação. Executar lint, tipos, testes, build do frontend e conferir responsividade no navegador quando disponível.
+
+### Edição de perfil e segurança — ajuste solicitado
+
+- Acrescentar contratos Zod estritos em `contracts/account`: nome e senha com as regras existentes; troca de senha vazia é uma operação sem alteração, preenchimento parcial é inválido. Endpoints privados `PATCH /api/account/profile`, `POST /api/account/password`, `POST /api/account/email-change` e `POST /api/account/email-change/confirm`, protegidos por `withAuthorization`, origem, limite JSON, respostas sem cache e limitação persistente das operações sensíveis por usuário.
+- Serviço/repositório próprios no backend. Serializar alterações com bloqueios de usuário e sessão, revalidando expiração, atividade e hash de senha após o hashing. Alterações de senha e confirmação de e-mail revogam sessões e links de recuperação, criam uma nova sessão atual e devolvem cookie HttpOnly; a senha permanece hash scrypt. Login revalida também o e-mail sob bloqueio, impedindo criação de sessão por credenciais antigas durante uma confirmação.
+- Migração aditiva `EmailChange`: um pedido por usuário, hash SHA-256 de token aleatório de 32 bytes, e-mail anterior/novo e expiração de 30 minutos, exclusão em cascata e índice de expiração. Persistir o pedido antes do envio Resend; entregar sucesso de solicitação somente após aceitação do provedor. Falha remove apenas o próprio pedido, preservando uma solicitação posterior. Confirmação transacional verifica o usuário da sessão e o e-mail anterior; o índice único de `User.email` resolve disputas concorrentes. Recuperação e troca de senha removem pedidos pendentes.
+- Reutilizar `RESEND_API_KEY`, `AUTH_EMAIL_FROM` e `WEB_URL`, sem expor configuração privada. Link `/confirm-email#token=...`, com confirmação explícita por POST autenticado. Ausência de sessão orienta entrar na conta e reabrir o link. Token permanece somente no fragmento/memória e é removido do histórico após sucesso; página noindex e no-referrer.
+- Formulários React Hook Form/Zod em componentes de conta, com ações independentes para nome, e-mail e senha; atualizar `/api/auth/me` no SWR e atualizar a página após salvar. Reutilizar critérios, confirmação e feedback de carregamento, manter campos em falhas e limpar/ocultar senhas após sucesso. Preservar a apresentação de conta e as seções futuras.
+- Testar contratos, autorização, origem, reautenticação, troca vazia/parcial, sessão atual versus demais, links, envio simulado, falhas e concorrência em testes unitários, PostgreSQL e HTTP direto/proxy. Conferir interação, foco, preenchimento, responsividade, lint, tipos, Prisma e builds. Testes não enviam e-mails reais nem alteram contas existentes.
+
 ### Autorização USER e ADMIN — Etapa 18
 
 - Centralizar a hierarquia dos perfis no contrato compartilhado: USER e ADMIN acessam recursos autenticados; somente ADMIN acessa recursos administrativos. Não aceitar perfil ou identidade fornecidos pelo cliente como autorização.

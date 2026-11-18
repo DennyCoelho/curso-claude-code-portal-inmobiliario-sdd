@@ -20,6 +20,7 @@ async function expectPageRedirect(path: string, target: string, cookie = "") {
   const response = await call(webUrl, path, cookie);
   const html = await response.text();
   assert.doesNotMatch(html, /Seu acesso à área (?:privada|administrativa) está confirmado/);
+  assert.doesNotMatch(html, /Informações da conta|id="account-favorites-title"|id="account-inquiries-title"/);
   if (response.status === 307) {
     assert.equal(new URL(response.headers.get("location")!, webUrl).pathname + new URL(response.headers.get("location")!, webUrl).search, target);
   } else {
@@ -32,6 +33,7 @@ async function expectPageRedirect(path: string, target: string, cookie = "") {
 
 test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perfil atual sem alterar contas existentes", async () => {
   const ids: string[] = [];
+  const accounts: { name: string; email: string; role: "USER" | "ADMIN" }[] = [];
   try {
     const absent = await call(apiUrl, "/api/admin/session");
     assert.equal(absent.status, 401);
@@ -44,6 +46,7 @@ test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perf
         sessions: { create: { tokenHash: sessions[role].tokenHash, expiresAt: sessions[role].expiresAt } },
       } });
       ids.push(user.id);
+      accounts.push({ name: user.name, email: user.email, role });
     }
     for (const origin of [apiUrl, webUrl]) {
       for (const [cookie, status] of [["", 401], [`${cookieName}=ADMIN`, 401], [`${cookies.ADMIN}; ${cookies.ADMIN}`, 401], [cookies.USER, 403], [cookies.ADMIN, 200]] as const) {
@@ -63,15 +66,28 @@ test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perf
     await expectPageRedirect("/account", "/login?next=%2Faccount");
     await expectPageRedirect("/admin", "/login?next=%2Fadmin");
     await expectPageRedirect("/admin", "/access-denied", cookies.USER);
-    for (const [path, cookie, message] of [["/account", cookies.USER, "área privada"], ["/account", cookies.ADMIN, "área privada"], ["/admin", cookies.ADMIN, "área administrativa"]]) {
-      const response = await call(webUrl, path, cookie);
-      assert.equal(response.status, 200);
-      assert.match(response.headers.get("cache-control")!, /no-store|private/);
-      const html = await response.text();
-      assert.ok(html.includes(`Seu acesso à ${message} está confirmado.`));
-      assert.match(html, /name="robots" content="noindex, nofollow"/);
-      assert.doesNotMatch(html, new RegExp(sessions.USER.token + "|" + sessions.ADMIN.token + "|hash-exclusivo-do-teste"));
+    for (const account of accounts) {
+      // Repetir o acesso confirma a identidade após recarga e alternância de usuário.
+      for (let visit = 0; visit < 2; visit++) {
+        const response = await call(webUrl, "/account", cookies[account.role]);
+        assert.equal(response.status, 200);
+        assert.match(response.headers.get("cache-control")!, /no-store|private/);
+        const html = await response.text();
+        assert.ok(html.includes(account.name));
+        assert.ok(html.includes(account.email));
+        assert.ok(!html.includes(accounts.find((other) => other.role !== account.role)!.email));
+        assert.match(html, /Informações da conta/);
+        assert.match(html, /Imóveis de interesse/);
+        assert.match(html, /Consultas enviadas/);
+        assert.match(html, /Em breve/);
+        assert.ok(html.includes(account.role === "ADMIN" ? "Administrador" : "Usuário"));
+        assert.match(html, /name="robots" content="noindex, nofollow"/);
+        assert.doesNotMatch(html, new RegExp(sessions.USER.token + "|" + sessions.ADMIN.token + "|hash-exclusivo-do-teste"));
+      }
     }
+    const adminPage = await call(webUrl, "/admin", cookies.ADMIN);
+    assert.equal(adminPage.status, 200);
+    assert.match(await adminPage.text(), /Seu acesso à área administrativa está confirmado/);
     await database.user.update({ where: { id: ids[1] }, data: { role: "USER" } });
     for (const origin of [apiUrl, webUrl]) assert.equal((await call(origin, "/api/admin/session", cookies.ADMIN)).status, 403);
     await expectPageRedirect("/admin", "/access-denied", cookies.ADMIN);
@@ -82,6 +98,7 @@ test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perf
     await expectPageRedirect("/account", "/login?next=%2Faccount", cookies.USER);
     await database.session.update({ where: { tokenHash: sessions.ADMIN.tokenHash }, data: { expiresAt: new Date(0) } });
     assert.equal((await call(webUrl, "/api/auth/me", cookies.ADMIN)).status, 401);
+    await expectPageRedirect("/account", "/login?next=%2Faccount", cookies.ADMIN);
     await expectPageRedirect("/admin", "/login?next=%2Fadmin", cookies.ADMIN);
     const denied = await call(webUrl, "/access-denied");
     assert.equal(denied.status, 200);

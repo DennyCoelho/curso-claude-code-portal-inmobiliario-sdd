@@ -21,6 +21,7 @@ export async function withAuthorization(
       ? errorResponse(error.status, error.message)
       : errorResponse(500, "Não foi possível verificar sua permissão. Tente novamente mais tarde.");
     if (response.status === 401) setSessionCookie(response, null);
+    if (response.status === 429) response.headers.set("Retry-After", "900");
   }
   response.headers.set("Cache-Control", "no-store");
   const vary = response.headers.get("Vary");

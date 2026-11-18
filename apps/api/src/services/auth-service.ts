@@ -33,7 +33,7 @@ export function createAuthService(repository: AuthRepository = createAuthReposit
       const validPassword = await verifyPassword(input.password, user?.passwordHash ?? null);
       if (!user || !user.isActive || !validPassword) throw new AuthError(401, "E-mail ou senha inválidos.");
       const session = newSession(clock());
-      await repository.createSession(user.id, { tokenHash: session.tokenHash, expiresAt: session.expiresAt }, user.passwordHash);
+      await repository.createSession(user.id, { tokenHash: session.tokenHash, expiresAt: session.expiresAt }, user.passwordHash, user.email);
       await logout(previousToken);
       return { user: publicUser(user), token: session.token };
     },

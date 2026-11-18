@@ -32,6 +32,7 @@ export function createPasswordResetRepository(database?: Prisma.TransactionClien
         if (!valid) return false;
         await client.user.update({ where: { id: valid.userId }, data: { passwordHash } });
         await client.passwordReset.deleteMany({ where: { userId: valid.userId } });
+        await client.emailChange.deleteMany({ where: { userId: valid.userId } });
         await client.session.deleteMany({ where: { userId: valid.userId } });
         return true;
       });

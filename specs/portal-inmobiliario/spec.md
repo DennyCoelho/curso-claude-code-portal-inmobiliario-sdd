@@ -450,6 +450,16 @@ A área privada deve exibir:
 - imóveis de interesse;
 - imóveis sobre os quais foram enviadas consultas.
 
+Na Etapa 19, completar a página protegida `/account` com nome, e-mail e perfil de acesso do usuário autenticado. Preparar as seções de imóveis de interesse e consultas enviadas com indicação “Em breve”; listagens e ações serão integradas nas Etapas 20 e 21. Oferecer navegação ao catálogo e ao gerenciamento da sessão, com atalho administrativo somente para ADMIN. Manter os dados restritos à sessão atual, textos acessíveis e layout responsivo, inclusive para nomes e e-mails longos.
+
+### Edição de perfil e segurança — ajuste solicitado
+
+Permitir editar o nome e solicitar mudança de e-mail na conta autenticada, com ações independentes para evitar salvar parcialmente dados quando um envio de e-mail falhar. Perfil de acesso e atividade não são editáveis pelo próprio usuário. Mudar o e-mail exige a senha atual; manter o endereço antigo até confirmar o novo por link de uso único, válido por 30 minutos. Uma nova solicitação substitui a anterior; e-mail duplicado, token expirado/usado, sessão de outra conta e conta inativa devem ser recusados. Configuração ou envio indisponível deve informar erro sem alterar o e-mail.
+
+A seção opcional Alterar senha contém senha atual, nova senha e confirmação. Todos os campos vazios preservam integralmente a senha e as sessões; se qualquer campo for preenchido, exigir os três, verificar a senha atual e aplicar à nova senha os critérios do cadastro. No sucesso, limpar e ocultar os campos, encerrar as outras sessões e renovar a sessão atual. Confirmar a mudança de e-mail também renova a sessão atual, revoga as demais e invalida recuperações antigas. Alterar ou recuperar a senha invalida mudanças de e-mail pendentes. Validar novamente sessão, atividade e credenciais dentro da transação para impedir alterações concorrentes com dados antigos.
+
+Oferecer estados de envio, sucesso e erro, bloqueio de duplicação, mostrar/ocultar independente, foco e erros acessíveis. Atualizar os dados da conta e da navegação após salvar. A confirmação de e-mail usa token no fragmento, sem envio automático ao abrir o link, sem indexação ou referência a terceiros e sem guardar tokens no armazenamento local. O usuário deve estar conectado à conta que solicitou a mudança para confirmar.
+
 ---
 
 ## 18. Painel administrativo

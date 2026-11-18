@@ -383,13 +383,44 @@ As páginas `/login` e `/register` usam React Hook Form + Zod com validação ac
 | `/account` | Redireciona ao login | Acesso permitido | Acesso permitido |
 | `/admin` | Redireciona ao login | Redireciona a `/access-denied` | Acesso permitido |
 
-As páginas são entradas mínimas para validar a proteção, sem antecipar informações da conta, favoritos ou indicadores das próximas etapas. O login preserva a intenção de acesso por `next=/account` ou `next=/admin`, oferecendo o link apropriado após entrar. Outros destinos e parâmetros repetidos usam `/account`, sem redirecionamentos externos. USER que pediu administração recebe orientação sobre a restrição. A saída permanece em Gerenciar sessão → Sair da conta.
+A conta `/account` exibe as informações descritas na Etapa 19 abaixo; `/admin` continua como entrada mínima protegida até a etapa do painel. O login preserva a intenção de acesso por `next=/account` ou `next=/admin`, oferecendo o link apropriado após entrar. Outros destinos e parâmetros repetidos usam `/account`, sem redirecionamentos externos. USER que pediu administração recebe orientação sobre a restrição. A saída permanece em Gerenciar sessão → Sair da conta.
 
 O serviço `authorizationService.requireUser(token, requiredRole)` consulta a sessão e o perfil atual via `authService.me`; ADMIN herda os acessos USER. Toda nova API privada deve usar `withAuthorization(request, "USER" | "ADMIN", callback)` e realizar acesso aos dados somente dentro do callback autorizado. O guard impede execução sem permissão, protege a origem nas escritas e força `Cache-Control: no-store`/`Vary: Cookie` em sucesso e erro. `401` expira o cookie; `403` preserva a sessão válida. Perfil/identidade em cabeçalhos, parâmetros ou corpo não concedem acesso.
 
 Cada nova página privada deve chamar `requirePageUser("USER" | "ADMIN")` antes de renderizar conteúdo ou carregar dados privados. A verificação ocorre no servidor por REST em `API_URL`, com timeout, sem cache e sem seguir redirecionamentos; somente cookies de sessão são encaminhados. Nenhum acesso direto ao banco existe no frontend. Layout, menu e cache SWR não são controles de autorização. Erros de rede/contrato bloqueiam a área e oferecem nova tentativa. Links privados têm prefetch desativado e páginas usam `noindex, nofollow`. O redirecionamento pode ocorrer por metatag após o início do streaming do Next.js, sem renderizar o conteúdo protegido.
 
 `npm run api:test` cobre hierarquia, falsificação de identidade, guards e erros; `npm run auth:test:web` cobre navegação por perfil, formulários e cliente REST da proteção. `npm run api:test:integration` verifica mudanças de perfil, inatividade, expiração e revogação no PostgreSQL com rollback. Com os dois apps iniciados, `npm run auth:test:http` também testa as permissões diretamente e pelo proxy, páginas privadas, retorno ao login e alterações durante a sessão. Contas descartáveis são removidas em `finally`, sem editar as contas existentes. A Etapa 18 reutiliza os perfis e as tabelas existentes, sem migrações.
+
+### Conta do usuário — Etapa 19
+
+`/account` apresenta nome, e-mail e perfil de acesso (Usuário ou Administrador) da sessão atual. Os dados são renderizados no servidor a partir da mesma consulta REST sem cache que autoriza a página, sem nova API ou alteração no banco. A página mantém `noindex, nofollow`, redirecionamento ao login e tratamento de falhas de acesso.
+
+As seções Imóveis de interesse e Consultas enviadas estão preparadas e identificadas como “Em breve”. Listagens, favoritos e histórico de consultas serão integrados nas Etapas 20 e 21. A navegação permite explorar imóveis e gerenciar a sessão; ADMIN também recebe o atalho Administração. O layout adapta os dados e as seções ao celular, tablet e computador, com quebra de nomes e e-mails longos.
+
+`npm run auth:test:web` inclui os testes da conta em `apps/web/scripts/account.test.tsx`: dados e semântica, navegação por perfil, disponibilidade das seções futuras e escape de texto. `npm run auth:test:http` confere os dados reais de USER/ADMIN, isolamento entre sessões, recarga, ausência de cache e bloqueio de sessões inativas/expiradas, removendo as contas descartáveis ao terminar.
+
+### Editar perfil e segurança da conta
+
+Na própria `/account`, Editar perfil permite salvar o nome sem informar senha. A seção Alterar e-mail tem ação própria e exige a senha atual; o endereço antigo permanece como login até a confirmação do novo pelo link recebido, válido por 30 minutos. Um pedido novo substitui o anterior. O perfil USER/ADMIN e o estado ativo não são editáveis nessa interface nem aceitos nos contratos REST.
+
+Alterar senha é opcional: os três campos vazios mantêm o hash e as sessões existentes. Preencher qualquer campo exige senha atual, nova senha e confirmação igual, com os mesmos critérios do cadastro. Sucesso limpa e oculta os campos, renova o cookie da sessão atual e encerra as sessões dos outros dispositivos. Salvar apenas o nome não altera a senha. Os formulários têm validação acessível, mostrar/ocultar independente, feedback de envio, bloqueio de duplicação e preservação dos valores em falhas.
+
+| Recurso privado | Entrada JSON | Resultado |
+| --- | --- | --- |
+| `PATCH /api/account/profile` | `name` | `200`, usuário atualizado. |
+| `POST /api/account/password` | `currentPassword`, `newPassword`, `confirmPassword` | `200`, usuário e `changed`; cookie renovado somente quando houver troca. |
+| `POST /api/account/email-change` | `email`, `currentPassword` | `202` após aceitação do e-mail pelo provedor; endereço atual preservado. |
+| `POST /api/account/email-change/confirm` | `token` | `200`, usuário com novo e-mail e cookie renovado. |
+
+As APIs usam sessão atual, proteção de origem, JSON limitado a 8 KB reais e respostas `no-store`/`Vary: Cookie`. Somente o usuário da sessão pode alterar seus dados. Operações sensíveis compartilham o limite de dez tentativas por usuário em quinze minutos (`429`/`Retry-After`). Senha atual incorreta e dados inválidos retornam `400`, sessão inválida `401`, conflito de e-mail/alteração concorrente `409` e serviço de envio indisponível `503`.
+
+A migração aditiva `20261118010000_criar_alteracao_email` cria `EmailChange`, com um pedido por usuário, hash do token aleatório e expiração. O link `/confirm-email#token=...` exige confirmação explícita, com sessão da conta que fez o pedido; abrir a página não altera dados. Se não estiver conectado, entre e reabra o link. Tokens não são gravados no armazenamento local e saem do histórico após o sucesso. A página usa `noindex, nofollow` e `no-referrer`.
+
+O envio utiliza as mesmas configurações Resend da recuperação: `RESEND_API_KEY`, `AUTH_EMAIL_FROM` (remetente verificado) e `WEB_URL` (origem HTTPS em produção) em `apps/api/.env.local`. Sem configuração, solicitar a mudança retorna `503` e mantém o e-mail atual; não são criadas configurações fictícias. Falha de envio invalida apenas o pedido correspondente. A validação automatizada simula o provedor e não envia e-mails reais; a entrega real depende dessas configurações.
+
+Trocar/recuperar a senha invalida pedidos de e-mail pendentes. Confirmar um e-mail invalida recuperações antigas e outras sessões. As alterações são transacionais, bloqueiam usuário/sessão e revalidam credenciais antes de gravar; o login também revalida o e-mail para impedir sessões criadas por credenciais antigas durante uma mudança. `/api/auth/me` e a página são atualizados após salvar.
+
+`npm run api:test`, `npm run api:test:integration`, `npm run auth:test:web` e `npm run auth:test:http` incluem os testes dessa funcionalidade: troca vazia/parcial, identidade, origem, reautenticação, tokens, falhas do provedor, concorrência, sessões, interação e HTTP direto/proxy. Os testes HTTP são sequenciais para respeitar o limite de hashing por instância; usam contas descartáveis e não enviam mensagens reais.
 
 No cadastro, os quatro critérios de senha acompanham a digitação: 8–15 caracteres, pelo menos uma maiúscula, um número e um caractere especial. O último item mostra “Pelo menos um caractere especial, ex.: @, !, #”; são aceitos pontuação e símbolos Unicode, enquanto espaços não contam como especiais. Cada item usa texto e ícone, com cor de confirmação quando atendido; critérios pendentes começam neutros. Minúsculas não são obrigatórias e sequências são aceitas. O campo Confirmar senha informa a igualdade e acompanha mudanças nos dois campos. Colagens não são truncadas para quinze caracteres: a interface informa o excesso e impede o cadastro. Erros obrigatórios aparecem ao tentar enviar, com foco no primeiro campo inválido. Ambas as senhas são limpas após sucesso.
 

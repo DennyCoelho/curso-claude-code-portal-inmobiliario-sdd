@@ -40,6 +40,19 @@ model User {
   inquiries    Inquiry[]
   sessions     Session[]
   passwordResets PasswordReset[]
+  emailChanges EmailChange[]
+}
+
+model EmailChange {
+  tokenHash     String   @id @db.VarChar(64)
+  userId        String   @unique @db.Uuid
+  previousEmail String   @db.VarChar(254)
+  newEmail      String   @db.VarChar(254)
+  expiresAt     DateTime @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }
 
 model PasswordReset {
