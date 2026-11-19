@@ -187,7 +187,7 @@ O link **Abrir no Google Maps** permanece disponível fora do iframe e utiliza a
 
 A Etapa 16 acrescenta **Tenho interesse** aos detalhes de cada imóvel, com nome, e-mail, telefone com DDD e mensagem. Os campos têm rótulos, validação por React Hook Form e Zod, foco no primeiro erro e mensagens acessíveis. Durante o envio os campos ficam desabilitados; o sucesso limpa o formulário, e falhas preservam os dados. Não há repetição automática do envio.
 
-O navegador envia JSON para `POST /api/contact` pelo proxy REST. O backend valida o mesmo contrato público, limita o corpo a 20 KB e consulta o imóvel publicado para obter seu ID e título canônicos. Rejeita campos extras, contatos inválidos, DDD inexistente e o campo antispam preenchido. Nome aceita 2–100 caracteres; e-mail, até 254; mensagem, 10–3000. O contato exige celular com DDD válido e onze dígitos nacionais. A máscara `(xx) xxxxx-xxxx` acompanha a digitação, limita os dígitos excedentes e aceita colagem com `+55`; o backend valida o celular completo e normaliza para o formato internacional. Os campos obrigatórios têm asterisco e placeholders de exemplo. Nenhum contato ou chave é registrado em logs.
+O navegador envia JSON para `POST /api/inquiries` pelo proxy REST, acrescentando um `requestId` UUID de tentativa. O backend valida o mesmo contrato público, limita o corpo a 20 KB e consulta o imóvel publicado para obter seu ID e título canônicos. Rejeita campos extras, contatos inválidos, DDD inexistente e o campo antispam preenchido. Nome aceita 2–100 caracteres; e-mail, até 254; mensagem, 10–3000. O contato exige celular com DDD válido e onze dígitos nacionais. A máscara `(xx) xxxxx-xxxx` acompanha a digitação, limita os dígitos excedentes e aceita colagem com `+55`; o backend valida o celular completo e normaliza para o formato internacional. Os campos obrigatórios têm asterisco e placeholders de exemplo. Nenhum contato ou chave é registrado em logs.
 
 Configure somente em `apps/api/.env.local` e reinicie o backend:
 
@@ -197,13 +197,19 @@ WEB3FORMS_ACCESS_KEY=""
 
 Preencha com uma access key real do formulário. **O fluxo funciona com o plano gratuito:** o backend devolve os dados preparados e o navegador envia diretamente ao Web3Forms, conforme a [orientação oficial](https://docs.web3forms.com/getting-started/troubleshooting). O provedor permite que essa access key seja pública. A variável fica centralizada no backend e é entregue na resposta de preparação, sem expor senhas do banco, segredos de autenticação ou credenciais do Cloudinary. O arquivo de exemplo continua sem valores reais.
 
-Sem chave válida, o endpoint responde `503`, e o formulário informa indisponibilidade. Imóvel ausente ou despublicado retorna `404`; JSON/dados inválidos, `400`; formato de conteúdo incorreto, `415`; corpo acima do limite, `413`. Falhas internas da preparação retornam `500` com mensagem genérica. A resposta `200` da preparação contém `provider` e `payload`, sem indicar envio concluído.
+Sem chave válida, o endpoint responde `503` antes de salvar, e o formulário informa indisponibilidade. Imóvel ausente ou despublicado retorna `404`; JSON/dados inválidos, `400`; formato de conteúdo incorreto, `415`; corpo acima do limite, `413`. Falhas internas retornam `500` com mensagem genérica. A resposta `201` confirma a persistência e contém `inquiry: { id, createdAt }`, `provider` e `payload`, sem indicar envio de e-mail concluído. O endpoint antigo `/api/contact` continua disponível somente para preparação compatível, sem persistência; o formulário usa exclusivamente `/api/inquiries`.
 
 O cliente valida o contrato de preparação e confirma que o ID corresponde ao imóvel solicitado. Em seguida, faz POST JSON diretamente a `https://api.web3forms.com/submit`, com os dados canônicos, telefone normalizado, access key pública e antispam. Ambas as requisições têm timeout de quinze segundos. Somente a resposta HTTP de sucesso **e** `success: true` do Web3Forms confirmam o envio; falhas de rede, rejeição ou resposta inválida mantêm os campos e mostram erro, sem repetição automática.
 
 Não faça proxy do envio ao Web3Forms: chamadas pelo servidor exigem plano pago e IP liberado pelo provedor e podem receber um bloqueio `403` do Cloudflare. O fluxo gratuito utiliza o navegador e sua validação HTTPS normal, sem falsificar cabeçalhos ou desativar a verificação de certificados.
 
-Nesta etapa, o contato é enviado por e-mail: a persistência no PostgreSQL e a associação ao usuário pertencem à Etapa 21. `npm run api:test` cobre contrato, telefone, preparação e Route Handler; `npm run property-detail:test` inclui a sequência REST → Web3Forms e interações do formulário em DOM simulado. Os testes usam respostas simuladas e não enviam e-mails reais. Depois de configurar o provedor, confira manualmente o recebimento de uma solicitação pelo formulário.
+Na Etapa 21, a consulta é persistida **antes** de enviar ao Web3Forms. Visitantes têm `userId` nulo; contas USER/ADMIN são identificadas exclusivamente pela sessão válida e ativa. E-mail de contato não define identidade. Sessão apresentada e inválida retorna `401`, sem registrar silenciosamente como visitante. Escritas verificam origem com `AUTH_TRUSTED_ORIGINS`, e todas as respostas usam `no-store` e `Vary: Cookie`.
+
+O `requestId` é usado como chave primária de `Inquiry`, sem migração. Repetir a mesma tentativa, contato normalizado e conta preserva registro e data; outros dados com o mesmo UUID retornam `409`. Um bloqueio transacional também impede duplicações concorrentes. Novas consultas são limitadas a dez por e-mail em quinze minutos, com chave SHA-256 e escopo próprio em `AuthRateLimit`; excesso retorna `429` e `Retry-After: 900`. Repetições já salvas não consomem novas tentativas. A limpeza periódica dos contadores de autenticação também atende a esses registros.
+
+Se o Web3Forms falhar ou a resposta se perder, a consulta permanece salva e o formulário informa que o envio por e-mail não foi confirmado. Os campos e o UUID são mantidos em memória para uma nova tentativa manual, sem novo registro. Não há repetição automática. O provedor pode ter enviado mesmo sem confirmação: a idempotência do portal não garante e-mail único. Alterar dados inicia outra consulta; recarregar a página perde a tentativa em memória. O histórico da conta confirma o registro no portal, sem atestar entrega de e-mail.
+
+`npm run api:test` cobre contrato, telefone, preparação e persistência coordenada; `npm run api:test:integration` verifica PostgreSQL, isolamento, limite e concorrência. `npm run property-detail:test` inclui REST → Web3Forms e falhas parciais em DOM simulado; `npm run auth:test:web` cobre o histórico da conta. Com os dois apps iniciados, `npm run inquiries:test:http` valida persistência e sessão diretamente e pelo proxy, removendo seus dados ao terminar. Os testes usam respostas simuladas para o provedor e não enviam e-mails reais. Depois de configurar o provedor, confira manualmente o recebimento de uma solicitação pelo formulário.
 
 ## PostgreSQL e migrações
 
@@ -395,7 +401,9 @@ Cada nova página privada deve chamar `requirePageUser("USER" | "ADMIN")` antes 
 
 `/account` apresenta nome, e-mail e perfil de acesso (Usuário ou Administrador) da sessão atual. Os dados são renderizados no servidor a partir da mesma consulta REST sem cache que autoriza a página, sem nova API ou alteração no banco. A página mantém `noindex, nofollow`, redirecionamento ao login e tratamento de falhas de acesso.
 
-Imóveis de interesse apresenta os favoritos da Etapa 20. Consultas enviadas permanece identificada como “Em breve” até a Etapa 21. A navegação permite explorar imóveis e gerenciar a sessão; ADMIN também recebe o atalho Administração. O layout adapta os dados e as seções ao celular, tablet e computador, com quebra de nomes e e-mails longos.
+Imóveis de interesse apresenta os favoritos da Etapa 20. Consultas enviadas apresenta o histórico real da Etapa 21 por `GET /api/inquiries?page=...`, privado USER/ADMIN: dez registros por página, ordem por data/ID, mensagem, data em pt-BR no fuso `America/Sao_Paulo` e link para imóvel publicado. Imóveis despublicados aparecem como indisponíveis, sem revelar o título atual. Contagem e página usam leitura consistente; somente a conta atual é consultada. A URL usa `inquiriesPage` e preserva os parâmetros dos favoritos. Há carregamento, vazio, falha e nova tentativa, com cache separado por usuário e ocultação de dados ao sair/trocar sessão. Consultas feitas como visitante não são associadas posteriormente pelo e-mail.
+
+A navegação permite explorar imóveis e gerenciar a sessão; ADMIN também recebe o atalho Administração. O layout adapta os dados e as seções ao celular, tablet e computador, com quebra de nomes e e-mails longos.
 
 ### Favoritos — Etapa 20
 
@@ -535,6 +543,7 @@ Busca da landing, busca no catálogo, filtros e ordenação acompanham a transi�
 | `npm run feedback:test` | Validar feedback de requisições pendentes, novas tentativas e navegações. |
 | `npm run favorites:test` | Testar favoritos, requisições pendentes e isolamento da interface. |
 | `npm run favorites:test:http` | Validar favoritos por HTTP direto/proxy com contas descartáveis. |
+| `npm run inquiries:test:http` | Validar consultas persistidas por HTTP direto/proxy, sem enviar e-mails reais. |
 | `npm run home:test` | Testar a landing page, a busca e o consumo REST sem banco. |
 | `npm run db:seed`   | Popular o banco de desenvolvimento com imóveis brasileiros. |
 | `npm run db:seed:users` | Criar contas fictícias USER/ADMIN e usuário inativo para testes locais. |

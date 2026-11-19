@@ -47,7 +47,8 @@
     "db:migrate": "npm run db:migrate --workspace=@portal-inmobiliario/api",
     "db:validate": "npm run db:validate --workspace=@portal-inmobiliario/api",
     "db:status": "npm run db:status --workspace=@portal-inmobiliario/api",
-    "db:migrate:dev": "npm run db:migrate:dev --workspace=@portal-inmobiliario/api --"
+    "db:migrate:dev": "npm run db:migrate:dev --workspace=@portal-inmobiliario/api --",
+    "inquiries:test:http": "npm run inquiries:test:http --workspace=@portal-inmobiliario/api"
   },
   "dependencies": {
     "concurrently": "^9.2.1"

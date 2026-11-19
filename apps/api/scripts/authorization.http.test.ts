@@ -79,7 +79,7 @@ test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perf
         assert.match(html, /Informações da conta/);
         assert.match(html, /Imóveis de interesse/);
         assert.match(html, /Consultas enviadas/);
-        assert.match(html, /Em breve/);
+        assert.match(html, /Consultas enviadas/);
         assert.ok(html.includes(account.role === "ADMIN" ? "Administrador" : "Usuário"));
         assert.match(html, /name="robots" content="noindex, nofollow"/);
         assert.doesNotMatch(html, new RegExp(sessions.USER.token + "|" + sessions.ADMIN.token + "|hash-exclusivo-do-teste"));

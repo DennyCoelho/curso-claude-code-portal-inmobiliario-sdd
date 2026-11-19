@@ -541,6 +541,13 @@ Se posteriormente for necessária uma geocodificação interna, ela deve ser tra
 
 ### Fluxo completo — Etapa 21
 
+- Criar `POST /api/inquiries` público com contrato estrito, origem confiável e limite de 20 KB. Derivar o usuário somente da sessão atual; sessão apresentada e inválida retorna `401`, sem salvar como visitante silenciosamente. Sem sessão, salvar `userId: null`; nunca vincular por e-mail ou identidade enviada no corpo.
+- Usar um UUID de tentativa como `Inquiry.id`, aproveitando a chave primária existente, sem migração. Uma transação verifica publicação, serializa a tentativa, limita novas consultas por hash do e-mail (dez em quinze minutos) e salva contato normalizado. Repetir UUID/dados/conta retorna o mesmo registro e data; reutilização com outros dados retorna `409`. Não expor registros de outras contas.
+- Validar a configuração Web3Forms antes de aceitar a consulta. Após a persistência, devolver identificação/data do registro e payload canônico público. O navegador envia ao Web3Forms somente depois de validar a confirmação REST, mantendo o fluxo gratuito oficial. Não há chamada ao provedor no backend nem confirmação de entrega persistida com base no cliente.
+- Preservar o registro se o envio externo falhar. Informar explicitamente “Consulta salva; envio por e-mail não confirmado”, manter campos e a mesma tentativa em memória para nova tentativa manual. Não repetir automaticamente o e-mail; avisar que uma confirmação perdida pode corresponder a um envio concluído. Limpar os campos somente após confirmação explícita do provedor. A idempotência protege o registro, não garante envio único pelo provedor.
+- Oferecer `GET /api/inquiries?page=...` privado USER/ADMIN, com dez consultas por página, contagem consistente, ordem por data/ID e identidade da sessão. Substituir “Em breve” na conta por consultas reais, mensagem/data e link somente para imóvel publicado; imóveis indisponíveis não expõem seus dados atuais. URL usa `inquiriesPage`, preservando favoritos. Cache por conta, no-store/Vary Cookie, carregamento/vazio/falha e nova tentativa; ocultar dados ao perder/trocar sessão.
+- Validar contratos, persistência, vínculo opcional, idempotência concorrente, isolamento, publicação, origem/sessão, falhas parciais, interface, HTTP direto/proxy, lint, tipos e builds. Testes simulam o Web3Forms e não enviam e-mails reais.
+
 Fluxo:
 
 1. validar os dados;

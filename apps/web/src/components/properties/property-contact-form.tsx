@@ -24,6 +24,7 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isSending, setIsSending] = useState(false);
   const sending = useRef(false);
+  const attempt = useRef<{ fields: string; id: string } | null>(null);
 
   async function onSubmit(values: ContactFields) {
     if (sending.current) return;
@@ -31,8 +32,11 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
     setIsSending(true);
     setResult(null);
     try {
-      const response = await submitPropertyContact({ ...values, propertyId });
+      const fields = JSON.stringify({ ...values, propertyId });
+      if (attempt.current?.fields !== fields) attempt.current = { fields, id: crypto.randomUUID() };
+      const response = await submitPropertyContact({ ...values, propertyId }, attempt.current.id);
       reset();
+      attempt.current = null;
       setResult(response);
     } catch (error) {
       setResult({ success: false, message: error instanceof Error ? error.message : "Não foi possível enviar a solicitação." });
@@ -48,7 +52,7 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
       <p id="property-contact-description" className="mt-3 text-sm leading-6 text-slate-600 wrap-anywhere">
         Solicite mais informações sobre {propertyTitle}.
       </p>
-      <form method="post" action="/api/contact" noValidate onSubmit={(event) => {
+      <form method="post" action="/api/inquiries" noValidate onSubmit={(event) => {
         event.preventDefault();
         if (!sending.current) void handleSubmit(onSubmit, () => setResult(null))(event);
       }} aria-describedby="property-contact-description" aria-busy={isSending} className="mt-5 space-y-4">
@@ -86,7 +90,7 @@ export function PropertyContactForm({ propertyId, propertyTitle }: { propertyId:
             {errors.message ? <p id="contact-message-error" role="alert" className="mt-1 text-sm text-red-700">{errors.message.message}</p> : null}
           </div>
           <input {...register("botcheck")} type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
-          <p className="text-xs leading-6 text-slate-500">Ao enviar, seus dados serão usados para responder à solicitação e processados pelo Web3Forms.</p>
+          <p className="text-xs leading-6 text-slate-500">Ao enviar, sua consulta será registrada no portal e seus dados serão usados para responder à solicitação e processados pelo Web3Forms. Se estiver conectado, ela aparecerá na sua conta.</p>
           <ActionButton type="submit" pending={isSending} pendingLabel="Enviando…" className="min-h-11 w-full rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white hover:bg-emerald-900">Enviar solicitação</ActionButton>
         </fieldset>
         <p role="status" aria-live="polite" className="text-sm text-slate-600">{isSending ? "Enviando sua solicitação…" : result?.success ? result.message : ""}</p>

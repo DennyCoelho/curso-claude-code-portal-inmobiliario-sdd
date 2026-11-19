@@ -36,7 +36,7 @@ test("USER e ADMIN têm catálogo e sessão, com atalho administrativo somente p
   }
 });
 
-test("favoritos têm seção integrada e consultas continuam preparadas sem dados fictícios", () => {
+test("favoritos e consultas têm seções integradas sem dados fictícios", () => {
   const document = renderAccount();
   const favorites = document.querySelector('section[aria-labelledby="account-favorites-title"]')!;
   assert.equal(favorites.querySelector("h2")?.textContent, "Imóveis de interesse");
@@ -44,8 +44,8 @@ test("favoritos têm seção integrada e consultas continuam preparadas sem dado
   for (const [id, title] of [["account-inquiries-title", "Consultas enviadas"]]) {
     const section = document.querySelector(`section[aria-labelledby="${id}"]`)!;
     assert.equal(section.querySelector("h2")?.textContent, title);
-    assert.match(section.textContent!, /Em breve/);
-    assert.equal(section.querySelectorAll("a, button, input, ul, ol").length, 0);
+    assert.doesNotMatch(section.textContent!, /Em breve/);
+    assert.match(section.textContent!, /Carregando suas consultas/);
     assert.doesNotMatch(section.textContent!, /\b0\b|Nenhum imóvel|Nenhuma consulta|Etapa|API|PostgreSQL/);
   }
 });

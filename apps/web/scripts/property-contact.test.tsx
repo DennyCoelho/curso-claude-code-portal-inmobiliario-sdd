@@ -16,7 +16,8 @@ const { createRoot } = await import("react-dom/client");
 const { PropertyContactForm } = await import("../src/components/properties/property-contact-form");
 const propertyId = "a2050000-0000-4000-8000-000000000001";
 const contact = { propertyId, name: "Maria Silva", email: "maria@example.com", phone: "(11) 91234-5678", message: "Gostaria de agendar uma visita.", botcheck: "" };
-const prepared = { provider: "web3forms", payload: {
+const requestId = "a2050000-0000-4000-8000-000000000099";
+const prepared = { inquiry: { id: requestId, createdAt: "2026-11-19T12:00:00.000Z" }, provider: "web3forms", payload: {
   access_key: "00000000-0000-4000-8000-000000000010", name: contact.name, email: contact.email, phone: "+5511912345678", message: contact.message,
   property_id: propertyId, property_title: "Casa em São Paulo", subject: "Contato sobre imóvel: Casa em São Paulo", from_name: "Portal Imobiliário", botcheck: false,
 } };
@@ -24,6 +25,7 @@ let container: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
 
 beforeEach(() => {
+  mock.method(globalThis.crypto, "randomUUID", () => requestId);
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -111,13 +113,13 @@ test("digitação e colagem formatam o celular, limitam o tamanho e impedem envi
 });
 
 test("cliente prepara por REST e envia diretamente ao Web3Forms com os dados canônicos", async () => {
-  const fetchMock = mock.method(globalThis, "fetch", async (input: Parameters<typeof fetch>[0]) => Response.json(input === "/api/contact" ? prepared : { success: true }));
+  const fetchMock = mock.method(globalThis, "fetch", async (input: Parameters<typeof fetch>[0]) => Response.json(input === "/api/inquiries" ? prepared : { success: true }));
   assert.deepEqual(await submitPropertyContact(contact), { success: true, message: "Solicitação enviada com sucesso." });
   const [url, options] = fetchMock.mock.calls[0].arguments as unknown as [string, RequestInit];
-  assert.equal(url, "/api/contact");
+  assert.equal(url, "/api/inquiries");
   assert.equal(options.method, "POST");
   assert.ok(options.signal instanceof AbortSignal);
-  assert.deepEqual(JSON.parse(options.body as string), contact);
+  assert.deepEqual(JSON.parse(options.body as string), { ...contact, requestId });
   assert.equal(fetchMock.mock.callCount(), 2);
   const [providerUrl, providerOptions] = fetchMock.mock.calls[1].arguments as unknown as [string, RequestInit];
   assert.equal(providerUrl, "https://api.web3forms.com/submit");
@@ -130,18 +132,18 @@ test("preparação inválida ou indisponível impede chamar o Web3Forms e não e
   const fetchMock = mock.method(globalThis, "fetch", async () => Response.json({ success: false, message: "segredo privado" }));
   for (const [body, status] of [[{ success: false }, 200], [{ success: "true" }, 200], [null, 200], [{ message: "segredo privado" }, 400], [{ success: true }, 500]] as const) {
     fetchMock.mock.mockImplementation(async () => Response.json(body, { status }));
-    await assert.rejects(submitPropertyContact(contact), { message: status === 200 ? "Não foi possível preparar a solicitação. Tente novamente mais tarde." : "Não foi possível confirmar o envio. Aguarde antes de tentar novamente." });
+    await assert.rejects(submitPropertyContact(contact), { message: status === 200 ? "Não foi possível preparar a solicitação. Tente novamente mais tarde." : "Não foi possível confirmar o registro. Tente novamente com os mesmos dados para evitar duplicação." });
   }
   for (const [status, message] of [[503, "O contato está temporariamente indisponível. Tente novamente mais tarde."], [404, "Este imóvel não está disponível para contato."]] as const) {
     fetchMock.mock.mockImplementation(async () => Response.json({ message: "segredo privado" }, { status }));
     await assert.rejects(submitPropertyContact(contact), { message });
   }
   fetchMock.mock.mockImplementation(async () => new Response("JSON inválido"));
-  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar/);
+  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar o registro/);
   fetchMock.mock.mockImplementation(async () => { throw new Error("rede privada"); });
-  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar/);
+  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar o registro/);
   assert.equal(fetchMock.mock.callCount(), 9);
-  for (const call of fetchMock.mock.calls) assert.equal(call.arguments[0], "/api/contact");
+  for (const call of fetchMock.mock.calls) assert.equal(call.arguments[0], "/api/inquiries");
 });
 
 test("preparação de outro imóvel ou com campos privados é rejeitada antes do envio", async () => {
@@ -159,15 +161,15 @@ test("preparação de outro imóvel ou com campos privados é rejeitada antes do
 
 test("somente confirmação explícita do provedor conclui o envio, sem repetição automática", async () => {
   let provider: () => Promise<Response> = async () => Response.json({ success: false });
-  const fetchMock = mock.method(globalThis, "fetch", async (input: Parameters<typeof fetch>[0]) => input === "/api/contact" ? Response.json(prepared) : provider());
+  const fetchMock = mock.method(globalThis, "fetch", async (input: Parameters<typeof fetch>[0]) => input === "/api/inquiries" ? Response.json(prepared) : provider());
   for (const [body, status] of [[{ success: false }, 200], [{ success: "true" }, 200], [null, 200], [{ success: true }, 403], [{ success: true }, 429], [{ success: true }, 500]] as const) {
     provider = async () => Response.json(body, { status });
-    await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar/);
+    await assert.rejects(submitPropertyContact(contact), /consulta foi salva.*envio por e-mail não foi confirmado/);
   }
   provider = async () => new Response("<html>Just a moment...</html>", { status: 403 });
-  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar/);
+  await assert.rejects(submitPropertyContact(contact), /consulta foi salva.*envio por e-mail não foi confirmado/);
   provider = async () => { throw new Error("dados privados da rede"); };
-  await assert.rejects(submitPropertyContact(contact), /Não foi possível confirmar/);
+  await assert.rejects(submitPropertyContact(contact), /consulta foi salva.*envio por e-mail não foi confirmado/);
   assert.equal(fetchMock.mock.callCount(), 16);
 });
 
@@ -191,7 +193,7 @@ test("formulário associa rótulos e erros aos campos e impede submissão invál
 
 test("envio pendente desabilita campos, evita duplicação e limpa dados somente após sucesso", async () => {
   let finish: ((value: Response) => void) | undefined;
-  const fetchMock = mock.method(globalThis, "fetch", (input: Parameters<typeof fetch>[0]) => input === "/api/contact" ? Promise.resolve(Response.json(prepared)) : new Promise<Response>((resolve) => { finish = resolve; }));
+  const fetchMock = mock.method(globalThis, "fetch", (input: Parameters<typeof fetch>[0]) => input === "/api/inquiries" ? Promise.resolve(Response.json(prepared)) : new Promise<Response>((resolve) => { finish = resolve; }));
   await render();
   await fillValid();
   await submit();
@@ -206,7 +208,7 @@ test("envio pendente desabilita campos, evita duplicação e limpa dados somente
   await submit();
   assert.equal(fetchMock.mock.callCount(), 2);
   const [, options] = fetchMock.mock.calls[0].arguments as unknown as [string, RequestInit];
-  assert.deepEqual(JSON.parse(options.body as string), contact);
+  assert.deepEqual(JSON.parse(options.body as string), { ...contact, requestId });
   await act(async () => { finish!(Response.json({ success: true })); });
   assert.match(container.querySelector('[role="status"]')?.textContent ?? "", /Solicitação enviada com sucesso/);
   assert.equal(field("name").value, "");
@@ -223,7 +225,7 @@ test("falha preserva os dados para nova tentativa e troca de imóvel reinicia o 
   assert.equal(field("message").value, contact.message);
   assert.equal(field("email").value, contact.email);
   assert.equal(container.querySelector("fieldset")?.disabled, false);
-  fetchMock.mock.mockImplementation(async (input: Parameters<typeof fetch>[0]) => Response.json(input === "/api/contact" ? prepared : { success: true }));
+  fetchMock.mock.mockImplementation(async (input: Parameters<typeof fetch>[0]) => Response.json(input === "/api/inquiries" ? prepared : { success: true }));
   await submit();
   assert.equal(fetchMock.mock.callCount(), 3);
   assert.match(container.querySelector('[role="status"]')?.textContent ?? "", /sucesso/);
@@ -231,4 +233,16 @@ test("falha preserva os dados para nova tentativa e troca de imóvel reinicia o 
   await render("a2050000-0000-4000-8000-000000000002");
   assert.equal(field("name").value, "");
   assert.equal(container.querySelector('[role="status"]')?.textContent, "");
+});
+
+test("falha externa informa consulta salva e nova tentativa mantém o mesmo UUID de persistência", async () => {
+  let providerSuccess = false;
+  const calls = mock.method(globalThis, "fetch", async (url: RequestInfo | URL) => Response.json(url === "/api/inquiries" ? prepared : { success: providerSuccess }));
+  await render(); await fillValid(); await submit();
+  assert.match(container.querySelector('[role="alert"]')?.textContent ?? "", /consulta foi salva.*envio por e-mail não foi confirmado/);
+  assert.equal(field("message").value, contact.message);
+  providerSuccess = true; await submit();
+  const bodies = calls.mock.calls.filter((call) => call.arguments[0] === "/api/inquiries").map((call) => JSON.parse((call.arguments[1] as RequestInit).body as string));
+  assert.equal(bodies.length, 2); assert.deepEqual(bodies[0], bodies[1]);
+  assert.match(container.querySelector('[role="status"]')?.textContent ?? "", /sucesso/); assert.equal(field("message").value, "");
 });

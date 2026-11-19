@@ -389,6 +389,12 @@ Se houver um usuário autenticado, vincular a solicitação a ele.
 
 Visitantes não autenticados também podem realizar consultas.
 
+Na Etapa 21, `POST /api/inquiries` deve persistir o contato validado e o imóvel publicado antes de preparar o envio pelo navegador ao Web3Forms. Vincular somente pela sessão atual, nunca pelo e-mail de contato ou por identidade informada no corpo. Sessões apresentadas e inválidas impedem o envio até nova entrada; visitantes sem sessão permanecem permitidos. Uma tentativa repetida com o mesmo UUID, dados e conta deve preservar registro e data, inclusive sob concorrência.
+
+Sem configuração válida do provedor, recusar antes de salvar. Após registro confirmado, falha externa deve informar claramente que a consulta está salva, mas o envio por e-mail não foi confirmado. Preservar dados e tentativa para repetição manual, sem repetir automaticamente nem prometer envio único no provedor. Não apagar a consulta por falha de e-mail nem registrar confirmação de entrega baseada somente no cliente. Limitar novas consultas a dez por e-mail em quinze minutos e proteger a origem das escritas.
+
+Em Minha conta, substituir a preparação de Consultas enviadas por histórico real da conta atual, para USER e ADMIN: mensagem, data brasileira e link para imóvel publicado. Não revelar dados atuais de imóveis indisponíveis nem consultas de outras contas ou de visitantes. Paginar com dez registros, preservar a URL e os filtros de favoritos e tratar carregamento, vazio, falha e nova tentativa. Ocultar dados ao encerrar ou trocar sessão.
+
 ---
 
 ## 15. Autenticação

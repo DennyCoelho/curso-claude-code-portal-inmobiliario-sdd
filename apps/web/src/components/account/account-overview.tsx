@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AuthenticatedUser } from "@portal-inmobiliario/contracts/auth";
 import type { ReactNode } from "react";
 import { AccountFavorites } from "@/components/favorites/account-favorites";
+import { AccountInquiries } from "./account-inquiries";
 
 const roleLabels = { USER: "Usuário", ADMIN: "Administrador" };
 
@@ -51,13 +52,7 @@ export function AccountOverview({ user, children, favoriteParameters = "" }: { u
       {children}
 
       <AccountFavorites parameters={favoriteParameters} />
-      <section aria-labelledby="account-inquiries-title" className="space-y-4 rounded-2xl border border-dashed border-slate-300 bg-white p-6 sm:p-8">
-        <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">Em breve</span>
-        <h2 id="account-inquiries-title" className="text-xl font-semibold tracking-tight">Consultas enviadas</h2>
-        <p className="leading-7 text-slate-600">
-          Em breve, você poderá consultar nesta seção os imóveis sobre os quais pediu informações.
-        </p>
-      </section>
+      <AccountInquiries parameters={favoriteParameters} />
     </div>
   );
 }

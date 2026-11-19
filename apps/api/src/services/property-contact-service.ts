@@ -10,13 +10,18 @@ export class ContactError extends Error {
   }
 }
 
+export function getContactAccessKey(): string {
+  const accessKey = process.env.WEB3FORMS_ACCESS_KEY?.trim();
+  if (!web3FormsPayloadSchema.shape.access_key.safeParse(accessKey).success) throw new ContactError(503, "O contato está temporariamente indisponível. Tente novamente mais tarde.");
+  return accessKey!;
+}
+
 export function createPropertyContactService(
   properties: { findById(id: string): Promise<Pick<PublicProperty, "id" | "title"> | null> } = publicPropertyService,
 ) {
   return {
     async prepare(contact: PropertyContact): Promise<PreparedPropertyContact> {
-      const accessKey = process.env.WEB3FORMS_ACCESS_KEY?.trim();
-      if (!web3FormsPayloadSchema.shape.access_key.safeParse(accessKey).success) throw new ContactError(503, "O contato está temporariamente indisponível. Tente novamente mais tarde.");
+      const accessKey = getContactAccessKey();
       const property = await properties.findById(contact.propertyId);
       if (!property) throw new ContactError(404, "Este imóvel não está disponível para contato.");
       const phone = normalizeBrazilianPhone(contact.phone);
