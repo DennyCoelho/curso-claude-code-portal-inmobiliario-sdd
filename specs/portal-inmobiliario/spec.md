@@ -485,6 +485,8 @@ Exibir indicadores como:
 - usuários;
 - consultas.
 
+Na Etapa 22, completar `/admin` com esses seis totais reais, restritos a ADMIN também no backend. Total de imóveis e contagens por operação incluem rascunhos; usuários incluem todos os perfis e contas inativas; consultas incluem visitantes e contas. Consultar somente agregados no PostgreSQL, sem expor cadastros individuais. Atualizar a cada acesso/recarregamento, sem cache privado compartilhado. Apresentar números em pt-BR, zeros reais, carregamento acessível e falhas com nova tentativa. Preservar redirecionamentos de acesso, noindex e navegação de conta/sessão. As telas de gerenciamento seguem suas próprias etapas.
+
 ---
 
 ## 19. Administração de imóveis

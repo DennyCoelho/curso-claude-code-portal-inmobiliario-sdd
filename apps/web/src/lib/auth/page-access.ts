@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@portal-inmobiliario/contracts/auth";
 import { fetchAuthorizedUser } from "@/lib/api/authorization";
+import { fetchAdminDashboard } from "@/lib/api/admin-dashboard";
 
 const getPrivateSession = cache(async (requiredRole: UserRole) => {
   const cookie = (await headers()).get("cookie") ?? "";
@@ -18,4 +19,12 @@ export async function requirePageUser(requiredRole: UserRole = "USER") {
   }
   if (session.status === "forbidden") redirect("/access-denied");
   return session.user;
+}
+
+export async function requireAdminDashboard() {
+  const cookie = (await headers()).get("cookie") ?? "";
+  const result = await fetchAdminDashboard(cookie, process.env.API_URL ?? "http://127.0.0.1:3001");
+  if (result.status === "unauthenticated") redirect("/login?next=%2Fadmin");
+  if (result.status === "forbidden") redirect("/access-denied");
+  return result.dashboard;
 }

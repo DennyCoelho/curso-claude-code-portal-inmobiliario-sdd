@@ -3,12 +3,16 @@ import { authResponseSchema, hasAccessRole, type AuthenticatedUser, type UserRol
 
 type PrivateSession = { status: "authenticated"; user: AuthenticatedUser } | { status: "unauthenticated" } | { status: "forbidden" };
 
-export async function fetchAuthorizedUser(cookieHeader: string, requiredRole: UserRole, apiUrl: string): Promise<PrivateSession> {
+export function getSessionCookieHeader(cookieHeader: string): string {
   // Encaminhar apenas cookies de sessão; preservar duplicados para o backend recusá-los.
   const sessionCookies = cookieHeader.split(";").map((part) => part.trim())
     .filter((part) => /^(?:__Host-portal_session|portal_session)=/.test(part));
-  if (!sessionCookies.some((part) => /=[a-f0-9]{64}$/.test(part))) return { status: "unauthenticated" };
-  const cookie = sessionCookies.join("; ");
+  return sessionCookies.some((part) => /=[a-f0-9]{64}$/.test(part)) ? sessionCookies.join("; ") : "";
+}
+
+export async function fetchAuthorizedUser(cookieHeader: string, requiredRole: UserRole, apiUrl: string): Promise<PrivateSession> {
+  const cookie = getSessionCookieHeader(cookieHeader);
+  if (!cookie) return { status: "unauthenticated" };
   try {
     const path = requiredRole === "ADMIN" ? "/api/admin/session" : "/api/auth/me";
     const response = await fetch(`${apiUrl.replace(/\/+$/, "")}${path}`, {

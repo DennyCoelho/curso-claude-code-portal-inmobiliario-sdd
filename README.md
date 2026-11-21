@@ -386,16 +386,29 @@ As páginas `/login` e `/register` usam React Hook Form + Zod com validação ac
 | --- | --- | --- | --- |
 | `GET /api/auth/me` | `401` | `200` | `200` |
 | `GET /api/admin/session` | `401` | `403` | `200` |
+| `GET /api/admin/dashboard` | `401` | `403` | `200` |
 | `/account` | Redireciona ao login | Acesso permitido | Acesso permitido |
 | `/admin` | Redireciona ao login | Redireciona a `/access-denied` | Acesso permitido |
 
-A conta `/account` exibe as informações descritas na Etapa 19 abaixo; `/admin` continua como entrada mínima protegida até a etapa do painel. O login preserva a intenção de acesso por `next=/account` ou `next=/admin`, oferecendo o link apropriado após entrar. Outros destinos e parâmetros repetidos usam `/account`, sem redirecionamentos externos. USER que pediu administração recebe orientação sobre a restrição. A saída permanece em Gerenciar sessão → Sair da conta.
+A conta `/account` exibe as informações descritas na Etapa 19 abaixo; `/admin` apresenta os indicadores da Etapa 22. O login preserva a intenção de acesso por `next=/account` ou `next=/admin`, oferecendo o link apropriado após entrar. Outros destinos e parâmetros repetidos usam `/account`, sem redirecionamentos externos. USER que pediu administração recebe orientação sobre a restrição. A saída permanece em Gerenciar sessão → Sair da conta.
 
 O serviço `authorizationService.requireUser(token, requiredRole)` consulta a sessão e o perfil atual via `authService.me`; ADMIN herda os acessos USER. Toda nova API privada deve usar `withAuthorization(request, "USER" | "ADMIN", callback)` e realizar acesso aos dados somente dentro do callback autorizado. O guard impede execução sem permissão, protege a origem nas escritas e força `Cache-Control: no-store`/`Vary: Cookie` em sucesso e erro. `401` expira o cookie; `403` preserva a sessão válida. Perfil/identidade em cabeçalhos, parâmetros ou corpo não concedem acesso.
 
-Cada nova página privada deve chamar `requirePageUser("USER" | "ADMIN")` antes de renderizar conteúdo ou carregar dados privados. A verificação ocorre no servidor por REST em `API_URL`, com timeout, sem cache e sem seguir redirecionamentos; somente cookies de sessão são encaminhados. Nenhum acesso direto ao banco existe no frontend. Layout, menu e cache SWR não são controles de autorização. Erros de rede/contrato bloqueiam a área e oferecem nova tentativa. Links privados têm prefetch desativado e páginas usam `noindex, nofollow`. O redirecionamento pode ocorrer por metatag após o início do streaming do Next.js, sem renderizar o conteúdo protegido.
+Cada nova página privada deve verificar o acesso no servidor antes de renderizar conteúdo ou carregar dados privados. `requirePageUser("USER" | "ADMIN")` protege os dados da sessão; no painel, `requireAdminDashboard()` usa a própria resposta autorizada dos indicadores, sem uma segunda chamada à API de sessão. A verificação ocorre por REST em `API_URL`, com timeout, sem cache e sem seguir redirecionamentos; somente cookies de sessão são encaminhados. Nenhum acesso direto ao banco existe no frontend. Layout, menu e cache SWR não são controles de autorização. Erros de rede/contrato bloqueiam a área e oferecem nova tentativa. Links privados têm prefetch desativado e páginas usam `noindex, nofollow`. O redirecionamento pode ocorrer por metatag após o início do streaming do Next.js, sem renderizar o conteúdo protegido.
 
 `npm run api:test` cobre hierarquia, falsificação de identidade, guards e erros; `npm run auth:test:web` cobre navegação por perfil, formulários e cliente REST da proteção. `npm run api:test:integration` verifica mudanças de perfil, inatividade, expiração e revogação no PostgreSQL com rollback. Com os dois apps iniciados, `npm run auth:test:http` também testa as permissões diretamente e pelo proxy, páginas privadas, retorno ao login e alterações durante a sessão. Contas descartáveis são removidas em `finally`, sem editar as contas existentes. A Etapa 18 reutiliza os perfis e as tabelas existentes, sem migrações.
+
+### Painel administrativo — Etapa 22
+
+Acesse [Administração](http://localhost:3000/admin) com uma conta ADMIN ativa. O painel apresenta seis indicadores reais, em uma grade responsiva: total de imóveis, imóveis publicados, imóveis à venda, imóveis para aluguel, usuários e consultas. Os números usam formatação pt-BR, incluindo zero quando não há registros.
+
+Total de imóveis, venda e aluguel incluem publicados e rascunhos. Usuários inclui todos os perfis e contas inativas. Consultas inclui solicitações salvas por visitantes e contas, mesmo quando o envio de e-mail não foi confirmado. Os indicadores são atualizados a cada acesso ou recarregamento; não há atualização automática em tempo real. As telas de gerenciamento continuam nas próximas etapas.
+
+`GET /api/admin/dashboard` retorna `{ totalProperties, publishedProperties, saleProperties, rentProperties, totalUsers, totalInquiries }`. O guard ADMIN revalida sessão, atividade e perfil atual antes de consultar qualquer indicador. Respostas usam `Cache-Control: no-store` e `Vary: Cookie`; visitantes recebem `401`, USER recebe `403`, e falhas retornam erro genérico sem contagens parciais. O repositório executa somente contagens no PostgreSQL, em uma transação de leitura repetível, sem carregar cadastros ou expor dados pessoais. Não há migração.
+
+A página consulta esse endpoint no servidor por REST sem cache, validando o contrato Zod compartilhado e encaminhando somente cookies de sessão. Visitantes seguem ao login com retorno a `/admin`; USER segue ao acesso restrito. Carregamento anuncia o progresso sem números fictícios, e falhas oferecem **Tentar novamente**. Conta, catálogo e gerenciamento da sessão permanecem acessíveis; a página não é indexada.
+
+`npm test` inclui contrato, serviço/rota, bloqueios de permissão, cliente REST, números, zeros, carregamento e erro. `npm run test:integration` inclui os indicadores reais com dados temporários revertidos no PostgreSQL. Com os dois apps iniciados, `npm run admin:test:http` confere API direta/proxy, recarga, dados restritos e bloqueio após rebaixamento, inativação e revogação, removendo suas contas descartáveis ao terminar.
 
 ### Conta do usuário — Etapa 19
 

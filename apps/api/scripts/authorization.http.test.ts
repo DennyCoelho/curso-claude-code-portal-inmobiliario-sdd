@@ -20,7 +20,7 @@ async function expectPageRedirect(path: string, target: string, cookie = "") {
   const response = await call(webUrl, path, cookie);
   const html = await response.text();
   assert.doesNotMatch(html, /Seu acesso à área (?:privada|administrativa) está confirmado/);
-  assert.doesNotMatch(html, /Informações da conta|id="account-favorites-title"|id="account-inquiries-title"/);
+  assert.doesNotMatch(html, /Informações da conta|id="account-favorites-title"|id="account-inquiries-title"|id="admin-indicators-title"/);
   if (response.status === 307) {
     assert.equal(new URL(response.headers.get("location")!, webUrl).pathname + new URL(response.headers.get("location")!, webUrl).search, target);
   } else {
@@ -87,7 +87,7 @@ test("autorização HTTP direta/proxy e páginas privadas respeitam sessão/perf
     }
     const adminPage = await call(webUrl, "/admin", cookies.ADMIN);
     assert.equal(adminPage.status, 200);
-    assert.match(await adminPage.text(), /Seu acesso à área administrativa está confirmado/);
+    assert.match(await adminPage.text(), /id="admin-indicators-title"/);
     await database.user.update({ where: { id: ids[1] }, data: { role: "USER" } });
     for (const origin of [apiUrl, webUrl]) assert.equal((await call(origin, "/api/admin/session", cookies.ADMIN)).status, 403);
     await expectPageRedirect("/admin", "/access-denied", cookies.ADMIN);

@@ -357,10 +357,14 @@ Esta reestruturação não antecipa as funcionalidades das Etapas 8 a 37. Os reg
 
 ## Fase 4 — Administração
 
-- [ ] **Etapa 22 — Painel ADMIN**
+- [x] **Etapa 22 — Painel ADMIN**
   - Completar `/admin`, cuja entrada protegida foi preparada na Etapa 18.
   - Exibir indicadores.
   - Restringir o acesso a ADMIN.
+  - `GET /api/admin/dashboard` com guard ADMIN, sessão/atividade/perfil atuais, `401`/`403`, `no-store` e `Vary: Cookie`. Contrato Zod estrito compartilhado com somente seis contagens, serviço e repositório próprios. PostgreSQL consultado por agregados em transação de leitura repetível, sem carregar cadastros nem exigir migração. Total e operações incluem rascunhos; usuários incluem todos os perfis e inativas; consultas incluem visitantes e contas.
+  - `/admin` consulta exclusivamente REST no servidor, com cookies de sessão filtrados, timeout, sem cache ou redirecionamentos externos. A própria resposta autorizada dos indicadores protege a página, sem chamada adicional à API de sessão. Visitantes seguem ao login com retorno; USER ao acesso restrito. Números em pt-BR, zeros reais, lista de descrição semântica, grade responsiva, carregamento acessível, erro com nova tentativa e noindex. Conta, catálogo e gerenciamento da sessão disponíveis; telas de gerenciamento continuam nas etapas próprias.
+  - `npm test` aprovado com lint, tipos dos três workspaces e 239 testes unitários. Aprovados 43 testes de integração PostgreSQL (13 de domínio/seed e 30 da API), 18 testes HTTP gerais, sete fluxos HTTP de autenticação/conta e um fluxo completo do painel direto/proxy. Builds de produção dos dois aplicativos aprovados. Cobertos contrato, zeros, falhas, bloqueio antes da consulta, rascunhos/operações, inativas, visitantes, recarga, rebaixamento, inativação e revogação. Testes temporários revertidos/removidos.
+  - Navegador integrado confirmou login ADMIN, carregamento, seis indicadores reais, recarga, navegação de sessão, logout e bloqueio ao acessar novamente. Larguras de 320, 768 e 1440 px conferidas com uma/duas/três colunas e sem transbordamento horizontal; capturas de celular/computador salvas e visual conferido. Console e logs dos aplicativos sem erros. Totais observados: 16 imóveis, 14 publicados, oito de venda, oito de aluguel, cinco usuários e zero consultas. README, especificação e plano atualizados; aplicativos de produção nas portas 3000/3001. Etapa 23 permanece pendente.
 
 - [ ] **Etapa 23 — CRUD REST de imóveis**
   - Listar.

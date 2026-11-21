@@ -472,6 +472,14 @@ Requisitos:
 
 Referências: [Resend](https://resend.com/docs/api-reference/emails/send-email) e [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
 
+### Painel administrativo — Etapa 22
+
+- Completar `/admin` com seis indicadores reais: total de imóveis, publicados, à venda, para aluguel, usuários e consultas. Total e operações incluem rascunhos; usuários incluem todos os perfis e contas inativas; consultas incluem visitantes e contas. Não antecipar as telas de gerenciamento das próximas etapas.
+- Criar `GET /api/admin/dashboard` protegido pelo guard ADMIN existente, com `401`/`403`, `no-store` e `Vary: Cookie`. Compartilhar contrato Zod estrito em `contracts/admin-dashboard`, expondo somente seis contagens inteiras não negativas. Serviço e repositório próprios consultam agregados no PostgreSQL em uma transação com leitura repetível, sem carregar registros nem exigir migração.
+- Consultar esse recurso na página Server Component por REST sem cache, encaminhando apenas cookies de sessão à origem fixa `API_URL`. A própria resposta autorizada substitui a verificação isolada de `/api/admin/session` nesta página, evitando duas chamadas. Redirecionar visitantes ao login e USER ao acesso restrito; falhas bloqueiam os indicadores e oferecem nova tentativa.
+- Usar lista de descrição semântica, números em pt-BR, grade responsiva e explicação do escopo das contagens, incluindo zeros reais. Preservar links de conta/sessão e noindex; oferecer carregamento acessível sem totais fictícios. Atualizar os indicadores a cada acesso/recarregamento.
+- Validar contratos, falhas, bloqueio antes da consulta, perfis e mudanças de sessão, totais no PostgreSQL com transações revertidas, HTTP direto/proxy, renderização, lint, tipos, testes e builds. Conferir responsividade no navegador quando disponível.
+
 ## 11. Cloudinary
 
 Fluxo:
